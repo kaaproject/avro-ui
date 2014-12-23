@@ -30,12 +30,15 @@ import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.IntegerField;
 import org.kaaproject.avro.ui.shared.LongField;
 import org.kaaproject.avro.ui.shared.RecordField;
+import org.kaaproject.avro.ui.shared.SizedField;
 import org.kaaproject.avro.ui.shared.StringField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -63,7 +66,9 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     public interface Style extends CssResource {
         
         String DEFAULT_CSS = "org/kaaproject/avro/ui/gwt/client/widget/FieldWidget.css";
-        
+
+        String fieldWidget();
+
         String requiredField();
         
         String buttonsPanel();
@@ -72,7 +77,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     
     private static Resources DEFAULT_RESOURCES;
     private static final String DEFAULT_DECIMAL_FORMAT = "#";
-    private static final String FULL_WIDTH = "100%";
+    protected static final String FULL_WIDTH = "100%";
     
     protected List<HandlerRegistration> registrations = new ArrayList<HandlerRegistration>();
     
@@ -103,6 +108,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         this.sizedTextStyle = sizedTextStyle;
         this.sizedTextStyle.ensureInjected();
         
+        this.addStyleName(style.fieldWidget());
     }
     
     @Override
@@ -173,7 +179,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             constructLabel(table, field, row, column);
             column++;
         }
-        constructWidget(table, field, row, column, handlerRegistrations);
+        row = constructWidget(table, field, row, column, handlerRegistrations);
         return row;
     }
     
@@ -185,7 +191,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         table.setWidget(row, column, label);
     }
     
-    protected void constructWidget(FlexTable table, FormField field, int row, int column, List<HandlerRegistration> handlerRegistrations) {
+    protected int constructWidget(FlexTable table, FormField field, int row, int column, List<HandlerRegistration> handlerRegistrations) {
         Widget widget = null;
         switch (field.getFieldType()) {
             case STRING:
@@ -213,24 +219,34 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                 widget = constructUnionWidget((UnionField)field, handlerRegistrations);
                 break;
         }
-        widget.setWidth(FULL_WIDTH);
-        table.setWidget(row, column, widget);
+        widget.setWidth(FULL_WIDTH);                
         if (field.getFieldType()==FieldType.ARRAY ||
-                field.getFieldType()==FieldType.UNION) {
+                field.getFieldType()==FieldType.UNION ||
+                field.getFieldType()==FieldType.RECORD) {
+            table.setText(row, 0, "");
+            table.setText(row, 1, "");
+            row++;
+            table.setWidget(row, column, widget);
             table.getFlexCellFormatter().setColSpan(row, column, 3);
+        } else {
+            table.setWidget(row, column, widget);
         }
+        return row;
     }
     
-    private Widget constructStringWidget(final StringField field, List<HandlerRegistration> handlerRegistrations) {
-        final SizedTextBox textBox = new SizedTextBox(sizedTextStyle, field.getInputType(), field.getMaxLength());
+    private Widget constructStringWidget(final StringField field,
+            List<HandlerRegistration> handlerRegistrations) {
+        final SizedTextBox textBox = new SizedTextBox(sizedTextStyle,
+                field.getInputType(), field.getMaxLength(), true,
+                field.getMaxLength() != SizedField.DEFAULT_MAX_LENGTH);
         textBox.setValue(field.getValue());
         handlerRegistrations.add(textBox.addInputHandler(new InputEventHandler() {
-            @Override
-            public void onInputChanged(InputEvent event) {
-                field.setValue(textBox.getValue());
-                fireChanged();
-            }
-        }));
+                    @Override
+                    public void onInputChanged(InputEvent event) {
+                        field.setValue(textBox.getValue());
+                        fireChanged();
+                    }
+                }));
         return textBox;
     }
     

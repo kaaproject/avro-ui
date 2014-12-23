@@ -85,6 +85,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         ScrollPanel scroll = new ScrollPanel();
         final FlexTable table = new FlexTable();
         table.setWidth("95%");
+        table.setCellPadding(5);
         
         List<RecordField> records = value.getValue();
         final int minRowCount = value.getMinRowCount();

@@ -73,7 +73,10 @@ public class EnumField extends FormField {
     }
     
     private FormEnum fromEnumSymbol(String enumSymbol) {
-        FormEnum enumValue = new FormEnum(enumSymbol, "");
+        FormEnum enumValue = null;
+        if (!strIsEmpty(enumSymbol)) {
+            enumValue = new FormEnum(enumSymbol, enumSymbol);
+        }
         if (this.enumValues != null) {
             int index = this.enumValues.indexOf(enumValue);
             if (index > -1) {

@@ -20,7 +20,7 @@ public abstract class SizedField extends FormField {
 
     private static final long serialVersionUID = 6539576598668221454L;
     
-    private static final int DEFAULT_MAX_LENGTH = 255;
+    public static final int DEFAULT_MAX_LENGTH = -1;
     
     private Integer maxLength;
     

@@ -131,5 +131,9 @@ public abstract class FormField implements Serializable, Cloneable {
         return true;
     }
 
+    protected static boolean strIsEmpty(String str) {
+        return str == null || str.length() == 0;
+    }
+
 
 }

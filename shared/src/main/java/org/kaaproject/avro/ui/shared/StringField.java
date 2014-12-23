@@ -89,10 +89,6 @@ public class StringField extends SizedField {
         return !strIsEmpty(value);
     }
 
-    private static boolean strIsEmpty(String str) {
-        return str == null || str.length() == 0;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
