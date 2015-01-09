@@ -103,7 +103,7 @@ public class FormAvroConverterTest {
         
         ((EnumField)formField).setValue(new FormEnum("VALUE_THREE","Value Three"));
         
-        GenericRecord record = FormAvroConverter.createGenericRecordFormRecordField(field, schema);
+        GenericRecord record = FormAvroConverter.createGenericRecordFromRecordField(field);
         
         Assert.assertNotNull(record);
         
@@ -162,7 +162,7 @@ public class FormAvroConverterTest {
         stringField.setValue("cell value");
         arrayField.addArrayData(newRow);
         
-        GenericRecord record = FormAvroConverter.createGenericRecordFormRecordField(field, schema);
+        GenericRecord record = FormAvroConverter.createGenericRecordFromRecordField(field);
         
         Assert.assertNotNull(record);
         Object val = record.get("testArrayElements");
@@ -212,7 +212,7 @@ public class FormAvroConverterTest {
         stringField.setValue("field value of union record");
         unionField.setValue(unionValue);
         
-        GenericRecord record = FormAvroConverter.createGenericRecordFormRecordField(field, schema);
+        GenericRecord record = FormAvroConverter.createGenericRecordFromRecordField(field);
         Assert.assertNotNull(record);
         Object val = record.get("unionField");
         Assert.assertNotNull(val);

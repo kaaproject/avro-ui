@@ -28,6 +28,8 @@ public class RecordField extends FormField {
     private String typeName;
 
     private String typeNamespace;
+    
+    private String schema;
 
     public RecordField() {
         super();
@@ -65,6 +67,14 @@ public class RecordField extends FormField {
         this.typeNamespace = typeNamespace;
     }
     
+    public String getSchema() {
+        return schema;
+    }
+
+    public void setSchema(String schema) {
+        this.schema = schema;
+    }
+
     public boolean isSameType(RecordField otherRecord) {
         return typeNamespace.equals(otherRecord.getTypeNamespace()) &&
                 typeName.equals(otherRecord.getTypeName());
@@ -98,6 +108,7 @@ public class RecordField extends FormField {
         }
         clonedRecordField.typeName = typeName;
         clonedRecordField.typeNamespace = typeNamespace;
+        clonedRecordField.schema = schema;
     }
 
     @Override

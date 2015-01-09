@@ -83,6 +83,7 @@ public class FormAvroConverter {
         recordField.setDisplayName(displayName);
         recordField.setTypeName(schema.getName());
         recordField.setTypeNamespace(schema.getNamespace());
+        recordField.setSchema(schema.toString());
         
         parseFields(recordField, schema);
         return recordField;
@@ -125,6 +126,7 @@ public class FormAvroConverter {
                 RecordField recordField = createField(fieldType, fieldName, displayName, optional);
                 recordField.setTypeName(field.schema().getName());
                 recordField.setTypeNamespace(field.schema().getNamespace());
+                recordField.setSchema(field.schema().toString());
                 parseFields(recordField, field.schema());
                 formField = recordField;
             }
@@ -341,7 +343,8 @@ public class FormAvroConverter {
      * @param schema the schema
      * @return the generic record
      */
-    public static GenericRecord createGenericRecordFormRecordField(RecordField recordField, Schema schema) {
+    public static GenericRecord createGenericRecordFromRecordField(RecordField recordField) {
+        Schema schema = new Schema.Parser().parse(recordField.getSchema());
         GenericRecordBuilder builder = new GenericRecordBuilder(schema);
         for (FormField formField : recordField.getValue()) {
             String fieldName = formField.getFieldName();
@@ -442,7 +445,7 @@ public class FormAvroConverter {
     private static Object convertValue(FormField formField, Schema fieldSchema) {
         switch(fieldSchema.getType()) {
         case RECORD:
-            return createGenericRecordFormRecordField((RecordField)formField, fieldSchema);
+            return createGenericRecordFromRecordField((RecordField)formField);
         case STRING:
             return ((StringField)formField).getValue();
         case INT:
@@ -458,7 +461,7 @@ public class FormAvroConverter {
             List<RecordField> arrayData = ((ArrayField)formField).getValue();
             GenericData.Array<GenericRecord> genericArrayData = new GenericData.Array<>(arrayData.size(), fieldSchema);
             for (RecordField recordField : arrayData) {
-                GenericRecord record = createGenericRecordFormRecordField(recordField, fieldSchema.getElementType());
+                GenericRecord record = createGenericRecordFromRecordField(recordField);
                 genericArrayData.add(record);
             }
             return genericArrayData;
@@ -486,7 +489,7 @@ public class FormAvroConverter {
                     RecordField recordValue = unionField.getValue();
                     Schema recordSchema = findRecordSchema(fieldSchema, recordValue.getTypeFullname());
                     if (recordSchema != null) {
-                        return createGenericRecordFormRecordField(unionField.getValue(), recordSchema);
+                        return createGenericRecordFromRecordField(unionField.getValue());
                     }
                     else {
                         throw new IllegalArgumentException("Union schema doesn't contains record value schema: " + recordValue.getTypeFullname());
