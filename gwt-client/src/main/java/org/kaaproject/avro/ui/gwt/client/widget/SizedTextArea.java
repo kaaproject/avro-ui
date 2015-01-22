@@ -16,11 +16,11 @@
 
 package org.kaaproject.avro.ui.gwt.client.widget;
 
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.input.HasInputEventHandlers;
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
-import org.kaaproject.avro.ui.gwt.client.widget.SizedTextBox.Style;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -42,13 +42,17 @@ public class SizedTextArea extends VerticalPanel implements HasValue<String>, Ha
     private Label charactersLabel;
     private final int maxChars;
     
-    private final Style style;
+    private final AvroUiStyle style;
+    
+    private static AvroUiStyle getDefaultStyle() {
+        return Utils.avroUiStyle;
+    }
     
     public SizedTextArea(int maxChars) {
-        this(SizedTextBox.getDefaultStyle(), maxChars);
+        this(getDefaultStyle(), maxChars);
     }
 
-    public SizedTextArea(Style style, int maxChars) {
+    public SizedTextArea(AvroUiStyle style, int maxChars) {
         
         // Inject the stylesheet.
         this.style = style;

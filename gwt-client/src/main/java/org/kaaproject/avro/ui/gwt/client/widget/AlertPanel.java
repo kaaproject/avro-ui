@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.kaaproject.avro.ui.sandbox.client.mvp.view.widget;
+package org.kaaproject.avro.ui.gwt.client.widget;
+
+import static org.kaaproject.avro.ui.gwt.client.util.Utils.avroUiStyle;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
@@ -26,11 +28,11 @@ public class AlertPanel extends Label {
     private DivElement textNode;
 
     public enum Type {
-        INFO("info", "icon-info"),
-        HINT("hint", "icon-hint"),
-        WARNING("warning", "icon-warning"),
-        ERROR("error", "icon-error"),
-        SUCCESS("success", "icon-success");
+        INFO(avroUiStyle.info(), avroUiStyle.iconInfo()),
+        HINT(avroUiStyle.hint(), avroUiStyle.iconHint()),
+        WARNING(avroUiStyle.warning(), avroUiStyle.iconWarning()),
+        ERROR(avroUiStyle.error(), avroUiStyle.iconError()),
+        SUCCESS(avroUiStyle.success(), avroUiStyle.iconSuccess());
 
         String labelStyleName;
 
@@ -43,11 +45,11 @@ public class AlertPanel extends Label {
     }
 
     public AlertPanel(Type type) {
-        setStylePrimaryName("ui-message");
+        setStylePrimaryName(avroUiStyle.uiMessage());
         addStyleName(type.labelStyleName);
 
         InlineLabel icon = new InlineLabel();
-        icon.setStylePrimaryName("ui-icon");
+        icon.setStylePrimaryName(avroUiStyle.uiIcon());
         icon.addStyleName(type.iconStyleName);
 
         getElement().appendChild(icon.getElement());

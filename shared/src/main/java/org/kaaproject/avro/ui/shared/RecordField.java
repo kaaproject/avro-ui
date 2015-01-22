@@ -17,73 +17,107 @@
 package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class RecordField extends FormField {
+public class RecordField extends FqnField {
 
     private static final long serialVersionUID = -2006331166074707248L;
     
     private List<FormField> value;
     
-    private String typeName;
-
-    private String typeNamespace;
+    private RecordField rootRecord;
     
-    private String schema;
-
+    private Map<String, RecordField> recordsMetadata;
+    
+    private boolean isNull = true;
+    
     public RecordField() {
         super();
+    }
+    
+    public RecordField(RecordField rootRecord) {
+        super();
+        this.rootRecord = rootRecord;
+        if (rootRecord == null) {
+            recordsMetadata = new HashMap<>();
+            this.rootRecord = this;
+        } else {
+            this.rootRecord = rootRecord;
+        }
         value = new ArrayList<>();
     }
     
-    public RecordField(String fieldName, 
+    public RecordField(RecordField rootRecord, 
+            String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
         value = new ArrayList<>();
+        if (rootRecord == null) {
+            recordsMetadata = new HashMap<>();
+            this.rootRecord = this;
+        } else {
+            this.rootRecord = rootRecord;
+        }
+    }
+    
+    public void putRecordMetadata(String fqn, RecordField field) {
+        recordsMetadata.put(fqn, field);
+    }
+    
+    public boolean containsRecordMetadata(String fqn) {
+        return recordsMetadata.containsKey(fqn);
+    }
+    
+    public RecordField getRecordMetadata(String fqn) {
+        return recordsMetadata.get(fqn);
     }
     
     public List<FormField> getValue() {
         return value;
+    }
+    
+    public List<FormField> getFieldsWithAccess(FieldAccess... accesses) {
+        List<FormField> result = new ArrayList<FormField>();
+        for (FormField field : value) {
+            for (FieldAccess access : accesses) {
+                if (field.getFieldAccess() == access) {
+                    result.add(field);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+    
+    public List<FormField> getKeyIndexedFields() {
+        List<FormField> result = new ArrayList<FormField>();
+        List<FormField> activeFields = getFieldsWithAccess(FieldAccess.EDITABLE, 
+                FieldAccess.READ_ONLY);
+        for (FormField field : activeFields) {
+            if (field.getKeyIndex() > -1) {
+                result.add(field);
+            }
+        }
+        Collections.sort(result, new Comparator<FormField>() {
+            @Override
+            public int compare(FormField o1, FormField o2) {
+                return o1.getKeyIndex() - o2.getKeyIndex();
+            }
+            
+        });
+        return result;
     }
 
     public void addField(FormField field) {
         value.add(field);
     }
     
-    public String getTypeName() {
-        return typeName;
-    }
-
-    public void setTypeName(String typeName) {
-        this.typeName = typeName;
-    }
-
-    public String getTypeNamespace() {
-        return typeNamespace;
-    }
-
-    public void setTypeNamespace(String typeNamespace) {
-        this.typeNamespace = typeNamespace;
-    }
-    
-    public String getSchema() {
-        return schema;
-    }
-
-    public void setSchema(String schema) {
-        this.schema = schema;
-    }
-
-    public boolean isSameType(RecordField otherRecord) {
-        return typeNamespace.equals(otherRecord.getTypeNamespace()) &&
-                typeName.equals(otherRecord.getTypeName());
-    }
-    
-    public String getTypeFullname() {
-        return typeNamespace + "." + typeName;
-    }
-
     @Override
     public FieldType getFieldType() {
         return FieldType.RECORD;
@@ -91,28 +125,49 @@ public class RecordField extends FormField {
     
     @Override
     public boolean isNull() {
-        return false;
+        return isNull;
     }
 
     @Override
-    protected FormField createInstance() {
-        return new RecordField();
+    protected FormField createInstance(boolean child) {
+//        if (child) {
+//            RecordField recordField = rootRecord.getRecordMetadata(getTypeFullname());
+//            recordField.isCloned = false;
+//            return recordField;
+//        } else {
+            return new RecordField(rootRecord);
+      //  }
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean child) {
+        super.copyFields(cloned, true);
         RecordField clonedRecordField = (RecordField)cloned;
-        for (FormField field : value) {
-            clonedRecordField.value.add(field.clone());
+        if (!child) {            
+            for (FormField field : value) {
+                clonedRecordField.value.add(field.clone(true));
+            }
+            clonedRecordField.isNull = false;
+        } else {
+            clonedRecordField.isNull = true;
         }
-        clonedRecordField.typeName = typeName;
-        clonedRecordField.typeNamespace = typeNamespace;
-        clonedRecordField.schema = schema;
+    }
+    
+    public void setNotNull() {
+        if (isNull) {
+            RecordField recordField = rootRecord.getRecordMetadata(getTypeFullname());
+            for (FormField field : recordField.getValue()) {
+                value.add(field.clone(true));
+            }
+            isNull = false;
+        }
     }
 
     @Override
     protected boolean valid() {
+        if (isNull) {
+            return true;
+        }
         boolean valid = true;
         for (FormField field : value) {
             valid &= field.isValid();

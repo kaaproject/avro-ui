@@ -35,11 +35,23 @@ public interface MainView extends IsWidget {
     
     HasClickHandlers getGenerateFormButton();
     
+    HasClickHandlers getShowRecordJsonButton();
+    
+    HasClickHandlers getUploadRecordFromJsonButton();
+    
+    HasClickHandlers getUploadButton();
+    
     boolean hasChanged();
     
     HasValue<String> getSchema();
 
     HasValue<RecordField> getSchemaForm();
+    
+    void setRecordJson(String json);
+    
+    HasValue<String> getRecordJson();
+    
+    void showUploadJson();
 
     void reset();
     

@@ -17,24 +17,46 @@
 package org.kaaproject.avro.ui.shared;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class FormField implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 6978997793895098628L;
     
+    public static enum FieldAccess {
+        EDITABLE,
+        READ_ONLY,
+        HIDDEN
+    }
+    
     private String fieldName;
     private String displayName;
+    private String displayHint;
+    private String schema;
     private boolean optional;
+    private FieldAccess fieldAccess = FieldAccess.EDITABLE;
     private float weight = 1f;
+    private int keyIndex = -1;
+    private int rowIndex = -1;
+    
+    private boolean isOverride = false;
+    private boolean changed = false;
+    
+    private transient List<ChangeListener> changeListeners = new ArrayList<>();
     
     public FormField() {
     }
     
     public FormField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
         this.fieldName = fieldName;
         this.displayName = displayName;
+        this.schema = schema;
         this.optional = optional;
     }
     
@@ -53,6 +75,22 @@ public abstract class FormField implements Serializable, Cloneable {
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
+    
+    public String getDisplayHint() {
+        return displayHint;
+    }
+
+    public void setDisplayHint(String displayHint) {
+        this.displayHint = displayHint;
+    }
+
+    public String getSchema() {
+        return schema;
+    }
+
+    public void setSchema(String schema) {
+        this.schema = schema;
+    }
 
     public boolean isOptional() {
         return optional;
@@ -69,13 +107,80 @@ public abstract class FormField implements Serializable, Cloneable {
     public float getWeight() {
         return weight;
     }
+    
+    public int getKeyIndex() {
+        return keyIndex;
+    }
+
+    public void setKeyIndex(int keyIndex) {
+        this.keyIndex = keyIndex;
+    }
+    
+    public int getRowIndex() {
+        return rowIndex;
+    }
+
+    public void setRowIndex(int rowIndex) {
+        this.rowIndex = rowIndex;
+    }
+
+    public FieldAccess getFieldAccess() {
+        return fieldAccess;
+    }
+
+    public void setFieldAccess(FieldAccess fieldAccess) {
+        this.fieldAccess = fieldAccess;
+    }
+    
+    public boolean isReadOnly() {
+        return this.fieldAccess == FieldAccess.READ_ONLY;
+    }
+
+    public boolean isOverride() {
+        return isOverride;
+    }
+
+    public void setOverride(boolean isOverride) {
+        this.isOverride = isOverride;
+    }
+
+    public boolean isChanged() {
+        return changed;
+    }
+    
+    protected void fireChanged() {
+        setChanged(true, true);
+    }
+    
+    public void setChanged(boolean changed) {
+        setChanged(changed, false);
+    }
+
+    public void setChanged(boolean changed, boolean fireChanged) {
+        if (this.changed != changed) {
+            this.changed = changed;
+            if (fireChanged) {
+                for (ChangeListener listener : changeListeners) {
+                    listener.onChanged(changed);
+                }
+            }
+        }
+    }
+    
+    public void addChangeListener(ChangeListener listener) {
+        changeListeners.add(listener);
+    }
 
     public abstract FieldType getFieldType();
     
     public abstract boolean isNull();
     
+    public boolean isSameType(FormField otherRecord) {
+        return getFieldType() == otherRecord.getFieldType();
+    }
+    
     public boolean isValid() {
-        if (optional) {
+        if (optional || (isOverride && !changed)) {
             return true;
         }
         else {
@@ -86,48 +191,59 @@ public abstract class FormField implements Serializable, Cloneable {
     protected abstract boolean valid();
     
     public FormField clone() {
-        FormField cloned = createInstance();
-        copyFields(cloned);
+        return clone(false);
+    }
+    
+    public FormField clone(boolean child) {
+        FormField cloned = createInstance(child);
+        copyFields(cloned, child);
         return cloned;
     }
 
-    protected abstract FormField createInstance();
+    protected abstract FormField createInstance(boolean child);
 
-    protected void copyFields (FormField cloned) {
+    protected void copyFields (FormField cloned, boolean child) {
         cloned.fieldName = fieldName;
         cloned.displayName = displayName;
+        cloned.displayHint = displayHint;
+        cloned.schema = schema;
         cloned.optional = optional;
+        cloned.fieldAccess = fieldAccess;
         cloned.weight = weight;
+        cloned.keyIndex = keyIndex;
+        cloned.isOverride = isOverride;
+        cloned.changed = changed;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + (changed ? 1231 : 1237);
         result = prime * result
                 + ((fieldName == null) ? 0 : fieldName.hashCode());
+        result = prime * result + rowIndex;
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         FormField other = (FormField) obj;
-        if (fieldName == null) {
-            if (other.fieldName != null) {
-                return false;
-            }
-        } else if (!fieldName.equals(other.fieldName)) {
+        if (changed != other.changed)
             return false;
-        }
+        if (fieldName == null) {
+            if (other.fieldName != null)
+                return false;
+        } else if (!fieldName.equals(other.fieldName))
+            return false;
+        if (rowIndex != other.rowIndex)
+            return false;
         return true;
     }
 
@@ -135,5 +251,10 @@ public abstract class FormField implements Serializable, Cloneable {
         return str == null || str.length() == 0;
     }
 
+    public static interface ChangeListener {
+        
+        void onChanged (boolean changed); 
+        
+    }
 
 }

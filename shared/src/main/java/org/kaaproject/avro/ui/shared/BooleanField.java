@@ -16,6 +16,8 @@
 
 package org.kaaproject.avro.ui.shared;
 
+import java.util.Map;
+
 public class BooleanField extends FormField {
 
     private static final long serialVersionUID = -7841564200726288319L;
@@ -30,8 +32,9 @@ public class BooleanField extends FormField {
 
     public BooleanField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
     
     public Boolean getDefaultValue() {
@@ -48,6 +51,7 @@ public class BooleanField extends FormField {
 
     public void setValue(Boolean value) {
         this.value = value;
+        fireChanged();
     }
 
     @Override
@@ -61,13 +65,13 @@ public class BooleanField extends FormField {
     }
 
     @Override
-    protected FormField createInstance() {
+    protected FormField createInstance(boolean child) {
         return new BooleanField();
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean child) {
+        super.copyFields(cloned, child);
         BooleanField clonedBoolenField = (BooleanField)cloned;
         clonedBoolenField.defaultValue = defaultValue;
         clonedBoolenField.value = value;

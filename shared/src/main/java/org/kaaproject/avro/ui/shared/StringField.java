@@ -16,10 +16,17 @@
 
 package org.kaaproject.avro.ui.shared;
 
+import java.util.Map;
+
 public class StringField extends SizedField {
 
     private static final long serialVersionUID = -5046250549233854347L;
     
+    public static enum InputType {
+        PLAIN,
+        PASSWORD
+    }
+
     private String defaultValue;
 
     private String value;
@@ -32,8 +39,9 @@ public class StringField extends SizedField {
     
     public StringField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
 
     public String getDefaultValue() {
@@ -50,6 +58,7 @@ public class StringField extends SizedField {
 
     public void setValue(String value) {
         this.value = value;
+        fireChanged();
     }
     
     public void setInputType(InputType inputType) {
@@ -71,13 +80,13 @@ public class StringField extends SizedField {
     }
     
     @Override
-    protected FormField createInstance() {
+    protected FormField createInstance(boolean child) {
         return new StringField();
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean child) {
+        super.copyFields(cloned, child);
         StringField clonedStringField = (StringField)cloned;
         clonedStringField.defaultValue = defaultValue;
         clonedStringField.value = value;

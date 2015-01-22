@@ -18,8 +18,9 @@ package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class EnumField extends FormField {
+public class EnumField extends FqnField {
 
     private static final long serialVersionUID = 149481447537169849L;
 
@@ -36,8 +37,9 @@ public class EnumField extends FormField {
     
     public EnumField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
     
     public FormEnum getDefaultValue() {
@@ -54,6 +56,7 @@ public class EnumField extends FormField {
 
     public void setValue(FormEnum value) {
         this.value = value;
+        fireChanged();
     }
 
     public List<FormEnum> getEnumValues() {
@@ -97,13 +100,13 @@ public class EnumField extends FormField {
     }
 
     @Override
-    protected FormField createInstance() {
+    protected FormField createInstance(boolean child) {
         return new EnumField();
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean child) {
+        super.copyFields(cloned, child);
         EnumField clonedEnumField = (EnumField)cloned;
         clonedEnumField.enumValues.addAll(enumValues);
         clonedEnumField.defaultValue = defaultValue;

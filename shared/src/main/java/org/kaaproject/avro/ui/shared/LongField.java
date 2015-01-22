@@ -16,6 +16,8 @@
 
 package org.kaaproject.avro.ui.shared;
 
+import java.util.Map;
+
 public class LongField extends SizedField {
 
     private static final long serialVersionUID = -5046250549233854347L;
@@ -29,9 +31,10 @@ public class LongField extends SizedField {
     }
     
     public LongField(String fieldName, 
-            String displayName, 
+            String displayName,
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
     
     public Long getDefaultValue() {
@@ -48,6 +51,7 @@ public class LongField extends SizedField {
 
     public void setValue(Long value) {
         this.value = value;
+        fireChanged();
     }
 
     @Override
@@ -61,13 +65,13 @@ public class LongField extends SizedField {
     }
 
     @Override
-    protected FormField createInstance() {
+    protected FormField createInstance(boolean child) {
         return new LongField();
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean child) {
+        super.copyFields(cloned, child);
         LongField clonedLongField = (LongField)cloned;
         clonedLongField.defaultValue = defaultValue;
         clonedLongField.value = value;

@@ -26,4 +26,8 @@ public interface AvroUiSandboxService extends RemoteService {
     
     public RecordField generateFormFromSchema(String avroSchema) throws AvroUiSandboxServiceException;
     
+    public String getJsonStringFromRecord(RecordField field) throws AvroUiSandboxServiceException;
+    
+    public RecordField generateFormDataFromJson(String avroSchema, String json) throws AvroUiSandboxServiceException;
+    
 }

@@ -19,22 +19,21 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData.EnumSymbol;
 import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericData.EnumSymbol;
 import org.apache.avro.generic.GenericRecord;
 import org.junit.Assert;
 import org.junit.Test;
-import org.kaaproject.avro.ui.converter.FormAvroConverter;
 import org.kaaproject.avro.ui.shared.ArrayField;
 import org.kaaproject.avro.ui.shared.BooleanField;
 import org.kaaproject.avro.ui.shared.EnumField;
 import org.kaaproject.avro.ui.shared.FormEnum;
 import org.kaaproject.avro.ui.shared.FormField;
-import org.kaaproject.avro.ui.shared.InputType;
 import org.kaaproject.avro.ui.shared.IntegerField;
 import org.kaaproject.avro.ui.shared.LongField;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.kaaproject.avro.ui.shared.StringField;
+import org.kaaproject.avro.ui.shared.StringField.InputType;
 import org.kaaproject.avro.ui.shared.UnionField;
 
 public class FormAvroConverterTest {
@@ -204,8 +203,12 @@ public class FormAvroConverterTest {
         Assert.assertNull(unionField.getValue());
         Assert.assertNotNull(unionField.getAcceptableValues());
         Assert.assertEquals(2, unionField.getAcceptableValues().size());
-        checkSingleFieldRecord(unionField.getAcceptableValues().get(0));
-        checkSingleFieldRecord(unionField.getAcceptableValues().get(1));
+        
+        Assert.assertTrue(unionField.getAcceptableValues().get(0) instanceof RecordField);
+        checkSingleFieldRecord((RecordField)unionField.getAcceptableValues().get(0));
+        
+        Assert.assertTrue(unionField.getAcceptableValues().get(1) instanceof RecordField);
+        checkSingleFieldRecord((RecordField)unionField.getAcceptableValues().get(1));
         
         RecordField unionValue = (RecordField) unionField.getAcceptableValues().get(1).clone();
         StringField stringField = (StringField) unionValue.getValue().get(0);
@@ -229,11 +232,21 @@ public class FormAvroConverterTest {
         Assert.assertEquals(field, convertedField);
     }
     
-    private void checkSingleFieldRecord(RecordField field) {
+    @Test
+    public void testOverrideSchema() throws IOException {
+        Schema schema = TestAvroSchemas.getOverrideSchema();
+        RecordField field = FormAvroConverter.createRecordFieldFromSchema(schema);
         Assert.assertNotNull(field);
         Assert.assertNotNull(field.getValue());
-        Assert.assertEquals(1, field.getValue().size());
-        FormField formField = field.getValue().get(0);
+    }
+    
+    private void checkSingleFieldRecord(FormField field) {
+        Assert.assertNotNull(field);
+        Assert.assertTrue(field instanceof RecordField);
+        RecordField recordField = (RecordField)field;
+        Assert.assertNotNull(recordField.getValue());
+        Assert.assertEquals(1, recordField.getValue().size());
+        FormField formField = recordField.getValue().get(0);
         Assert.assertNotNull(formField);
         Assert.assertTrue(formField instanceof StringField);
         Assert.assertEquals(1000, ((StringField)formField).getMaxLength());

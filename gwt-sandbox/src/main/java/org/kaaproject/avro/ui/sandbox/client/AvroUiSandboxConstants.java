@@ -49,7 +49,22 @@ public interface AvroUiSandboxConstants extends ConstantsWithLookup {
     
     @DefaultStringValue("Reset")
     String reset();
+    
+    @DefaultStringValue("Show record JSON")
+    String showRecordJson();
+    
+    @DefaultStringValue("Upload record from JSON")
+    String uploadRecordFromJson();
+    
+    @DefaultStringValue("Generated record JSON")
+    String generatedRecordJson();
 
+    @DefaultStringValue("Record JSON to upload")
+    String recordJsonToUpload();
+
+    @DefaultStringValue("Upload")
+    String upload();
+    
 }
 
 

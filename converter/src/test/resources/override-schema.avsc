@@ -1,0 +1,39 @@
+{
+  "type" : "record",
+  "name" : "DefaultSchema",
+  "namespace" : "org.kaa.config",
+  "fields" : [ {
+    "name" : "Properties",
+    "type" : [ {
+      "type" : "array",
+      "items" : {
+        "type" : "record",
+        "name" : "Property",
+        "namespace" : "config.system",
+        "fields" : [ {
+          "name" : "name",
+          "type" : [ "string", {
+            "type" : "enum",
+            "name" : "unchangedT",
+            "namespace" : "org.kaaproject.configuration",
+            "symbols" : [ "unchanged" ]
+          } ]
+        }, {
+          "name" : "value",
+          "type" : [ "string", "org.kaaproject.configuration.unchangedT" ]
+        }, {
+          "name" : "__uuid",
+          "type" : [ {
+            "type" : "fixed",
+            "name" : "uuidT",
+            "namespace" : "org.kaaproject.configuration",
+            "size" : 16
+          }, "null" ]
+        } ]
+      }
+    }, "org.kaaproject.configuration.unchangedT" ]
+  }, {
+    "name" : "__uuid",
+    "type" : [ "org.kaaproject.configuration.uuidT", "null" ]
+  } ]
+}

@@ -1,0 +1,32 @@
+<!--
+  Copyright 2014-2015 CyberVision, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+        xmlns:gwt="urn:import:com.google.gwt.user.client.ui">
+        
+        <ui:with field='avroUiResources' type='org.kaaproject.avro.ui.gwt.client.AvroUiResources'/>
+        <ui:with field='avroUiStyle' type='org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle'/>
+        
+        <gwt:FlowPanel ui:field="fieldSet" addStyleNames="{avroUiStyle.fieldSet}">
+            <gwt:Image ui:field="arrowImage" resource="{avroUiResources.arrowBottomImage}" addStyleNames="{avroUiStyle.legend} {avroUiStyle.legendImage}"/>                   
+            <gwt:CheckBox ui:field="legendBox" visible="false" addStyleNames="{avroUiStyle.legend} {avroUiStyle.legendCheckBox}"/> 
+            <gwt:Label ui:field="legendLabel" addStyleNames="{avroUiStyle.legend} {avroUiStyle.legendLabel}"/>     
+            <gwt:Label ui:field="legendNotesLabel" visible="false" addStyleNames="{avroUiStyle.legend} {avroUiStyle.legendLabel} {avroUiStyle.legendNotes}"/>     
+            <gwt:SimplePanel ui:field="legendPanel" addStyleNames="{avroUiStyle.legend} {avroUiStyle.legendPanel}" visible="false"/>             
+            <gwt:SimplePanel ui:field="contentPanel" width="100%" addStyleNames="{avroUiStyle.content}"/>
+        </gwt:FlowPanel>
+</ui:UiBinder>

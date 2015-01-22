@@ -18,14 +18,17 @@ package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class UnionField extends FormField {
 
     private static final long serialVersionUID = -7020719983305986557L;
 
-    private List<RecordField> acceptableValues;
+    private List<FormField> acceptableValues;
     
-    private RecordField value;
+    private FormField defaultValue;
+    
+    private FormField value;
     
     public UnionField() {
         super();
@@ -34,16 +37,25 @@ public class UnionField extends FormField {
     
     public UnionField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
         acceptableValues = new ArrayList<>();
     }
     
-    public RecordField getValue() {
+    public FormField getDefaultValue() {
+        return defaultValue;
+    }
+
+    public void setDefaultValue(FormField defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
+    public FormField getValue() {
         return value;
     }
 
-    public void setValue(RecordField value) {
+    public void setValue(FormField value) {
         if (value != null) {
             int index = -1;
             for (int i=0;i<acceptableValues.size();i++) {
@@ -55,6 +67,7 @@ public class UnionField extends FormField {
             if (index > -1) {
                 this.value = value;
                 this.acceptableValues.set(index, value);
+                fireChanged();
             }
             else {
                 throw new IllegalArgumentException("Value type not in list of union types!");
@@ -62,14 +75,15 @@ public class UnionField extends FormField {
         }
         else {
             this.value = null;
+            fireChanged();
         }
     }
     
-    public List<RecordField> getAcceptableValues() {
+    public List<FormField> getAcceptableValues() {
         return acceptableValues;
     }
     
-    public void setAcceptableValues(List<RecordField> acceptableValues) {
+    public void setAcceptableValues(List<FormField> acceptableValues) {
         this.acceptableValues = acceptableValues;
     }
 
@@ -89,18 +103,19 @@ public class UnionField extends FormField {
     }
 
     @Override
-    protected FormField createInstance() {
+    protected FormField createInstance(boolean child) {
         return new UnionField();
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean child) {
+        super.copyFields(cloned, child);
         UnionField clonedUnionField = (UnionField)cloned;
-        for (RecordField acceptableValue : acceptableValues) {
-            clonedUnionField.acceptableValues.add((RecordField) acceptableValue.clone());
+        for (FormField acceptableValue : acceptableValues) {
+            clonedUnionField.acceptableValues.add(acceptableValue.clone(child));
         }
-        clonedUnionField.setValue(value != null ? (RecordField) value.clone() : null);
+        clonedUnionField.defaultValue = defaultValue;
+        clonedUnionField.setValue(value != null ? value.clone(child) : null);
     }
 
     @Override

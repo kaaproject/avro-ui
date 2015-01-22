@@ -15,7 +15,22 @@
  */
 package org.kaaproject.avro.ui.sandbox.services;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
+
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.io.JsonDecoder;
+import org.apache.avro.io.JsonEncoder;
+import org.codehaus.jackson.JsonEncoding;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
 import org.kaaproject.avro.ui.converter.FormAvroConverter;
 import org.kaaproject.avro.ui.sandbox.services.util.Utils;
 import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxService;
@@ -31,6 +46,8 @@ public class AvroUiSandboxServiceImpl implements AvroUiSandboxService {
     /** The Constant LOG. */
     private static final Logger LOG = LoggerFactory.getLogger(AvroUiSandboxServiceImpl.class);
     
+    private static final Charset UTF8 = Charset.forName("UTF-8");
+    
     @Override
     public RecordField generateFormFromSchema(String avroSchema)
             throws AvroUiSandboxServiceException {
@@ -38,8 +55,41 @@ public class AvroUiSandboxServiceImpl implements AvroUiSandboxService {
             Schema schema = new Schema.Parser().parse(avroSchema);
             RecordField generatedForm = FormAvroConverter.createRecordFieldFromSchema(schema);
             return generatedForm;
+        } catch (Exception e) {
+            throw Utils.handleException(e);
         }
-        catch (Exception e) {
+    }
+
+    @Override
+    public String getJsonStringFromRecord(RecordField field)
+            throws AvroUiSandboxServiceException {
+        try {
+            GenericRecord record = FormAvroConverter.createGenericRecordFromRecordField(field);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            JsonGenerator jsonGenerator
+                = new JsonFactory().createJsonGenerator(baos, JsonEncoding.UTF8);
+            jsonGenerator.useDefaultPrettyPrinter();
+            JsonEncoder jsonEncoder = EncoderFactory.get().jsonEncoder(record.getSchema(), jsonGenerator);
+            DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<GenericRecord>(record.getSchema());
+            datumWriter.write(record, jsonEncoder);
+            jsonEncoder.flush();
+            baos.flush();            
+            return new String(baos.toByteArray(), UTF8);
+        } catch (Exception e) {
+            throw Utils.handleException(e);
+        }
+    }
+
+    @Override
+    public RecordField generateFormDataFromJson(String avroSchema, String json)
+            throws AvroUiSandboxServiceException {
+        try {
+            Schema schema = new Schema.Parser().parse(avroSchema);
+            JsonDecoder jsonDecoder = DecoderFactory.get().jsonDecoder(schema, json);
+            DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(schema);
+            GenericRecord genericRecord = datumReader.read(null, jsonDecoder);
+            return FormAvroConverter.createRecordFieldFromGenericRecord(genericRecord);
+        } catch (Exception e) {
             throw Utils.handleException(e);
         }
     }
