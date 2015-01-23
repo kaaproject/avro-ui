@@ -178,9 +178,10 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             });
             navElements = new ArrayList<>();
             Element element = getElement();
+            int height = 0;
             if (element.getParentElement() != null) {
                 Element parentElement = element.getParentElement();
-                int height = getInnerHeight(parentElement);
+                height = getInnerHeight(parentElement);
                 for (int i=0; i<parentElement.getChildNodes().getLength();i++) {
                     Node node = parentElement.getChildNodes().getItem(i);
                     if (Element.is(node)) {
@@ -190,8 +191,10 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                         }
                     }
                 }
+            }
+            if (height > 0) {
                 setHeight(height+"px");
-            } else { 
+            } else {
                 setHeight(getInnerHeight(element)+"px");
             }
         }
