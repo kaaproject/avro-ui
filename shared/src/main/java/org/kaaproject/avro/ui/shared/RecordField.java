@@ -41,14 +41,7 @@ public class RecordField extends FqnField {
     
     public RecordField(RecordField rootRecord) {
         super();
-        this.rootRecord = rootRecord;
-        if (rootRecord == null) {
-            recordsMetadata = new HashMap<>();
-            this.rootRecord = this;
-        } else {
-            this.rootRecord = rootRecord;
-        }
-        value = new ArrayList<>();
+        init(rootRecord);
     }
     
     public RecordField(RecordField rootRecord, 
@@ -57,13 +50,17 @@ public class RecordField extends FqnField {
             String schema,
             boolean optional) {
         super(fieldName, displayName, schema, optional);
+        init(rootRecord);
+    }
+    
+    private void init(RecordField rootRecord) {
         value = new ArrayList<>();
+        this.rootRecord = rootRecord;
         if (rootRecord == null) {
             recordsMetadata = new HashMap<>();
             this.rootRecord = this;
-        } else {
-            this.rootRecord = rootRecord;
-        }
+            isNull = false;
+        } 
     }
     
     public void putRecordMetadata(String fqn, RecordField field) {
@@ -116,9 +113,10 @@ public class RecordField extends FqnField {
 
     public void addField(FormField field) {
         value.add(field);
+        isNull = false;
     }
     
-    @Override
+	@Override
     public FieldType getFieldType() {
         return FieldType.RECORD;
     }
@@ -127,47 +125,67 @@ public class RecordField extends FqnField {
     public boolean isNull() {
         return isNull;
     }
+    
+    @Override
+    public void finalizeMetadata() {
+    	create();
+    }
+   
+    @Override
+	public void disableOverride() {
+		super.disableOverride();
+		for (FormField field : value) {
+			field.disableOverride();
+		}
+	}
 
-    @Override
-    protected FormField createInstance(boolean child) {
-//        if (child) {
-//            RecordField recordField = rootRecord.getRecordMetadata(getTypeFullname());
-//            recordField.isCloned = false;
-//            return recordField;
-//        } else {
-            return new RecordField(rootRecord);
-      //  }
+	@Override
+    protected FormField createInstance() {
+        return new RecordField(rootRecord);
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, true);
-        RecordField clonedRecordField = (RecordField)cloned;
-        if (!child) {            
-            for (FormField field : value) {
-                clonedRecordField.value.add(field.clone(true));
-            }
-            clonedRecordField.isNull = false;
-        } else {
-            clonedRecordField.isNull = true;
-        }
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
     }
     
-    public void setNotNull() {
+    public void create() {
         if (isNull) {
             RecordField recordField = rootRecord.getRecordMetadata(getTypeFullname());
             for (FormField field : recordField.getValue()) {
-                value.add(field.clone(true));
+                value.add(field.clone());
+            }
+            if (isOverrideDisabled()) {
+            	disableOverride();
             }
             isNull = false;
+            fireChanged();
+        }
+    }
+    
+    public void setNull() {
+    	value.clear();
+    	isNull = true;
+    	fireChanged();
+    }
+    
+    @Override
+    public boolean isValid() {
+        if (isOverride() && !isChanged()) {
+            return true;
+        } else if (isOptional()) {
+            if (!isNull) {
+                return valid();
+            } else {
+                return true;
+            }
+        } else {
+            return !isNull && valid();
         }
     }
 
     @Override
     protected boolean valid() {
-        if (isNull) {
-            return true;
-        }
         boolean valid = true;
         for (FormField field : value) {
             valid &= field.isValid();

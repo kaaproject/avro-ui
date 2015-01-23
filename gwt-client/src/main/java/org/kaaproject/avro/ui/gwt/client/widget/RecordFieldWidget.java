@@ -103,10 +103,12 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             if (type == FieldType.RECORD) {
                 return true;
             } else if (type == FieldType.ARRAY) {
+            	field.finalizeMetadata();
                 if (ArrayFieldWidget.isGridNeeded((ArrayField)field)) {
                     return true;
                 }
             } else if (type == FieldType.UNION) {
+            	field.finalizeMetadata();
                 for (FormField unionValue : ((UnionField)field).getAcceptableValues()) {
                     if (unionValue.getFieldType() == FieldType.UNION) {
                         return true;
@@ -218,11 +220,6 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
 
     @Override
     protected Widget constructForm() {
-        if (isRoot) {
-            if (value != null) {
-                value.setNotNull();
-            }
-        }
         constructFormData(table, value, registrations);
         if (isRoot && (forceNavigation || isNavigationNeeded(value))) {
             initNavigation();

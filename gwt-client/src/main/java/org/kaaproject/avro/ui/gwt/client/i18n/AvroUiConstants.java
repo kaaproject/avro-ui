@@ -4,10 +4,10 @@ import com.google.gwt.i18n.client.ConstantsWithLookup;
 
 public interface AvroUiConstants extends ConstantsWithLookup {
 
-    @DefaultStringValue("Add items")
+    @DefaultStringValue("add items")
     String appendStrategy();
 
-    @DefaultStringValue("Replace items")
+    @DefaultStringValue("replace items")
     String replaceStrategy();
     
     @DefaultStringValue("There is no data to display")
@@ -30,4 +30,11 @@ public interface AvroUiConstants extends ConstantsWithLookup {
 
     @DefaultStringValue("Back")
     String back();
+    
+    @DefaultStringValue("Create")
+    String create();
+    
+    @DefaultStringValue("Open")
+    String open();
+    
 }

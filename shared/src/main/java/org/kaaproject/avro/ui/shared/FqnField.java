@@ -1,8 +1,5 @@
 package org.kaaproject.avro.ui.shared;
 
-import java.util.Map;
-
-
 public abstract class FqnField extends FormField {
 
     private static final long serialVersionUID = 7473310438849667183L;
@@ -39,23 +36,13 @@ public abstract class FqnField extends FormField {
     }
 
     @Override
-    public boolean isSameType(FormField otherRecord) {
-        if (super.isSameType(otherRecord)) {
-            FqnField otherFqnField = (FqnField)otherRecord;
-            return typeNamespace.equals(otherFqnField.getTypeNamespace()) &&
-                    typeName.equals(otherFqnField.getTypeName());
-        } else {
-            return false;
-        }
-    }
-    
     public String getTypeFullname() {
         return typeNamespace + "." + typeName;
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         FqnField clonedFqnField = (FqnField)cloned;
         clonedFqnField.typeName = typeName;
         clonedFqnField.typeNamespace = typeNamespace;

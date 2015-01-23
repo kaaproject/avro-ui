@@ -16,7 +16,6 @@
 
 package org.kaaproject.avro.ui.shared;
 
-import java.util.Map;
 
 public class BooleanField extends FormField {
 
@@ -65,13 +64,13 @@ public class BooleanField extends FormField {
     }
 
     @Override
-    protected FormField createInstance(boolean child) {
+    protected FormField createInstance() {
         return new BooleanField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         BooleanField clonedBoolenField = (BooleanField)cloned;
         clonedBoolenField.defaultValue = defaultValue;
         clonedBoolenField.value = value;

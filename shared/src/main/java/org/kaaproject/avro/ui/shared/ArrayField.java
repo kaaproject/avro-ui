@@ -18,7 +18,6 @@ package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ArrayField extends FormField {
 
@@ -73,6 +72,12 @@ public class ArrayField extends FormField {
         }
     }
     
+    public FormField createRow() {
+    	FormField row = elementMetadata.clone();
+    	row.finalizeMetadata();
+    	return row;
+    }
+    
     public OverrideStrategy getOverrideStrategy() {
         return overrideStrategy;
     }
@@ -95,21 +100,34 @@ public class ArrayField extends FormField {
         data.setRowIndex(value.size());
         this.value.add(data);
     }
-
+    
     @Override
-    protected FormField createInstance(boolean child) {
+    public void finalizeMetadata() {
+    	if (elementMetadata != null) {
+    		elementMetadata.finalizeMetadata();
+    		elementMetadata.disableOverride();
+    	}
+    	for (FormField field : value) {
+    		field.finalizeMetadata();
+    		field.disableOverride();
+    	}
+    }
+    
+    @Override
+    protected FormField createInstance() {
         return new ArrayField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         ArrayField clonedArrayField = (ArrayField)cloned;
         clonedArrayField.minRowCount = minRowCount;
-        clonedArrayField.elementMetadata = elementMetadata.clone(child);
+        clonedArrayField.elementMetadata = elementMetadata.clone();
         for (FormField field : value) {
-            clonedArrayField.value.add(field.clone(child));
+            clonedArrayField.value.add(field.clone());
         }
+        clonedArrayField.overrideStrategy = overrideStrategy;
     }
     
     @Override

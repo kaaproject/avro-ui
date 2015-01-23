@@ -20,7 +20,7 @@ public enum FieldType {
 
     RECORD(true),
     STRING,
-    INTEGER,
+    INT,
     LONG,
     FLOAT,
     DOUBLE,
@@ -31,7 +31,8 @@ public enum FieldType {
     UNION(true),
     FIXED;
     
-    boolean isComplex;
+    private boolean isComplex;    
+    private String name;
     
     FieldType() {
         this(false);
@@ -39,9 +40,15 @@ public enum FieldType {
     
     FieldType(boolean isComplex) {
         this.isComplex = isComplex;
+        this.name = this.name().toLowerCase();
     }
     
     public boolean isComplex() {
         return isComplex;
     }
+    
+    public String getName() { 
+    	return name; 
+    }
+    
 }

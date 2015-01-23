@@ -32,7 +32,16 @@ public interface AvroUiMessages extends Messages {
     @DefaultMessage("Delete entry")
     String deleteSelectedEntryTitle();
     
+    @DefaultMessage("Are you sure you want to delete nested {0} which is value of field ''{1}''?")
+    String deleteNestedEntryQuestion(String nestedValueType, String fieldName);
+    
+    @DefaultMessage("Delete nested entry")
+    String deleteNestedEntryTitle();
+    
     @DefaultMessage("Add new {0}")
     String addNewEntry(String entryTitle);
+    
+    @DefaultMessage("Nested {0}")
+    String nestedEntry(String entryTitle);
 
 }

@@ -1,8 +1,6 @@
 package org.kaaproject.avro.ui.shared;
 
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.Map;
 
 public class BytesField extends FormField {
 
@@ -69,13 +67,13 @@ public class BytesField extends FormField {
     }
     
     @Override
-    protected FormField createInstance(boolean child) {
+    protected FormField createInstance() {
         return new BytesField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         BytesField clonedBytesField = (BytesField)cloned;
         clonedBytesField.defaultValue = defaultValue;
         clonedBytesField.value = value;

@@ -18,7 +18,6 @@ package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class UnionField extends FormField {
 
@@ -54,8 +53,12 @@ public class UnionField extends FormField {
     public FormField getValue() {
         return value;
     }
-
+    
     public void setValue(FormField value) {
+    	setValue(value, true);
+    }
+
+    public void setValue(FormField value, boolean fireChange) {
         if (value != null) {
             int index = -1;
             for (int i=0;i<acceptableValues.size();i++) {
@@ -67,7 +70,9 @@ public class UnionField extends FormField {
             if (index > -1) {
                 this.value = value;
                 this.acceptableValues.set(index, value);
-                fireChanged();
+                if (fireChange) {
+                	fireChanged();
+                }
             }
             else {
                 throw new IllegalArgumentException("Value type not in list of union types!");
@@ -75,7 +80,9 @@ public class UnionField extends FormField {
         }
         else {
             this.value = null;
-            fireChanged();
+            if (fireChange) {
+            	fireChanged();
+            }
         }
     }
     
@@ -103,19 +110,34 @@ public class UnionField extends FormField {
     }
 
     @Override
-    protected FormField createInstance(boolean child) {
+    public void finalizeMetadata() {
+    	for (FormField acceptableValue : acceptableValues) {
+    		acceptableValue.finalizeMetadata();
+    	}
+    }
+    
+    @Override
+	public void disableOverride() {
+    	super.disableOverride();
+    	for (FormField acceptableValue : acceptableValues) {
+    		acceptableValue.disableOverride();
+    	}
+    }
+
+    @Override
+    protected FormField createInstance() {
         return new UnionField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         UnionField clonedUnionField = (UnionField)cloned;
         for (FormField acceptableValue : acceptableValues) {
-            clonedUnionField.acceptableValues.add(acceptableValue.clone(child));
+            clonedUnionField.acceptableValues.add(acceptableValue.clone());
         }
         clonedUnionField.defaultValue = defaultValue;
-        clonedUnionField.setValue(value != null ? value.clone(child) : null);
+        clonedUnionField.setValue(value != null ? value.clone() : null, false);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package org.kaaproject.avro.ui.shared;
 
 import java.text.ParseException;
-import java.util.Map;
 
 public class FixedField extends FqnField {
     
@@ -73,7 +72,8 @@ public class FixedField extends FqnField {
     
     @Override
     public boolean isValid() {
-        if (isOptional() && isNull()) {
+        if ((isOptional() && isNull()) || 
+        		((isOverride() && !isChanged()))) {
             return true;
         } else {
             return valid();
@@ -91,13 +91,13 @@ public class FixedField extends FqnField {
     }
 
     @Override
-    protected FormField createInstance(boolean child) {
+    protected FormField createInstance() {
         return new FixedField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         FixedField clonedFixedField = (FixedField)cloned;
         clonedFixedField.defaultValue = defaultValue;
         clonedFixedField.value = value;

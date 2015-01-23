@@ -16,7 +16,6 @@
 
 package org.kaaproject.avro.ui.shared;
 
-import java.util.Map;
 
 public class IntegerField extends SizedField {
 
@@ -56,7 +55,7 @@ public class IntegerField extends SizedField {
 
     @Override
     public FieldType getFieldType() {
-        return FieldType.INTEGER;
+        return FieldType.INT;
     }
     
     @Override
@@ -65,13 +64,13 @@ public class IntegerField extends SizedField {
     }
 
     @Override
-    protected FormField createInstance(boolean child) {
+    protected FormField createInstance() {
         return new IntegerField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         IntegerField clonedIntegerField = (IntegerField)cloned;
         clonedIntegerField.defaultValue = defaultValue;
         clonedIntegerField.value = value;

@@ -117,7 +117,7 @@ public class FormAvroConverter {
      * @throws IOException 
      */
     public static RecordField createRecordFieldFromSchema(Schema schema) throws IOException {
-        FormField formField = createFieldFromSchema(null, schema, false);
+        FormField formField = createFieldFromSchema(null, schema);
         if (formField instanceof RecordField) {
             return (RecordField)formField;
         } else {
@@ -132,7 +132,7 @@ public class FormAvroConverter {
      * @return the form field
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private static FormField createFieldFromSchema(RecordField rootRecord, Schema schema, boolean ignoreOverride) throws IOException {
+    private static FormField createFieldFromSchema(RecordField rootRecord, Schema schema) throws IOException {
         FormField formField = null;
         String fieldName = schema.getName();
         String displayName = fieldName;
@@ -141,7 +141,7 @@ public class FormAvroConverter {
             displayName = displayNameVal.asText();
         }
         boolean optional = isNullTypeSchema(schema);
-        boolean isOverride = isOverrideTypeSchema(schema) && !ignoreOverride;
+        boolean isOverride = isOverrideTypeSchema(schema);
         
         FieldType fieldType = toFieldType(schema);
         Schema fieldTypeSchema = getFieldTypeSchema(schema);
@@ -152,31 +152,37 @@ public class FormAvroConverter {
             List<Schema> acceptableTypes = fieldTypeSchema.getTypes();
             for (int i=0;i<acceptableTypes.size();i++) {
                 if (!isOverrideType(acceptableTypes.get(i)) && acceptableTypes.get(i).getType() != Schema.Type.NULL) {
-                    FormField acceptableValue = createFieldFromSchema(rootRecord, acceptableTypes.get(i), ignoreOverride);
+                    FormField acceptableValue = createFieldFromSchema(rootRecord, acceptableTypes.get(i));
                     acceptableValues.add(acceptableValue);
                 }
             }
             unionField.setAcceptableValues(acceptableValues);
             formField = unionField;
         } else if (fieldType == FieldType.RECORD) {
-            RecordField recordField;
+            RecordField recordField= null;
             if (rootRecord == null || !rootRecord.containsRecordMetadata(fieldTypeSchema.getFullName())) {
                 RecordField newRecordField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
                 newRecordField.setTypeName(fieldTypeSchema.getName());
                 newRecordField.setTypeNamespace(fieldTypeSchema.getNamespace());
                 if (rootRecord == null) {
                     rootRecord = newRecordField;
+                    recordField = rootRecord;
                 }
                 if (!rootRecord.containsRecordMetadata(fieldTypeSchema.getFullName())) {
                     rootRecord.putRecordMetadata(fieldTypeSchema.getFullName(), newRecordField);
                 }
-                parseFields(rootRecord, newRecordField, fieldTypeSchema, ignoreOverride);
+                parseFields(rootRecord, newRecordField, fieldTypeSchema);
             }
-            recordField = (RecordField)rootRecord.getRecordMetadata(fieldTypeSchema.getFullName()).clone(true);
+            if (recordField == null) {
+	            recordField = (RecordField)rootRecord.getRecordMetadata(fieldTypeSchema.getFullName()).clone();
+	            recordField.setFieldName(fieldName);
+	            recordField.setDisplayName(displayName);
+	            recordField.setOptional(optional);
+            }
             formField = recordField;
         } else if (fieldType == FieldType.ARRAY) {
             ArrayField arrayField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-            FormField elementMetadata = createFieldFromSchema(rootRecord, fieldTypeSchema.getElementType(), true);
+            FormField elementMetadata = createFieldFromSchema(rootRecord, fieldTypeSchema.getElementType());
             arrayField.setElementMetadata(elementMetadata);
             formField = arrayField;
         } else {
@@ -221,12 +227,12 @@ public class FormAvroConverter {
      * @param schema the schema
      * @throws IOException 
      */
-    private static void parseFields(RecordField rootRecord, RecordField formData, Schema schema, boolean ignoreOverride) throws IOException {
+    private static void parseFields(RecordField rootRecord, RecordField formData, Schema schema) throws IOException {
         List<Field> schemaFields = schema.getFields();
         for (Field field : schemaFields) {
 
             FieldType fieldType = toFieldType(field.schema());
-            FormField formField = createFieldFromSchema(rootRecord, field.schema(), ignoreOverride);
+            FormField formField = createFieldFromSchema(rootRecord, field.schema());
             
             String fieldName = field.name();
             String displayName = fieldName;
@@ -332,7 +338,7 @@ public class FormAvroConverter {
                             InputType inputType = InputType.valueOf(inputTypeNode.asText().toUpperCase());
                             ((StringField)sizedField).setInputType(inputType);
                         }
-                    } else if (fieldType == FieldType.INTEGER) {
+                    } else if (fieldType == FieldType.INT) {
                         Integer defaultValue = convertJsonValue(fieldType, defaultValueVal);
                         ((IntegerField)sizedField).setDefaultValue(defaultValue);
                         if (!formField.isOverride()) {
@@ -409,7 +415,7 @@ public class FormAvroConverter {
         case ENUM:
             field = (T) new EnumField(fieldName, displayName, schema, optional);
             break;
-        case INTEGER:
+        case INT:
             field = (T) new IntegerField(fieldName, displayName, schema, optional);
             break;
         case LONG:
@@ -458,7 +464,7 @@ public class FormAvroConverter {
         case BOOLEAN:
             value = (T) new Boolean(jsonValue.asBoolean());
             break;
-        case INTEGER:
+        case INT:
             value = (T) new Integer(jsonValue.asInt());
             break;
         case LONG:
@@ -481,7 +487,7 @@ public class FormAvroConverter {
             } else if (jsonValue.isArray()) {
                 byte[] data = new byte[jsonValue.size()];
                 for (int i=0;i<jsonValue.size();i++) {
-                    int val = convertJsonValue(FieldType.INTEGER, jsonValue.get(i));
+                    int val = convertJsonValue(FieldType.INT, jsonValue.get(i));
                     data[i] = (byte) val;
                 }
                 return (T) Base64Utils.toBase64(data);
@@ -505,7 +511,7 @@ public class FormAvroConverter {
                 ((BooleanField)field).setValue(value);
             }
             break;
-        case INTEGER:
+        case INT:
             {
                 Integer value = convertJsonValue(fieldType, jsonValue);
                 ((IntegerField)field).setValue(value);
@@ -591,7 +597,7 @@ public class FormAvroConverter {
         switch (type) {
         case BOOLEAN:
             return jsonValue.isBoolean();
-        case INTEGER:
+        case INT:
             return jsonValue.isInt();
         case LONG:
             return jsonValue.isLong() || jsonValue.isBigDecimal();
@@ -623,7 +629,7 @@ public class FormAvroConverter {
             case STRING:
                 return FieldType.STRING;
             case INT:
-                return FieldType.INTEGER;
+                return FieldType.INT;
             case LONG:
                 return FieldType.LONG;
             case FLOAT:
@@ -751,6 +757,9 @@ public class FormAvroConverter {
      * @throws IOException 
      */
     private static void fillRecordFieldFromGenericRecord(RecordField rootRecord, RecordField recordField, GenericRecord record) throws IOException {
+    	if (recordField != rootRecord) {
+    		recordField.finalizeMetadata();
+    	}
         for (FormField field : recordField.getValue()) {
             Object value = record.get(field.getFieldName());
             setFormFieldValue(rootRecord, field, value);
@@ -774,15 +783,20 @@ public class FormAvroConverter {
             }
             switch(field.getFieldType()) {
             case RECORD:
-                GenericRecord record = (GenericRecord)value;
-                fillRecordFieldFromGenericRecord(rootRecord, (RecordField)field, record);
+            	RecordField recordField = (RecordField)field;
+            	if (value != null) {
+            		GenericRecord record = (GenericRecord)value;
+            		fillRecordFieldFromGenericRecord(rootRecord, recordField, record);
+            	} else {
+            		recordField.setNull();
+            	}
                 break;
             case UNION:
                 UnionField unionField = (UnionField)field;
                 if (value != null) {
                     Schema unionSchema = new Schema.Parser().parse(unionField.getSchema());
                     Schema valueSchema = unionSchema.getTypes().get(GenericData.get().resolveUnion(unionSchema, value));
-                    FormField unionValue = createFieldFromSchema(rootRecord, valueSchema, false);
+                    FormField unionValue = createFieldFromSchema(rootRecord, valueSchema);
                     setFormFieldValue(rootRecord, unionValue, value);
                     unionField.setValue(unionValue);
                 } else {
@@ -805,7 +819,7 @@ public class FormAvroConverter {
                     bytesField.setValue(null);
                 }
                 break;            
-            case INTEGER:
+            case INT:
                 ((IntegerField)field).setValue((Integer)value);
                 break;
             case LONG:
@@ -842,9 +856,10 @@ public class FormAvroConverter {
             case ARRAY:
                 ArrayField arrayField = (ArrayField)field;
                 arrayField.getValue().clear();
+                arrayField.finalizeMetadata();
                 GenericData.Array<Object> genericArrayData = (GenericData.Array<Object>)value;
                 for (Object arrayValue : genericArrayData) {
-                    FormField fieldValue = arrayField.getElementMetadata().clone();
+                    FormField fieldValue = arrayField.createRow();
                     setFormFieldValue(rootRecord, fieldValue, arrayValue);
                     ((ArrayField)field).addArrayData(fieldValue);
                 }
@@ -915,8 +930,7 @@ public class FormAvroConverter {
             List<FormField> arrayData = ((ArrayField)formField).getValue();
             GenericData.Array<Object> genericArrayData = new GenericData.Array<>(arrayData.size(), fieldSchema);
             for (FormField arrayField : arrayData) {
-                Schema schema = new Schema.Parser().parse(arrayField.getSchema());
-                Object data =  convertValue(arrayField, schema);
+                Object data =  convertValue(arrayField, fieldSchema.getElementType());
                 genericArrayData.add(data);
             }
             return genericArrayData;
@@ -924,21 +938,20 @@ public class FormAvroConverter {
             if (formField.isNull()) {
                 if (hasType(fieldSchema, Schema.Type.NULL)) {
                     return null;
-                }
-                else {
+                } else {
                     throw new UnsupportedOperationException("Avro field doesn't support null values!");
                 }
-            }
-            else {
-                FormField recordValue;
-                if (formField.getFieldType() == FieldType.RECORD) {
-                    recordValue = formField;
-                } else {
+            } else {
+                FormField value;
+                if (formField.getFieldType() == FieldType.UNION) {
                     UnionField unionField = (UnionField)formField;
-                    recordValue = unionField.getValue();
+                    value = unionField.getValue();
+                } else {
+                	value = formField;
                 }
-                Schema schema = new Schema.Parser().parse(recordValue.getSchema());
-                return convertValue(recordValue, schema);
+                int index = fieldSchema.getIndexNamed(value.getTypeFullname());
+                Schema schema = fieldSchema.getTypes().get(index);
+                return convertValue(value, schema);
             }
         default:
             throw new UnsupportedOperationException("Unsupported avro field type: " + fieldSchema.getType());

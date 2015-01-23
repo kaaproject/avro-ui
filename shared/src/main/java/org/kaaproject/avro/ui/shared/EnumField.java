@@ -18,7 +18,6 @@ package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class EnumField extends FqnField {
 
@@ -100,13 +99,13 @@ public class EnumField extends FqnField {
     }
 
     @Override
-    protected FormField createInstance(boolean child) {
+    protected FormField createInstance() {
         return new EnumField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         EnumField clonedEnumField = (EnumField)cloned;
         clonedEnumField.enumValues.addAll(enumValues);
         clonedEnumField.defaultValue = defaultValue;

@@ -16,7 +16,6 @@
 
 package org.kaaproject.avro.ui.shared;
 
-import java.util.Map;
 
 public class StringField extends SizedField {
 
@@ -80,13 +79,13 @@ public class StringField extends SizedField {
     }
     
     @Override
-    protected FormField createInstance(boolean child) {
+    protected FormField createInstance() {
         return new StringField();
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         StringField clonedStringField = (StringField)cloned;
         clonedStringField.defaultValue = defaultValue;
         clonedStringField.value = value;

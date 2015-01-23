@@ -18,9 +18,7 @@ package org.kaaproject.avro.ui.shared;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public abstract class FormField implements Serializable, Cloneable {
 
@@ -43,6 +41,8 @@ public abstract class FormField implements Serializable, Cloneable {
     private int rowIndex = -1;
     
     private boolean isOverride = false;
+    private boolean isOverrideDisabled = false;
+    
     private boolean changed = false;
     
     private transient List<ChangeListener> changeListeners = new ArrayList<>();
@@ -143,6 +143,10 @@ public abstract class FormField implements Serializable, Cloneable {
     public void setOverride(boolean isOverride) {
         this.isOverride = isOverride;
     }
+    
+    public boolean isOverrideDisabled() {
+    	return isOverrideDisabled;
+    }
 
     public boolean isChanged() {
         return changed;
@@ -170,39 +174,45 @@ public abstract class FormField implements Serializable, Cloneable {
     public void addChangeListener(ChangeListener listener) {
         changeListeners.add(listener);
     }
-
+    
+    public String getTypeFullname() {
+    	return getFieldType().getName();
+    }
+    
     public abstract FieldType getFieldType();
     
     public abstract boolean isNull();
     
     public boolean isSameType(FormField otherRecord) {
-        return getFieldType() == otherRecord.getFieldType();
+        return getTypeFullname().equals(otherRecord.getTypeFullname());
     }
     
     public boolean isValid() {
         if (optional || (isOverride && !changed)) {
             return true;
-        }
-        else {
+        } else {
             return valid();
         }
     }
     
     protected abstract boolean valid();
     
-    public FormField clone() {
-        return clone(false);
-    }
+    public void finalizeMetadata() {}
     
-    public FormField clone(boolean child) {
-        FormField cloned = createInstance(child);
-        copyFields(cloned, child);
+    public void disableOverride() {
+    	isOverride = false;
+    	isOverrideDisabled = true;
+    }
+
+    public FormField clone() {
+        FormField cloned = createInstance();
+        copyFields(cloned);
         return cloned;
     }
 
-    protected abstract FormField createInstance(boolean child);
+    protected abstract FormField createInstance();
 
-    protected void copyFields (FormField cloned, boolean child) {
+    protected void copyFields (FormField cloned) {
         cloned.fieldName = fieldName;
         cloned.displayName = displayName;
         cloned.displayHint = displayHint;
@@ -212,6 +222,7 @@ public abstract class FormField implements Serializable, Cloneable {
         cloned.weight = weight;
         cloned.keyIndex = keyIndex;
         cloned.isOverride = isOverride;
+        cloned.isOverrideDisabled = isOverrideDisabled;
         cloned.changed = changed;
     }
 

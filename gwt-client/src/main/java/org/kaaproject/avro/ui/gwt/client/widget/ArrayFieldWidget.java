@@ -88,6 +88,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         }
         fieldWidgetPanel.setWidth("600px");
         
+        value.finalizeMetadata();
+        
         if (isGridNeeded(value)) {
             fieldWidgetPanel.setContent(constructGrid());
         } else {
@@ -150,7 +152,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             addRow.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    FormField newField = value.getElementMetadata().clone();
+                    FormField newField = value.createRow();
                     navigationContainer.addNewField(newField, new NavigationActionListener() {
                         @Override
                         public void onChanged(FormField field) {}
@@ -247,7 +249,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             addRow.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    FormField newField = elementMetadata.clone();
+                    FormField newField = value.createRow();
                     value.addArrayData(newField);
                     List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
                     setRow(table, newField, value.getValue().size() - 1 + startRow, rowHandlerRegistrations);

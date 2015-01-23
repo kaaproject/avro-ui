@@ -78,6 +78,8 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
         formValuesBox.setEnabled(!isReadOnly);
         fieldWidgetPanel.setLegendWidget(formValuesBox);
         
+        value.finalizeMetadata();
+        
         if (!isReadOnly) {
             registrations.add(formValuesBox.addValueChangeHandler(this));
             if (!value.isOptional()) {

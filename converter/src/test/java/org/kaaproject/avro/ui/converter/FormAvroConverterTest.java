@@ -149,6 +149,7 @@ public class FormAvroConverterTest {
         Assert.assertNotNull(formField);
         Assert.assertTrue(formField instanceof ArrayField);
         ArrayField arrayField = (ArrayField)formField;
+        arrayField.finalizeMetadata();
         Assert.assertNotNull(arrayField.getValue());
         Assert.assertEquals(1, arrayField.getMinRowCount());
         Assert.assertEquals(1, arrayField.getValue().size());
@@ -156,7 +157,7 @@ public class FormAvroConverterTest {
         Assert.assertNotNull(arrayField.getElementMetadata());
         checkSingleFieldRecord(arrayField.getElementMetadata());
         
-        RecordField newRow = (RecordField) arrayField.getElementMetadata().clone();
+        RecordField newRow = (RecordField) arrayField.createRow();
         StringField stringField = (StringField) newRow.getValue().get(0);
         stringField.setValue("cell value");
         arrayField.addArrayData(newRow);
@@ -200,6 +201,7 @@ public class FormAvroConverterTest {
         Assert.assertNotNull(formField);
         Assert.assertTrue(formField instanceof UnionField);
         UnionField unionField = (UnionField)formField;
+        unionField.finalizeMetadata();
         Assert.assertNull(unionField.getValue());
         Assert.assertNotNull(unionField.getAcceptableValues());
         Assert.assertEquals(2, unionField.getAcceptableValues().size());
@@ -211,6 +213,7 @@ public class FormAvroConverterTest {
         checkSingleFieldRecord((RecordField)unionField.getAcceptableValues().get(1));
         
         RecordField unionValue = (RecordField) unionField.getAcceptableValues().get(1).clone();
+        unionValue.finalizeMetadata();
         StringField stringField = (StringField) unionValue.getValue().get(0);
         stringField.setValue("field value of union record");
         unionField.setValue(unionValue);
@@ -238,6 +241,13 @@ public class FormAvroConverterTest {
         RecordField field = FormAvroConverter.createRecordFieldFromSchema(schema);
         Assert.assertNotNull(field);
         Assert.assertNotNull(field.getValue());
+        Assert.assertEquals(2, field.getValue().size());
+        FormField formField = field.getValue().get(0);
+        Assert.assertNotNull(formField);
+        Assert.assertTrue(formField instanceof ArrayField);
+        ArrayField arrayField = (ArrayField)formField;
+        Assert.assertTrue(arrayField.isOverride());
+        Assert.assertFalse(arrayField.isChanged());
     }
     
     private void checkSingleFieldRecord(FormField field) {

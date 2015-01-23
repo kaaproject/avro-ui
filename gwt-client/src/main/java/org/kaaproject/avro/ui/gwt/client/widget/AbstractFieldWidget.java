@@ -25,6 +25,8 @@ import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
+import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog;
+import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog.ConfirmListener;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationActionListener;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
 import org.kaaproject.avro.ui.shared.ArrayField;
@@ -188,7 +190,6 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         if (field != null && field.getFieldAccess() != FieldAccess.HIDDEN) {
             int row = 0;
             if (field.getFieldType()==FieldType.RECORD) {
-                ((RecordField)field).setNotNull();
                 for (FormField formField : ((RecordField)field).getValue()) {
                     row = constructField(table, row, formField, handlerRegistrations);
                     row++;
@@ -278,7 +279,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             } else {
                 String text = extractStringValue(field);
                 HTML textLabel = new HTML("&nbsp;");
-                textLabel.setHeight("100%");
+                textLabel.setHeight(FULL_WIDTH);
                 textLabel.setStyleName(style.secondaryLabel());
                 if (!isBlank(text)) {
                     textLabel.setText(text);
@@ -296,7 +297,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                 case FIXED:
                     widget = constructFixedWidget((FixedField)field, handlerRegistrations);
                     break;            
-                case INTEGER:
+                case INT:
                     widget = constructIntegerWidget((IntegerField)field, handlerRegistrations);
                     break;
                 case FLOAT:
@@ -318,8 +319,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                     widget = constructArrayWidget((ArrayField)field, handlerRegistrations);
                     break;
                 case RECORD:
-                    widget = constructRecordWidget((RecordField)field, handlerRegistrations);
-                    break;
+                	throw new RuntimeException("Can't create record widget inside table.");
                 case UNION:
                     widget = constructUnionWidget((UnionField)field, handlerRegistrations);
                     break;
@@ -337,7 +337,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             return ((BytesField)field).getValue();
         case FIXED:
             return ((FixedField)field).getValue();
-        case INTEGER:
+        case INT:
             Integer intVal = ((IntegerField)field).getValue();
             return intVal != null ? String.valueOf(intVal) : null;
         case FLOAT:
@@ -508,20 +508,6 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         return arrayWidget;
     }
     
-    private Widget constructRecordWidget(final RecordField field, List<HandlerRegistration> handlerRegistrations) {
-        RecordFieldWidget recordWidget = new RecordFieldWidget(style, navigationContainer, readOnly);
-        recordWidget.setValue((RecordField)field);
-        if (!readOnly && !field.isReadOnly()) {
-            recordWidget.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
-                @Override
-                public void onValueChange(ValueChangeEvent<RecordField> event) {
-                    fireChanged();
-                }
-            });
-        }
-        return recordWidget;
-    }
-    
     private Widget constructUnionWidget(final UnionField field, List<HandlerRegistration> handlerRegistrations) {
         UnionFieldWidget unionWidget = new UnionFieldWidget(style, navigationContainer, readOnly);
         unionWidget.setValue(field);
@@ -539,23 +525,29 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     private Widget constructNestedWidgetButton(final FormField field, List<HandlerRegistration> handlerRegistrations) {
         HorizontalPanel nestedWidget = new HorizontalPanel();
         nestedWidget.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-        String fieldTypeName = "";
-        if (field.getFieldType() == FieldType.RECORD) {
-            fieldTypeName = "record";
-        } else if (field.getFieldType() == FieldType.UNION) {
-            fieldTypeName = "union";
-        }
-        Label label = new Label("Nested " + fieldTypeName);
+        final String fieldTypeName = field.getFieldType().getName();
+        Label label = new Label(Utils.messages.nestedEntry(fieldTypeName));
         label.setStyleName(style.fieldNotes());
         label.getElement().getStyle().setPaddingRight(10, Unit.PX);
-        Button button = new Button("Open");
-        button.addStyleName(style.buttonSmall());
-        if ((readOnly || field.isReadOnly()) && field.isOverride() && !field.isChanged()) {
-            button.setEnabled(false);
-        } else {
-            button.addClickHandler(new ClickHandler() {
+        final boolean createRecord = field.getFieldType() == FieldType.RECORD && field.isNull();
+        final Button openButton = new Button(createRecord ? Utils.constants.create() : Utils.constants.open());
+        openButton.addStyleName(style.buttonSmall());
+        final Button deleteButon = new Button(Utils.constants.delete());
+        deleteButon.addStyleName(style.buttonSmall());        
+        deleteButon.getElement().getStyle().setMarginLeft(10, Unit.PX);
+        boolean disabled = (readOnly || field.isReadOnly()) && field.isOverride() && !field.isChanged();
+        deleteButon.setVisible(field.getFieldType() == FieldType.RECORD && !field.isNull() && !disabled);
+        openButton.setEnabled(!disabled);
+        if (!disabled) {
+            openButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
+                	if (createRecord) {
+                		((RecordField)field).create();
+                		openButton.setText(Utils.constants.open());
+                		deleteButon.setVisible(true);
+                		fireChanged();
+                	}
                     navigationContainer.showField(field, new NavigationActionListener() {
                         @Override
                         public void onChanged(FormField field) {
@@ -566,9 +558,32 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                     });
                 }
             });
+          	deleteButon.addClickHandler(new ClickHandler() {
+ 				@Override
+ 				public void onClick(ClickEvent event) {
+ 			        ConfirmListener listener = new ConfirmListener() {
+ 			            @Override
+ 			            public void onNo() {
+ 			            }
+
+ 			            @Override
+ 			            public void onYes() {
+ 			                ((RecordField)field).setNull();
+ 			                openButton.setText(Utils.constants.create());
+ 			                deleteButon.setVisible(false);
+ 			                fireChanged();
+ 			            }
+ 			        };
+ 			        ConfirmDialog dialog = new ConfirmDialog(listener, Utils.messages.deleteNestedEntryTitle(), 
+ 			        		Utils.messages.deleteNestedEntryQuestion(fieldTypeName, field.getDisplayName()));
+ 			        dialog.center();
+ 			        dialog.show();
+ 				}
+ 			});
         }
         nestedWidget.add(label);
-        nestedWidget.add(button);
+        nestedWidget.add(openButton);
+        nestedWidget.add(deleteButon);
         return nestedWidget;
     }
     
@@ -583,7 +598,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             if (field.isOverride()) {
                 overrideBox = new CheckBox();
                 overrideBox.getElement().getStyle().setPosition(Position.ABSOLUTE);
-                label.getElement().getStyle().setLeft(25, Unit.PX);
+                label.getElement().getStyle().setLeft(28, Unit.PX);
                 overrideBox.setValue(field.isChanged());
                 overrideBox.setEnabled(!readOnly && !field.isReadOnly());
                 add(overrideBox);

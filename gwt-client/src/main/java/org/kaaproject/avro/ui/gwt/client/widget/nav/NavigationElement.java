@@ -55,7 +55,6 @@ public class NavigationElement {
         switch (field.getFieldType()) {
         case RECORD:
             RecordFieldWidget recordFieldWidget = new RecordFieldWidget(style, container, readOnly);
-            ((RecordField)field).setNotNull();
             recordFieldWidget.setValue((RecordField)field);
             if (!readOnly) {
                 recordFieldWidget.addValueChangeHandler(new ValueChangeHandler<RecordField>() {

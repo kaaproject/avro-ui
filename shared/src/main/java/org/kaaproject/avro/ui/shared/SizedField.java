@@ -16,7 +16,6 @@
 
 package org.kaaproject.avro.ui.shared;
 
-import java.util.Map;
 
 public abstract class SizedField extends FormField {
 
@@ -51,8 +50,8 @@ public abstract class SizedField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned, boolean child) {
-        super.copyFields(cloned, child);
+    protected void copyFields(FormField cloned) {
+        super.copyFields(cloned);
         SizedField clonedSizedField = (SizedField)cloned;
         clonedSizedField.maxLength = maxLength;
     }
