@@ -38,8 +38,10 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -148,6 +150,36 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         FlexTable schemaFormTable = new FlexTable();
         schemaFormTable.setWidth(FULL_WIDTH);
         
+        int row = 0;
+        
+        HorizontalPanel toolbarPanel = new HorizontalPanel();
+        
+        CheckBox readOnlyCheckBox = new CheckBox("Read only");
+        readOnlyCheckBox.setWidth(FULL_WIDTH);
+        readOnlyCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                schemaForm.setReadOnly(event.getValue());
+            }
+        });
+        
+        toolbarPanel.add(readOnlyCheckBox);
+        Button showDisplayStringButton = new Button("View display string");
+        showDisplayStringButton.getElement().getStyle().setMarginLeft(10, Unit.PX);
+        showDisplayStringButton.addStyleName("b-app-button-small");
+        showDisplayStringButton.addClickHandler(new ClickHandler() {
+            
+            @Override
+            public void onClick(ClickEvent event) {
+                RecordField field = schemaForm.getValue();
+                String displayString = field != null ? field.getDisplayString() : "null";
+                Window.alert("Display string:\n" + displayString);
+            }
+        });
+        toolbarPanel.add(showDisplayStringButton);
+        
+        schemaFormTable.setWidget(row++, 0, toolbarPanel);
+        
         schemaForm = new RecordFieldWidget();
         schemaForm.setWidth(FULL_WIDTH);
         
@@ -163,7 +195,7 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         schemaFormPanel.setWidth(FULL_WIDTH);
         schemaFormPanel.getElement().getStyle().setPropertyPx("minHeight", 300);
         
-        schemaFormTable.setWidget(0, 0, schemaFormPanel);
+        schemaFormTable.setWidget(row++, 0, schemaFormPanel);
         
         showRecordJsonButton = new Button(Utils.constants.showRecordJson());
         showRecordJsonButton.setEnabled(false);
@@ -177,9 +209,9 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         buttonsPanel.add(showRecordJsonButton);
         buttonsPanel.add(uploadRecordFromJsonButton);
         
-        schemaFormTable.setWidget(1, 0, buttonsPanel);
+        schemaFormTable.setWidget(row++, 0, buttonsPanel);
         
-        schemaFormTable.getFlexCellFormatter().setHorizontalAlignment(1, 0, HasHorizontalAlignment.ALIGN_LEFT);
+        schemaFormTable.getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
         buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(15, Unit.PX);
 
         recordJsonArea = new SizedTextArea(-1);
@@ -196,7 +228,7 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         jsonRecordPanel = new CaptionPanel(Utils.constants.generatedRecordJson());
         jsonRecordPanel.add(recordJsonArea);
         
-        schemaFormTable.setWidget(2, 0, jsonRecordPanel);
+        schemaFormTable.setWidget(row++, 0, jsonRecordPanel);
         jsonRecordPanel.setVisible(false);
         
         uploadButton = new Button(Utils.constants.upload());
@@ -208,8 +240,8 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
         buttonsPanel.add(uploadButton);
         
-        schemaFormTable.setWidget(3, 0, buttonsPanel);
-        schemaFormTable.getFlexCellFormatter().setHorizontalAlignment(3, 0, HasHorizontalAlignment.ALIGN_LEFT);
+        schemaFormTable.setWidget(row++, 0, buttonsPanel);
+        schemaFormTable.getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
         
         detailsTable.setWidget(0, 1, schemaFormTable);
         detailsTable.getFlexCellFormatter().setRowSpan(0, 1, 2);

@@ -61,8 +61,8 @@ public class FormAvroConverter {
     /** The Constant DISPLAY_NAME. */
     private static final String DISPLAY_NAME = "displayName";
     
-    /** The Constant DISPLAY_HINT. */
-    private static final String DISPLAY_HINT = "displayHint";
+    /** The Constant DISPLAY_PROMPT. */
+    private static final String DISPLAY_PROMPT = "displayPrompt";
     
     /** The Constant BY_DEFAULT. */
     private static final String BY_DEFAULT = "by_default";
@@ -244,9 +244,9 @@ public class FormAvroConverter {
             formField.setFieldName(fieldName);
             formField.setDisplayName(displayName);
 
-            JsonNode displayHintVal = field.getJsonProp(DISPLAY_HINT);
-            if (displayHintVal != null && displayHintVal.isTextual()) {
-                formField.setDisplayHint(displayHintVal.asText());
+            JsonNode displayPromptVal = field.getJsonProp(DISPLAY_PROMPT);
+            if (displayPromptVal != null && displayPromptVal.isTextual()) {
+                formField.setDisplayPrompt(displayPromptVal.asText());
             }
             
             JsonNode defaultValueVal = field.getJsonProp(BY_DEFAULT);
@@ -268,7 +268,7 @@ public class FormAvroConverter {
                 }
                 FormField metadata = arrayField.getElementMetadata();
                 if (!metadata.getFieldType().isComplex()) {
-                    metadata.setDisplayHint(arrayField.getDisplayHint());
+                    metadata.setDisplayPrompt(arrayField.getDisplayPrompt());
                 }                
                 for (int i=0; i<arrayField.getMinRowCount();i++) {
                     arrayField.addArrayData(arrayField.getElementMetadata().clone());

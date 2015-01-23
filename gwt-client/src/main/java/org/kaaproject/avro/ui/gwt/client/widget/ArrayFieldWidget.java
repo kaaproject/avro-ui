@@ -35,6 +35,7 @@ import org.kaaproject.avro.ui.shared.FieldType;
 import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
 import org.kaaproject.avro.ui.shared.RecordField;
+import org.kaaproject.avro.ui.shared.UnionField;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -56,7 +57,11 @@ import com.google.gwt.view.client.HasData;
 
 public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
 
-    private ArrayGrid recordGrid;
+    private static final String ARRAY_PANEL_WIDTH = "600px";
+    private static final String GRID_HEIGHT = "180px";
+    private static final String TABLE_SCROLL_HEIGHT = "200px";
+    
+    private ArrayGrid arrayGrid;
 
     public ArrayFieldWidget(NavigationContainer container, boolean readOnly) {
         super(container, readOnly);
@@ -86,7 +91,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                     .getOverrideStrategy().name().toLowerCase()
                     + "Strategy"));
         }
-        fieldWidgetPanel.setWidth("600px");
+        fieldWidgetPanel.setWidth(ARRAY_PANEL_WIDTH);
         
         value.finalizeMetadata();
         
@@ -129,8 +134,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     @Override
     public void onShown() {
         super.onShown();
-        if (recordGrid != null) {
-            recordGrid.reload();
+        if (arrayGrid != null) {
+            arrayGrid.reload();
         }
     }
 
@@ -138,10 +143,10 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         VerticalPanel verticalPanel = new VerticalPanel();
         verticalPanel.setWidth(FULL_WIDTH);
 
-        recordGrid = new ArrayGrid(value, !readOnly && !value.isReadOnly());
-        recordGrid.setHeight("180px");
+        arrayGrid = new ArrayGrid(value, !readOnly && !value.isReadOnly());
+        arrayGrid.setHeight(GRID_HEIGHT);
         
-        verticalPanel.add(recordGrid);
+        verticalPanel.add(arrayGrid);
         
         HorizontalPanel buttonsPanel = new HorizontalPanel();
         buttonsPanel.addStyleName(style.buttonsPanel());
@@ -159,7 +164,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                         
                         @Override
                         public void onAdded(FormField field) {
-                            recordGrid.getDataProvider().addRow(field);
+                            arrayGrid.getDataProvider().addRow(field);
                         }
                     });
                 }
@@ -167,15 +172,15 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             buttonsPanel.add(addRow);
         }
         
-        recordGrid.addRowActionHandler(new RowActionEventHandler<Integer>() {
+        arrayGrid.addRowActionHandler(new RowActionEventHandler<Integer>() {
             @Override
             public void onRowAction(RowActionEvent<Integer> event) {
                 final int index = event.getClickedId();
                 if (event.getAction() == RowAction.CLICK) {
-                    FormField field = recordGrid.getDataProvider().getData().get(index);
+                    FormField field = arrayGrid.getDataProvider().getData().get(index);
                     navigationContainer.showField(field, null);
                 } else if (event.getAction() == RowAction.DELETE) {
-                    recordGrid.getDataProvider().removeRow(index);
+                    arrayGrid.getDataProvider().removeRow(index);
                     fireChanged();
                 }
             }
@@ -233,7 +238,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         }
 
         scroll.setWidth(FULL_WIDTH);
-        scroll.setHeight("200px");
+        scroll.setHeight(TABLE_SCROLL_HEIGHT);
         scroll.add(table);
 
         verticalPanel.setWidth(FULL_WIDTH);
@@ -306,6 +311,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     }
     
     private static class ArrayGrid extends AbstractGrid<FormField, Integer> {
+        
+        private static final int MAX_CELL_STRING_LENGTH = 100;
 
         private List<FormField> metadata;
         private ArrayDataProvider dataProvider;
@@ -374,7 +381,11 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                                 int index = fieldNameIndexMap.get(metaField.getFieldName());
                                 field = ((RecordField)item).getValue().get(index);
                             }
-                            return extractStringValue(field);
+                            String value = extractStringValue(field);
+                            if (value.length() > MAX_CELL_STRING_LENGTH) {
+                                value = value.substring(0, MAX_CELL_STRING_LENGTH-3) + "...";
+                            }
+                            return value;
                         }
                     }, width);
                 } else {
@@ -388,9 +399,19 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                                 field = ((RecordField)item).getValue().get(index);
                             }
                             int index = getObjectId(item);
-                            String value = field.getDisplayName() + " # " + index;
-                            if (field.getFieldType() == FieldType.ARRAY) {
-                                value += " (" + ((ArrayField)field).getValue().size() + " rows)";
+                            String value = "#" + index; 
+                            if (field.getFieldType() == FieldType.UNION) {
+                                FormField unionVal = ((UnionField)field).getValue();
+                                if (unionVal == null) {
+                                    value += " null";
+                                } else {
+                                    value += " " + unionVal.getDisplayString();
+                                }
+                            } else {
+                                value += " " + field.getDisplayString();
+                            }
+                            if (value.length() > MAX_CELL_STRING_LENGTH) {
+                                value = value.substring(0, MAX_CELL_STRING_LENGTH-3) + "...";
                             }
                             return value;
                         }

@@ -52,7 +52,7 @@ public interface MainView extends IsWidget {
     HasValue<String> getRecordJson();
     
     void showUploadJson();
-
+    
     void reset();
     
     void setPresenter(Presenter presenter);

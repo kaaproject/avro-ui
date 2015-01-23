@@ -85,6 +85,11 @@ public class ArrayField extends FormField {
     public void setOverrideStrategy(OverrideStrategy overrideStrategy) {
         this.overrideStrategy = overrideStrategy;
     }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + elementMetadata.getDisplayName() +" (" + value.size() + " rows)";
+    }
 
     @Override
     public FieldType getFieldType() {

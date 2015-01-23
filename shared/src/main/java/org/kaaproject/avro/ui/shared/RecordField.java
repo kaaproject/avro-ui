@@ -116,6 +116,29 @@ public class RecordField extends FqnField {
         isNull = false;
     }
     
+    @Override
+    public String getDisplayString() {
+        String str = super.getDisplayString();
+        if (isNull) {
+            str += " null";
+        } else {
+            str += " { ";
+            List<FormField> fields = getKeyIndexedFields();
+            if (fields.isEmpty()) {
+                fields = value;
+            }
+            for (int i=0;i<fields.size();i++) {
+                FormField field = fields.get(i);
+                if (i>0) {
+                    str += ", ";
+                }
+                str += field.getDisplayString();
+            }
+            str += " }";
+        }
+        return str;
+    }
+    
 	@Override
     public FieldType getFieldType() {
         return FieldType.RECORD;

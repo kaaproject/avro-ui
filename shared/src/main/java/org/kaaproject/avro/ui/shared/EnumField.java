@@ -89,6 +89,11 @@ public class EnumField extends FqnField {
     }
     
     @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + valueToDisplayString(value);
+    }
+    
+    @Override
     public FieldType getFieldType() {
         return FieldType.ENUM;
     }

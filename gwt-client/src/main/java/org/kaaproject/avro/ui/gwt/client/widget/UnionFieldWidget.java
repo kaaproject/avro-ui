@@ -21,28 +21,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
-import org.kaaproject.avro.ui.gwt.client.util.Utils;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
 import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.OptionElement;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.ValueListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ProvidesKey;
 
 public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements ValueChangeHandler<FormField> {
 
+    private static final String UNION_PANEL_WIDTH = "650px";
+    
     private List<HandlerRegistration> recordTableRegistrations = new ArrayList<HandlerRegistration>();
     private FieldWidgetPanel fieldWidgetPanel;
     private FlexTable recordTable;
@@ -69,12 +64,12 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
         }
         
         recordTable = new FlexTable();
-        fieldWidgetPanel.setWidth("650px");
+        fieldWidgetPanel.setWidth(UNION_PANEL_WIDTH);
         fieldWidgetPanel.setContent(recordTable);
 
         boolean isReadOnly = readOnly || value.isReadOnly();
         
-        final FormValuesListBox formValuesBox = new FormValuesListBox(style, isReadOnly ? null : value.getDisplayHint());
+        final FormValuesListBox formValuesBox = new FormValuesListBox(style, isReadOnly ? null : value.getDisplayPrompt());
         formValuesBox.setEnabled(!isReadOnly);
         fieldWidgetPanel.setLegendWidget(formValuesBox);
         

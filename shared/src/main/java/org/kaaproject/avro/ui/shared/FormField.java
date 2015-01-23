@@ -32,7 +32,7 @@ public abstract class FormField implements Serializable, Cloneable {
     
     private String fieldName;
     private String displayName;
-    private String displayHint;
+    private String displayPrompt;
     private String schema;
     private boolean optional;
     private FieldAccess fieldAccess = FieldAccess.EDITABLE;
@@ -76,12 +76,12 @@ public abstract class FormField implements Serializable, Cloneable {
         this.displayName = displayName;
     }
     
-    public String getDisplayHint() {
-        return displayHint;
+    public String getDisplayPrompt() {
+        return displayPrompt;
     }
 
-    public void setDisplayHint(String displayHint) {
-        this.displayHint = displayHint;
+    public void setDisplayPrompt(String displayPrompt) {
+        this.displayPrompt = displayPrompt;
     }
 
     public String getSchema() {
@@ -179,6 +179,15 @@ public abstract class FormField implements Serializable, Cloneable {
     	return getFieldType().getName();
     }
     
+    public String getDisplayString() {
+        String str = "\"" + getDisplayName();
+        if (isOverride) {
+            str += " (" + (changed ? "changed" : "unchanged") + ")";
+        } 
+        str += "\"" + ":";
+        return str;
+    }
+    
     public abstract FieldType getFieldType();
     
     public abstract boolean isNull();
@@ -215,7 +224,7 @@ public abstract class FormField implements Serializable, Cloneable {
     protected void copyFields (FormField cloned) {
         cloned.fieldName = fieldName;
         cloned.displayName = displayName;
-        cloned.displayHint = displayHint;
+        cloned.displayPrompt = displayPrompt;
         cloned.schema = schema;
         cloned.optional = optional;
         cloned.fieldAccess = fieldAccess;
@@ -260,6 +269,23 @@ public abstract class FormField implements Serializable, Cloneable {
 
     protected static boolean strIsEmpty(String str) {
         return str == null || str.length() == 0;
+    }
+    
+    protected static String valueToDisplayString(Object value) {
+        String str = "";
+        if (value == null) {
+            str = "null";
+        } else {
+            if (value instanceof FormField) {
+                str = ((FormField)value).getDisplayString();
+            } else {
+                str = value.toString();
+            }
+            if (value instanceof CharSequence || value instanceof FormEnum) {
+                str = "\"" + str + "\"";
+            }
+        }
+        return str;
     }
 
     public static interface ChangeListener {

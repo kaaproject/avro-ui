@@ -39,6 +39,8 @@ public class Breadcrumbs extends UnorderedList {
     private String divider = "/";
     
     private static class Divider extends ComplexPanel implements HasWidgets {
+        
+        @SuppressWarnings("deprecation")
         public Divider(String divider) {
             setElement(DOM.createElement("span"));
             setStyleName(Utils.avroUiStyle.divider());

@@ -47,6 +47,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implements NavigationContainer {
 
+    private static final int NAVIGATION_HEADER_HEIGHT = 60; 
+    private static final int FRAGMENT_SWITCH_ANIMATION_DURATION = 500;
+    private static final String RECORD_PANEL_WIDTH = "700px";
+    
     private ResizePanel resizePanel;
     private LayoutPanel rootPanel;
     private Breadcrumbs breadcrumbs;
@@ -84,6 +88,15 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     
     public void setForceNavigation(boolean force) {
         this.forceNavigation = force;
+    }
+    
+    public void setReadOnly(boolean readOnly) {
+        if (this.readOnly != readOnly) {
+            this.readOnly = readOnly;
+            RecordField currentValue = value;
+            setValue(null);
+            setValue(currentValue);
+        }
     }
     
     public static boolean isNavigationNeeded(RecordField recordField) {
@@ -146,14 +159,14 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             rootPanel = new LayoutPanel();
             breadcrumbs = new Breadcrumbs();
             fragmentPanel = new FragmentLayoutPanel();
-            fragmentPanel.setAnimationDuration(500);
+            fragmentPanel.setAnimationDuration(FRAGMENT_SWITCH_ANIMATION_DURATION);
             rootPanel.add(breadcrumbs);
             rootPanel.setWidgetLeftRight(breadcrumbs, 0, Unit.PX, 0, Unit.PX);
-            rootPanel.setWidgetTopHeight(breadcrumbs, 0, Unit.PX, 60, Unit.PX);
+            rootPanel.setWidgetTopHeight(breadcrumbs, 0, Unit.PX, NAVIGATION_HEADER_HEIGHT, Unit.PX);
             rootPanel.setWidgetVerticalPosition(breadcrumbs, Alignment.END);
             rootPanel.add(fragmentPanel);
             rootPanel.setWidgetLeftRight(fragmentPanel, 0, Unit.PX, 0, Unit.PX);
-            rootPanel.setWidgetTopBottom(fragmentPanel, 60, Unit.PX, 0, Unit.PX);    
+            rootPanel.setWidgetTopBottom(fragmentPanel, NAVIGATION_HEADER_HEIGHT, Unit.PX, 0, Unit.PX);    
             rootPanel.setWidgetVerticalPosition(fragmentPanel, Alignment.STRETCH);
             resizePanel.add(rootPanel);
             resizePanel.setWidth(FULL_WIDTH);
@@ -240,7 +253,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             }
             if (value != null && value.isOverride()) {
                 FieldWidgetPanel fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
-                fieldWidgetPanel.setWidth("700px");
+                fieldWidgetPanel.setWidth(RECORD_PANEL_WIDTH);
                 if (value.isOverride() && !readOnly && !value.isReadOnly()) {
                     fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
                         @Override

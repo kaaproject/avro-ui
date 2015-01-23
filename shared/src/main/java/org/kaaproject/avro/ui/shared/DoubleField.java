@@ -52,6 +52,11 @@ public class DoubleField extends SizedField {
         this.value = value;
         fireChanged();
     }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + valueToDisplayString(value);
+    }
 
     @Override
     public FieldType getFieldType() {

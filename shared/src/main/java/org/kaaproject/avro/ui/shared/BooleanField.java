@@ -52,6 +52,11 @@ public class BooleanField extends FormField {
         this.value = value;
         fireChanged();
     }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + valueToDisplayString(value);
+    }
 
     @Override
     public FieldType getFieldType() {

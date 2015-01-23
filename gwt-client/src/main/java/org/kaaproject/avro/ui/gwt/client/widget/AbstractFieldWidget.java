@@ -73,6 +73,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 public abstract class AbstractFieldWidget<T extends FormField> extends SimplePanel implements HasValue<T> {
     
+    protected static final String FIELDS_COLUMN_WIDTH = "300px";
+    protected static final String LABELS_COLUMN_WIDTH = "200px";
     private static final String DEFAULT_INTEGER_FORMAT = "#";
     private static final String DEFAULT_DECIMAL_FORMAT = "#.#############################";
     protected static final String FULL_WIDTH = "100%";
@@ -185,8 +187,8 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
 
     protected void constructFormData(FlexTable table, FormField field, List<HandlerRegistration> handlerRegistrations) {
         table.removeAllRows();
-        table.getColumnFormatter().setWidth(0, "200px");
-        table.getColumnFormatter().setWidth(1, "300px");
+        table.getColumnFormatter().setWidth(0, LABELS_COLUMN_WIDTH);
+        table.getColumnFormatter().setWidth(1, FIELDS_COLUMN_WIDTH);
         if (field != null && field.getFieldAccess() != FieldAccess.HIDDEN) {
             int row = 0;
             if (field.getFieldType()==FieldType.RECORD) {
@@ -360,7 +362,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     private Widget constructStringWidget(final StringField field,
             List<HandlerRegistration> handlerRegistrations) {
         final SizedTextBox textBox = new SizedTextBox(style,
-                field.getInputType(), field.getDisplayHint(), field.getMaxLength(), true,
+                field.getInputType(), field.getDisplayPrompt(), field.getMaxLength(), true,
                 field.getMaxLength() != SizedField.DEFAULT_MAX_LENGTH);
         textBox.setValue(field.getValue());
         handlerRegistrations.add(textBox.addInputHandler(new InputEventHandler() {
@@ -376,7 +378,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     private Widget constructBytesWidget(final BytesField field,
             List<HandlerRegistration> handlerRegistrations) {
         final SizedTextBox textBox = new SizedTextBox(style,
-                InputType.PLAIN, field.getDisplayHint(), SizedField.DEFAULT_MAX_LENGTH, true,
+                InputType.PLAIN, field.getDisplayPrompt(), SizedField.DEFAULT_MAX_LENGTH, true,
                 false);
         textBox.setValue(field.getValue());
         handlerRegistrations.add(textBox.addInputHandler(new InputEventHandler() {
@@ -393,7 +395,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     private Widget constructFixedWidget(final FixedField field,
             List<HandlerRegistration> handlerRegistrations) {
         final SizedTextBox textBox = new SizedTextBox(style,
-                InputType.PLAIN, field.getDisplayHint(), field.getStringMaxSize(), true,
+                InputType.PLAIN, field.getDisplayPrompt(), field.getStringMaxSize(), true,
                 false);       
         textBox.setValue(field.getValue());        
         handlerRegistrations.add(textBox.addInputHandler(new InputEventHandler() {
@@ -408,7 +410,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
     
     private Widget constructIntegerWidget(final IntegerField field, List<HandlerRegistration> handlerRegistrations) {
-        final IntegerBox integerBox = new IntegerBox(style, field.getDisplayHint(), DEFAULT_INTEGER_FORMAT);
+        final IntegerBox integerBox = new IntegerBox(style, field.getDisplayPrompt(), DEFAULT_INTEGER_FORMAT);
         integerBox.setValue(field.getValue());
         handlerRegistrations.add(integerBox.addKeyUpHandler(new KeyUpHandler() {
             @Override
@@ -421,7 +423,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
 
     private Widget constructLongWidget(final LongField field, List<HandlerRegistration> handlerRegistrations) {
-        final LongBox longBox = new LongBox(style, field.getDisplayHint(), DEFAULT_INTEGER_FORMAT);
+        final LongBox longBox = new LongBox(style, field.getDisplayPrompt(), DEFAULT_INTEGER_FORMAT);
         longBox.setValue(field.getValue());
         handlerRegistrations.add(longBox.addKeyUpHandler(new KeyUpHandler() {
             @Override
@@ -434,7 +436,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
     
     private Widget constructFloatWidget(final FloatField field, List<HandlerRegistration> handlerRegistrations) {
-        final FloatBox floatBox = new FloatBox(style, field.getDisplayHint(), DEFAULT_DECIMAL_FORMAT);
+        final FloatBox floatBox = new FloatBox(style, field.getDisplayPrompt(), DEFAULT_DECIMAL_FORMAT);
         floatBox.setValue(field.getValue());
         handlerRegistrations.add(floatBox.addKeyUpHandler(new KeyUpHandler() {
             @Override
@@ -447,7 +449,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
     
     private Widget constructDoubleWidget(final DoubleField field, List<HandlerRegistration> handlerRegistrations) {
-        final DoubleBox doubleBox = new DoubleBox(style, field.getDisplayHint(), DEFAULT_DECIMAL_FORMAT);
+        final DoubleBox doubleBox = new DoubleBox(style, field.getDisplayPrompt(), DEFAULT_DECIMAL_FORMAT);
         doubleBox.setValue(field.getValue());
         handlerRegistrations.add(doubleBox.addKeyUpHandler(new KeyUpHandler() {
             @Override
@@ -460,7 +462,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
     
     private Widget constructEnumWidget(final EnumField field, List<HandlerRegistration> handlerRegistrations) {
-        FormEnumListBox enumBox = new FormEnumListBox(style, field.getDisplayHint());
+        FormEnumListBox enumBox = new FormEnumListBox(style, field.getDisplayPrompt());
         if (!field.isOptional() && !field.isOverride()) {
             enumBox.setValue(field.getValue());
         }        
@@ -527,27 +529,35 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         nestedWidget.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
         final String fieldTypeName = field.getFieldType().getName();
         Label label = new Label(Utils.messages.nestedEntry(fieldTypeName));
+        Label emptyLabel = new Label(Utils.constants.empty());
         label.setStyleName(style.fieldNotes());
         label.getElement().getStyle().setPaddingRight(10, Unit.PX);
-        final boolean createRecord = field.getFieldType() == FieldType.RECORD && field.isNull();
-        final Button openButton = new Button(createRecord ? Utils.constants.create() : Utils.constants.open());
+        final boolean isEmptyRecord = field.getFieldType() == FieldType.RECORD && field.isNull();
+        final Button openButton = new Button(isEmptyRecord ? Utils.constants.create() : Utils.constants.open());
         openButton.addStyleName(style.buttonSmall());
         final Button deleteButon = new Button(Utils.constants.delete());
         deleteButon.addStyleName(style.buttonSmall());        
         deleteButon.getElement().getStyle().setMarginLeft(10, Unit.PX);
-        boolean disabled = (readOnly || field.isReadOnly()) && field.isOverride() && !field.isChanged();
-        deleteButon.setVisible(field.getFieldType() == FieldType.RECORD && !field.isNull() && !disabled);
-        openButton.setEnabled(!disabled);
-        if (!disabled) {
+        
+        boolean isReadOnly = readOnly || field.isReadOnly();
+        boolean showEmptyLabel = isReadOnly && field.isNull();
+        
+        if (showEmptyLabel) {
+            openButton.setVisible(false);
+            deleteButon.setVisible(false);
+            emptyLabel.setVisible(true);
+        } else {
+            openButton.setVisible(true);
+            emptyLabel.setVisible(false);
             openButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                	if (createRecord) {
-                		((RecordField)field).create();
-                		openButton.setText(Utils.constants.open());
-                		deleteButon.setVisible(true);
-                		fireChanged();
-                	}
+                    if (isEmptyRecord) {
+                        ((RecordField)field).create();
+                        openButton.setText(Utils.constants.open());
+                        deleteButon.setVisible(true);
+                        fireChanged();
+                    }
                     navigationContainer.showField(field, new NavigationActionListener() {
                         @Override
                         public void onChanged(FormField field) {
@@ -557,31 +567,40 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                         public void onAdded(FormField field) {}
                     });
                 }
-            });
-          	deleteButon.addClickHandler(new ClickHandler() {
- 				@Override
- 				public void onClick(ClickEvent event) {
- 			        ConfirmListener listener = new ConfirmListener() {
- 			            @Override
- 			            public void onNo() {
- 			            }
+            });            
+            
+            if (field.getFieldType() == FieldType.RECORD &&  
+                    !field.isNull() && !isReadOnly) {
+                deleteButon.setVisible(true);
+                deleteButon.addClickHandler(new ClickHandler() {
+                    @Override
+                    public void onClick(ClickEvent event) {
+                        ConfirmListener listener = new ConfirmListener() {
+                            @Override
+                            public void onNo() {
+                            }
 
- 			            @Override
- 			            public void onYes() {
- 			                ((RecordField)field).setNull();
- 			                openButton.setText(Utils.constants.create());
- 			                deleteButon.setVisible(false);
- 			                fireChanged();
- 			            }
- 			        };
- 			        ConfirmDialog dialog = new ConfirmDialog(listener, Utils.messages.deleteNestedEntryTitle(), 
- 			        		Utils.messages.deleteNestedEntryQuestion(fieldTypeName, field.getDisplayName()));
- 			        dialog.center();
- 			        dialog.show();
- 				}
- 			});
+                            @Override
+                            public void onYes() {
+                                ((RecordField)field).setNull();
+                                openButton.setText(Utils.constants.create());
+                                deleteButon.setVisible(false);
+                                fireChanged();
+                            }
+                        };
+                        ConfirmDialog dialog = new ConfirmDialog(listener, Utils.messages.deleteNestedEntryTitle(), 
+                                Utils.messages.deleteNestedEntryQuestion(fieldTypeName, field.getDisplayName()));
+                        dialog.center();
+                        dialog.show();
+                    }
+                });
+            } else {
+                deleteButon.setVisible(false);
+            }            
         }
+ 
         nestedWidget.add(label);
+        nestedWidget.add(emptyLabel);
         nestedWidget.add(openButton);
         nestedWidget.add(deleteButon);
         return nestedWidget;

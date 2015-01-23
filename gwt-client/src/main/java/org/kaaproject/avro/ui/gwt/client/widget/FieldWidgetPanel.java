@@ -46,7 +46,7 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
     interface FieldWidgetPanelUiBinder extends UiBinder<Widget, FieldWidgetPanel> { }
     private static FieldWidgetPanelUiBinder uiBinder = GWT.create(FieldWidgetPanelUiBinder.class);
     
-    private static final int ANIMATION_DURATION = 350;
+    private static final int OPEN_ANIMATION_DURATION = 350;
     
     private static ContentAnimation contentAnimation;
     
@@ -224,7 +224,7 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
         if (animate) {
           curPanel = panel;
           opening = panel.isOpen;
-          run(ANIMATION_DURATION);
+          run(OPEN_ANIMATION_DURATION);
         } else {
           panel.updateStyles();
           panel.contentPanel.setVisible(panel.isOpen);

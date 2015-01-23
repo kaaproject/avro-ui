@@ -23,10 +23,12 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class UnorderedList extends ComplexPanel implements HasWidgets {
     
+    @SuppressWarnings("deprecation")
     public UnorderedList() {
         setElement(DOM.createElement("ul"));
     }
     
+    @SuppressWarnings("deprecation")
     @Override
     public void add(Widget w) {
         add(w, getElement());

@@ -93,6 +93,11 @@ public class UnionField extends FormField {
     public void setAcceptableValues(List<FormField> acceptableValues) {
         this.acceptableValues = acceptableValues;
     }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " { " + valueToDisplayString(value) +" }";
+    }
 
     @Override
     public FieldType getFieldType() {

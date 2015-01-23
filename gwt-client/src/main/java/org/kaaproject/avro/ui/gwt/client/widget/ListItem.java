@@ -23,10 +23,12 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ListItem extends ComplexPanel implements HasWidgets {
     
+    @SuppressWarnings("deprecation")
     public ListItem() {
         setElement(DOM.createElement("li"));
     }
     
+    @SuppressWarnings("deprecation")
     @Override
     public void add(Widget w) {
         add(w, getElement());

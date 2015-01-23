@@ -69,6 +69,11 @@ public class StringField extends SizedField {
     }
 
     @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " \"" + valueToDisplayString(value) + "\"";
+    }
+
+    @Override
     public FieldType getFieldType() {
         return FieldType.STRING;
     }
