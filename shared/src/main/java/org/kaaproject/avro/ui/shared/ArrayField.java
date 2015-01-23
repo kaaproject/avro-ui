@@ -23,11 +23,18 @@ public class ArrayField extends FormField {
 
     private static final long serialVersionUID = -1859402253654290694L;
     
-    private RecordField elementMetadata;
+    public static enum OverrideStrategy {
+        APPEND,
+        REPLACE
+    }
     
-    private List<RecordField> value;
+    private FormField elementMetadata;
+    
+    private List<FormField> value;
     
     private int minRowCount = 0;
+    
+    private OverrideStrategy overrideStrategy;
 
     public ArrayField() {
         super();
@@ -36,20 +43,21 @@ public class ArrayField extends FormField {
     
     public ArrayField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
         value = new ArrayList<>();
     }
     
-    public RecordField getElementMetadata() {
+    public FormField getElementMetadata() {
         return elementMetadata;
     }
 
-    public void setElementMetadata(RecordField elementMetadata) {
+    public void setElementMetadata(FormField elementMetadata) {
         this.elementMetadata = elementMetadata;
     }
 
-    public List<RecordField> getValue() {
+    public List<FormField> getValue() {
         return value;
     }
     
@@ -63,6 +71,25 @@ public class ArrayField extends FormField {
         	setOptional(true);
         }
     }
+    
+    public FormField createRow() {
+    	FormField row = elementMetadata.clone();
+    	row.finalizeMetadata();
+    	return row;
+    }
+    
+    public OverrideStrategy getOverrideStrategy() {
+        return overrideStrategy;
+    }
+
+    public void setOverrideStrategy(OverrideStrategy overrideStrategy) {
+        this.overrideStrategy = overrideStrategy;
+    }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + elementMetadata.getDisplayName() +" (" + value.size() + " rows)";
+    }
 
     @Override
     public FieldType getFieldType() {
@@ -74,10 +101,23 @@ public class ArrayField extends FormField {
         return false;
     }
     
-    public void addArrayData(RecordField data) {
+    public void addArrayData(FormField data) {
+        data.setRowIndex(value.size());
         this.value.add(data);
     }
-
+    
+    @Override
+    public void finalizeMetadata() {
+    	if (elementMetadata != null) {
+    		elementMetadata.finalizeMetadata();
+    		elementMetadata.disableOverride();
+    	}
+    	for (FormField field : value) {
+    		field.finalizeMetadata();
+    		field.disableOverride();
+    	}
+    }
+    
     @Override
     protected FormField createInstance() {
         return new ArrayField();
@@ -88,9 +128,25 @@ public class ArrayField extends FormField {
         super.copyFields(cloned);
         ArrayField clonedArrayField = (ArrayField)cloned;
         clonedArrayField.minRowCount = minRowCount;
-        clonedArrayField.elementMetadata = (RecordField)elementMetadata.clone();
-        for (RecordField field : value) {
-            clonedArrayField.value.add((RecordField)field.clone());
+        clonedArrayField.elementMetadata = elementMetadata.clone();
+        for (FormField field : value) {
+            clonedArrayField.value.add(field.clone());
+        }
+        clonedArrayField.overrideStrategy = overrideStrategy;
+    }
+    
+    @Override
+    public boolean isValid() {
+        if (isOverride() && !isChanged()) {
+            return true;
+        } else if (isOptional()) {
+            if (value.size() > 0) {
+                return valid();
+            } else {
+                return true;
+            }
+        } else {
+            return valid();
         }
     }
 
@@ -98,7 +154,7 @@ public class ArrayField extends FormField {
     protected boolean valid() {
         if (value.size() > 0 && value.size() >= minRowCount) {
             boolean valid = true;
-            for (RecordField field : value) {
+            for (FormField field : value) {
                 valid &= field.isValid();
             }
             return valid;

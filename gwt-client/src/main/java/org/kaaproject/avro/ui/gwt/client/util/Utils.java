@@ -16,15 +16,26 @@
 
 package org.kaaproject.avro.ui.gwt.client.util;
 
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources;
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
+import org.kaaproject.avro.ui.gwt.client.i18n.AvroUiConstants;
 import org.kaaproject.avro.ui.gwt.client.i18n.AvroUiMessages;
 
 import com.google.gwt.core.client.GWT;
 
 public class Utils {
     
+    public static final AvroUiResources resources = GWT
+            .create(AvroUiResources.class);
+    
     public static final AvroUiMessages messages = GWT.create(
             AvroUiMessages.class);
-
+    
+    public static final AvroUiConstants constants = GWT.create(
+            AvroUiConstants.class);
+    
+    public static final AvroUiStyle avroUiStyle = resources.avroUiStyle();
+    
     public static boolean isNotBlank(String string) {
         return string != null && string.length() > 0;
     }
@@ -40,5 +51,5 @@ public class Utils {
     public static boolean isBlank(CharSequence cs) {
         return cs == null || cs.length() == 0;
     }
-    
+
 }

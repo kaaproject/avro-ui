@@ -23,9 +23,11 @@ public class UnionField extends FormField {
 
     private static final long serialVersionUID = -7020719983305986557L;
 
-    private List<RecordField> acceptableValues;
+    private List<FormField> acceptableValues;
     
-    private RecordField value;
+    private FormField defaultValue;
+    
+    private FormField value;
     
     public UnionField() {
         super();
@@ -34,16 +36,29 @@ public class UnionField extends FormField {
     
     public UnionField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
         acceptableValues = new ArrayList<>();
     }
     
-    public RecordField getValue() {
-        return value;
+    public FormField getDefaultValue() {
+        return defaultValue;
     }
 
-    public void setValue(RecordField value) {
+    public void setDefaultValue(FormField defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
+    public FormField getValue() {
+        return value;
+    }
+    
+    public void setValue(FormField value) {
+    	setValue(value, true);
+    }
+
+    public void setValue(FormField value, boolean fireChange) {
         if (value != null) {
             int index = -1;
             for (int i=0;i<acceptableValues.size();i++) {
@@ -55,6 +70,9 @@ public class UnionField extends FormField {
             if (index > -1) {
                 this.value = value;
                 this.acceptableValues.set(index, value);
+                if (fireChange) {
+                	fireChanged();
+                }
             }
             else {
                 throw new IllegalArgumentException("Value type not in list of union types!");
@@ -62,15 +80,23 @@ public class UnionField extends FormField {
         }
         else {
             this.value = null;
+            if (fireChange) {
+            	fireChanged();
+            }
         }
     }
     
-    public List<RecordField> getAcceptableValues() {
+    public List<FormField> getAcceptableValues() {
         return acceptableValues;
     }
     
-    public void setAcceptableValues(List<RecordField> acceptableValues) {
+    public void setAcceptableValues(List<FormField> acceptableValues) {
         this.acceptableValues = acceptableValues;
+    }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " { " + valueToDisplayString(value) +" }";
     }
 
     @Override
@@ -89,6 +115,21 @@ public class UnionField extends FormField {
     }
 
     @Override
+    public void finalizeMetadata() {
+    	for (FormField acceptableValue : acceptableValues) {
+    		acceptableValue.finalizeMetadata();
+    	}
+    }
+    
+    @Override
+	public void disableOverride() {
+    	super.disableOverride();
+    	for (FormField acceptableValue : acceptableValues) {
+    		acceptableValue.disableOverride();
+    	}
+    }
+
+    @Override
     protected FormField createInstance() {
         return new UnionField();
     }
@@ -97,10 +138,11 @@ public class UnionField extends FormField {
     protected void copyFields(FormField cloned) {
         super.copyFields(cloned);
         UnionField clonedUnionField = (UnionField)cloned;
-        for (RecordField acceptableValue : acceptableValues) {
-            clonedUnionField.acceptableValues.add((RecordField) acceptableValue.clone());
+        for (FormField acceptableValue : acceptableValues) {
+            clonedUnionField.acceptableValues.add(acceptableValue.clone());
         }
-        clonedUnionField.setValue(value != null ? (RecordField) value.clone() : null);
+        clonedUnionField.defaultValue = defaultValue;
+        clonedUnionField.setValue(value != null ? value.clone() : null, false);
     }
 
     @Override

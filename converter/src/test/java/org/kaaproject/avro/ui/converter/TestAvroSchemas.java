@@ -30,6 +30,9 @@ public class TestAvroSchemas {
     private static final String UNION = "union.avsc";
     private static Schema unionSchema;
     
+    private static final String OVERRIDE_SCHEMA = "override-schema.avsc";
+    private static Schema overrideSchema;
+    
     public static Schema getSingleFieldsSchema() throws IOException {
         if (singleFieldsSchema == null) {
             singleFieldsSchema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(SINGLE_FIELDS));
@@ -49,6 +52,13 @@ public class TestAvroSchemas {
             unionSchema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(UNION));
         }
         return unionSchema;
+    }
+    
+    public static Schema getOverrideSchema() throws IOException {
+        if (overrideSchema == null) {
+            overrideSchema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(OVERRIDE_SCHEMA));
+        }
+        return overrideSchema;
     }
 
 }

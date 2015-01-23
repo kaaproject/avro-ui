@@ -18,22 +18,29 @@ package org.kaaproject.avro.ui.gwt.client.widget;
 
 import static org.kaaproject.avro.ui.gwt.client.util.Utils.isBlank;
 
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.input.HasInputEventHandlers;
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
-import org.kaaproject.avro.ui.shared.InputType;
+import org.kaaproject.avro.ui.shared.StringField.InputType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
@@ -45,61 +52,39 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class SizedTextBox extends VerticalPanel implements HasValue<String>, HasInputEventHandlers {
 
-    public interface Resources extends ClientBundle {
-        
-        @Source(Style.DEFAULT_CSS)
-        Style sizedTextStyle();
-        
-    }
-    
-    public interface Style extends CssResource {
-        
-        String DEFAULT_CSS = "org/kaaproject/avro/ui/gwt/client/widget/SizedText.css";
-        
-        String secondaryLabel();
-        
-        String fieldNotes();
-        
-    }
-    
-    private static Resources DEFAULT_RESOURCES;
-    
     private TextBox text;
     private HTML textLabel;
     private Label charactersLabel;
     private final int maxChars;
     private final boolean editable;
 
-    private final Style style;
+    private final AvroUiStyle style;
 
-    protected static Style getDefaultStyle() {
-        if (DEFAULT_RESOURCES == null) {
-          DEFAULT_RESOURCES = GWT.create(Resources.class);
-        }
-        return DEFAULT_RESOURCES.sizedTextStyle();
+    private static AvroUiStyle getDefaultStyle() {
+        return Utils.avroUiStyle;
     }
     
-    public SizedTextBox(int maxChars, InputType inputType) {
-        this(getDefaultStyle(), inputType, maxChars);
+    public SizedTextBox(int maxChars, InputType inputType, String prompt) {
+        this(getDefaultStyle(), inputType, prompt, maxChars);
     }
 
-    public SizedTextBox(int maxChars, InputType inputType, boolean editable) {
-        this(getDefaultStyle(), inputType,  maxChars, editable, true);
+    public SizedTextBox(int maxChars, InputType inputType, String prompt, boolean editable) {
+        this(getDefaultStyle(), inputType, prompt, maxChars, editable, true);
     }
     
-    public SizedTextBox(int maxChars, InputType inputType, boolean editable, boolean addNotes) {
-        this(getDefaultStyle(), inputType, maxChars, editable, addNotes);
+    public SizedTextBox(int maxChars, InputType inputType, String prompt, boolean editable, boolean addNotes) {
+        this(getDefaultStyle(), inputType, prompt, maxChars, editable, addNotes);
     }
 
-    public SizedTextBox(Style style, InputType inputType, int maxChars) {
-        this(style, inputType, maxChars, true, true);
+    public SizedTextBox(AvroUiStyle style, InputType inputType, String prompt, int maxChars) {
+        this(style, inputType, prompt, maxChars, true, true);
     }
     
-    public SizedTextBox(Style style, InputType inputType, int maxChars, boolean editable) {
-        this(style, inputType, maxChars, editable, true);
+    public SizedTextBox(AvroUiStyle style, InputType inputType, String prompt, int maxChars, boolean editable) {
+        this(style, inputType, prompt, maxChars, editable, true);
     }
 
-    public SizedTextBox(Style style, InputType inputType, int maxChars, boolean editable, boolean addNotes) {
+    public SizedTextBox(AvroUiStyle style, InputType inputType, String prompt, int maxChars, boolean editable, boolean addNotes) {
         
         // Inject the stylesheet.
         this.style = style;
@@ -111,7 +96,7 @@ public class SizedTextBox extends VerticalPanel implements HasValue<String>, Has
             if (inputType == InputType.PASSWORD) {
                 text = new ExtendedPasswordTextBox();
             } else {
-                text = new ExtendedTextBox();
+                text = new ExtendedTextBox(prompt);
             }
             add(text);
         }
@@ -244,12 +229,33 @@ public class SizedTextBox extends VerticalPanel implements HasValue<String>, Has
             text.setReadOnly(readOnly);
         }
     }
+    
+    public void setInvalid(boolean invalid) {
+        if (editable) {
+            if (invalid) {
+                text.addStyleName(style.invalidField());
+            } else {
+                text.removeStyleName(style.invalidField());
+            }
+        }
+    }
 
-    private class ExtendedTextBox extends TextBox {
+    private class ExtendedTextBox extends TextBox implements BlurHandler,
+                                                        FocusHandler, ClickHandler, KeyPressHandler {
 
-        public ExtendedTextBox() {
+        private String promptText;
+        
+        public ExtendedTextBox(String promptText) {
             super();
+            this.promptText = promptText;
             sinkEvents(Event.ONPASTE);
+            if (Utils.isNotBlank(promptText)) {
+                this.addKeyPressHandler(this);
+                this.addFocusHandler(this);
+                this.addClickHandler(this);
+                this.addBlurHandler(this);
+                setPrompts();
+            }
         }
 
         @Override
@@ -266,6 +272,67 @@ public class SizedTextBox extends VerticalPanel implements HasValue<String>, Has
                     });
                     break;
             }
+        }
+        
+        @Override
+        public void onBlur(BlurEvent event) {
+            if (Utils.isBlank(super.getText())) {
+                setPrompts();
+            }
+        }
+        
+        @Override
+        public void onFocus(FocusEvent event) {
+            this.setSelectionRange(0, 0);
+        }
+        
+        @Override
+        public void onClick(ClickEvent event) {
+            if (promptText.equals(super.getText())) {
+                removePrompts();
+            }
+        }
+        
+        @Override
+        public void onKeyPress(KeyPressEvent event) {
+            if (promptText.equals(super.getText())
+                    && !(event.getNativeEvent().getKeyCode() == KeyCodes.KEY_TAB)) {
+                removePrompts();
+            }
+        }
+        
+        @Override
+        public String getText() {
+            String text = super.getText();
+            if (Utils.isNotBlank(promptText) && promptText.equals(text)) {
+                return "";
+            } else {
+                return text;
+            }
+        }
+
+        @Override
+        public void setText(String text) {
+            if (Utils.isNotBlank(promptText)) {
+                if (Utils.isBlank(text)) {
+                    setPrompts();
+                } else {
+                    removePrompts();
+                    super.setText(text);
+                }
+            } else {
+                super.setText(text);
+            }
+        }
+
+        private void setPrompts() {
+            this.addStyleName(style.prompt());
+            super.setText(promptText);
+        }
+
+        private void removePrompts() {
+            this.removeStyleName(style.prompt());
+            super.setText("");
         }
     }
     

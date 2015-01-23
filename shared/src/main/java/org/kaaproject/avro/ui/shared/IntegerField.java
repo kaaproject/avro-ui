@@ -16,6 +16,7 @@
 
 package org.kaaproject.avro.ui.shared;
 
+
 public class IntegerField extends SizedField {
 
     private static final long serialVersionUID = -5046250549233854347L;
@@ -30,8 +31,9 @@ public class IntegerField extends SizedField {
 
     public IntegerField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
     
     public Integer getDefaultValue() {
@@ -48,11 +50,17 @@ public class IntegerField extends SizedField {
 
     public void setValue(Integer value) {
         this.value = value;
+        fireChanged();
+    }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + valueToDisplayString(value);
     }
 
     @Override
     public FieldType getFieldType() {
-        return FieldType.INTEGER;
+        return FieldType.INT;
     }
     
     @Override

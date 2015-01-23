@@ -16,6 +16,7 @@
 
 package org.kaaproject.avro.ui.shared;
 
+
 public abstract class SizedField extends FormField {
 
     private static final long serialVersionUID = 6539576598668221454L;
@@ -30,8 +31,9 @@ public abstract class SizedField extends FormField {
     
     public SizedField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
     
     public int getMaxLength() {

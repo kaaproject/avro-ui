@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package org.kaaproject.avro.ui.shared;
+package org.kaaproject.avro.ui.gwt.client.widget;
 
-public enum InputType {
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 
-    PLAIN,
-    PASSWORD
-    
+import com.google.gwt.dom.client.Document;
+
+public class DoubleBox extends NumberBox<Double> {
+    public DoubleBox(AvroUiStyle style, String prompt, String numberFormatPattern) {
+        super(style, Document.get().createTextInputElement(), prompt, new NumberRenderer<Double>(
+                numberFormatPattern, true), new DoubleParser(numberFormatPattern));
+        setDecimal(true);
+    }
 }

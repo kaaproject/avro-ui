@@ -16,6 +16,7 @@
 
 package org.kaaproject.avro.ui.shared;
 
+
 public class LongField extends SizedField {
 
     private static final long serialVersionUID = -5046250549233854347L;
@@ -29,9 +30,10 @@ public class LongField extends SizedField {
     }
     
     public LongField(String fieldName, 
-            String displayName, 
+            String displayName,
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
     
     public Long getDefaultValue() {
@@ -48,6 +50,12 @@ public class LongField extends SizedField {
 
     public void setValue(Long value) {
         this.value = value;
+        fireChanged();
+    }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + valueToDisplayString(value);
     }
 
     @Override

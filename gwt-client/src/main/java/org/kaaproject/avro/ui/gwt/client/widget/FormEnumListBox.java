@@ -18,15 +18,15 @@ package org.kaaproject.avro.ui.gwt.client.widget;
 
 import java.io.IOException;
 
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.shared.FormEnum;
 
 import com.google.gwt.text.shared.Renderer;
-import com.google.gwt.user.client.ui.ValueListBox;
 
-public class FormEnumListBox extends ValueListBox<FormEnum> {
+public class FormEnumListBox extends ExtendedValueListBox<FormEnum> {
 
-    public FormEnumListBox() {
-        super(new FormEnumRenderer());
+    public FormEnumListBox(AvroUiStyle style, String promptText) {
+        super(new FormEnumRenderer(), style, promptText);
     }
 
     static class FormEnumRenderer implements Renderer<FormEnum> {

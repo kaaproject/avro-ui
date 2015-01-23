@@ -23,4 +23,25 @@ public interface AvroUiMessages extends Messages {
     @DefaultMessage("{0} of {1} characters")
     String charactersLength(int length, int maxLenght);
 
+    @DefaultMessage("Page {0} of {1}")
+    String pagerText(int current, int total);
+
+    @DefaultMessage("Are you sure you want to delete selected entry?")
+    String deleteSelectedEntryQuestion();
+
+    @DefaultMessage("Delete entry")
+    String deleteSelectedEntryTitle();
+    
+    @DefaultMessage("Are you sure you want to delete nested {0} which is value of field ''{1}''?")
+    String deleteNestedEntryQuestion(String nestedValueType, String fieldName);
+    
+    @DefaultMessage("Delete nested entry")
+    String deleteNestedEntryTitle();
+    
+    @DefaultMessage("Add new {0}")
+    String addNewEntry(String entryTitle);
+    
+    @DefaultMessage("Nested {0}")
+    String nestedEntry(String entryTitle);
+
 }

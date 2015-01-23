@@ -16,10 +16,16 @@
 
 package org.kaaproject.avro.ui.shared;
 
+
 public class StringField extends SizedField {
 
     private static final long serialVersionUID = -5046250549233854347L;
     
+    public static enum InputType {
+        PLAIN,
+        PASSWORD
+    }
+
     private String defaultValue;
 
     private String value;
@@ -32,8 +38,9 @@ public class StringField extends SizedField {
     
     public StringField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
 
     public String getDefaultValue() {
@@ -50,6 +57,7 @@ public class StringField extends SizedField {
 
     public void setValue(String value) {
         this.value = value;
+        fireChanged();
     }
     
     public void setInputType(InputType inputType) {
@@ -58,6 +66,11 @@ public class StringField extends SizedField {
     
     public InputType getInputType() {
         return inputType;
+    }
+
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " \"" + valueToDisplayString(value) + "\"";
     }
 
     @Override

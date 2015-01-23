@@ -24,8 +24,8 @@ import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.widget.RecordFieldWidget;
 import org.kaaproject.avro.ui.gwt.client.widget.SizedTextArea;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.MainView;
-import org.kaaproject.avro.ui.sandbox.client.mvp.view.widget.AlertPanel;
-import org.kaaproject.avro.ui.sandbox.client.mvp.view.widget.AlertPanel.Type;
+import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel;
+import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel.Type;
 import org.kaaproject.avro.ui.sandbox.client.util.Utils;
 import org.kaaproject.avro.ui.shared.RecordField;
 
@@ -34,10 +34,14 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -72,6 +76,12 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
     private Button generateFormButton;
     private Button resetButton;
     private RecordFieldWidget schemaForm;
+    private Button showRecordJsonButton;
+    private SizedTextArea recordJsonArea;
+    private CaptionPanel jsonRecordPanel;
+    
+    private Button uploadRecordFromJsonButton;
+    private Button uploadButton;
 
     public MainViewImpl() {
         errorPanel = new AlertPanel(Type.ERROR);
@@ -121,6 +131,10 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
                 generateFormButton.setEnabled(false);
                 hasChanged = false;
                 schemaForm.setValue(null);
+                showRecordJsonButton.setEnabled(false);
+                jsonRecordPanel.setVisible(false);
+                uploadButton.setEnabled(false);
+                uploadButton.setVisible(false);
             }
         });
         
@@ -133,16 +147,105 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         
         detailsTable.setWidget(0, 0, schemaTable);
         
+        FlexTable schemaFormTable = new FlexTable();
+        schemaFormTable.setWidth(FULL_WIDTH);
+        
+        int row = 0;
+        
+        HorizontalPanel toolbarPanel = new HorizontalPanel();
+        
+        CheckBox readOnlyCheckBox = new CheckBox("Read only");
+        readOnlyCheckBox.setWidth(FULL_WIDTH);
+        readOnlyCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                schemaForm.setReadOnly(event.getValue());
+            }
+        });
+        
+        toolbarPanel.add(readOnlyCheckBox);
+        Button showDisplayStringButton = new Button("View display string");
+        showDisplayStringButton.getElement().getStyle().setMarginLeft(10, Unit.PX);
+        showDisplayStringButton.addStyleName("b-app-button-small");
+        showDisplayStringButton.addClickHandler(new ClickHandler() {
+            
+            @Override
+            public void onClick(ClickEvent event) {
+                RecordField field = schemaForm.getValue();
+                String displayString = field != null ? field.getDisplayString() : "null";
+                Window.alert("Display string:\n" + displayString);
+            }
+        });
+        toolbarPanel.add(showDisplayStringButton);
+        
+        schemaFormTable.setWidget(row++, 0, toolbarPanel);
+        
         schemaForm = new RecordFieldWidget();
         schemaForm.setWidth(FULL_WIDTH);
+        
+        schemaForm.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<RecordField> event) {
+                 fireChanged();
+            }
+        });
+        
         CaptionPanel schemaFormPanel = new CaptionPanel(Utils.constants.generatedForm());
         schemaFormPanel.add(schemaForm);
         schemaFormPanel.setWidth(FULL_WIDTH);
         schemaFormPanel.getElement().getStyle().setPropertyPx("minHeight", 300);
         
-        detailsTable.setWidget(0, 1, schemaFormPanel);
-        detailsTable.getFlexCellFormatter().setRowSpan(0, 1, 2);
+        schemaFormTable.setWidget(row++, 0, schemaFormPanel);
+        
+        showRecordJsonButton = new Button(Utils.constants.showRecordJson());
+        showRecordJsonButton.setEnabled(false);
+        
+        uploadRecordFromJsonButton = new Button(Utils.constants.uploadRecordFromJson());
+        uploadRecordFromJsonButton.setEnabled(false);
 
+        buttonsPanel = new HorizontalPanel();
+        buttonsPanel.setSpacing(15);
+        buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        buttonsPanel.add(showRecordJsonButton);
+        buttonsPanel.add(uploadRecordFromJsonButton);
+        
+        schemaFormTable.setWidget(row++, 0, buttonsPanel);
+        
+        schemaFormTable.getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
+        buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(15, Unit.PX);
+
+        recordJsonArea = new SizedTextArea(-1);
+        recordJsonArea.setWidth(FULL_WIDTH);
+        recordJsonArea.getTextArea().getElement().getStyle().setPropertyPx("minHeight", 300);
+        recordJsonArea.getTextArea().setReadOnly(true);
+        recordJsonArea.addInputHandler(new InputEventHandler() {
+            @Override
+            public void onInputChanged(InputEvent event) {
+               boolean enableUpload = isNotBlank(recordJsonArea.getValue());
+               uploadButton.setEnabled(enableUpload);
+            }
+        });
+        jsonRecordPanel = new CaptionPanel(Utils.constants.generatedRecordJson());
+        jsonRecordPanel.add(recordJsonArea);
+        
+        schemaFormTable.setWidget(row++, 0, jsonRecordPanel);
+        jsonRecordPanel.setVisible(false);
+        
+        uploadButton = new Button(Utils.constants.upload());
+        uploadButton.setEnabled(false);
+        uploadButton.setVisible(false);
+        
+        buttonsPanel = new HorizontalPanel();
+        buttonsPanel.setSpacing(15);
+        buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        buttonsPanel.add(uploadButton);
+        
+        schemaFormTable.setWidget(row++, 0, buttonsPanel);
+        schemaFormTable.getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
+        
+        detailsTable.setWidget(0, 1, schemaFormTable);
+        detailsTable.getFlexCellFormatter().setRowSpan(0, 1, 2);
+        
         clearMessages();
     }
 
@@ -152,6 +255,11 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         resetImpl();
         generateFormButton.setEnabled(false);
         resetButton.setEnabled(false);
+        showRecordJsonButton.setEnabled(false);
+        uploadRecordFromJsonButton.setEnabled(false);
+        uploadButton.setEnabled(false);
+        uploadButton.setVisible(false);
+        jsonRecordPanel.setVisible(false);
         hasChanged = false;
     }
 
@@ -188,6 +296,7 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
     private void resetImpl() {
         schema.setValue("");
         schemaForm.setValue(null);
+        recordJsonArea.setValue("");
     }
 
     @Override
@@ -200,6 +309,9 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         generateFormButton.setEnabled(valid);
         hasChanged = true;
         resetButton.setEnabled(valid || schemaForm.getValue() != null);
+        uploadRecordFromJsonButton.setEnabled(schemaForm.getValue() != null);
+        boolean schemaFormValid = schemaForm.validate();
+        showRecordJsonButton.setEnabled(schemaFormValid);
     }
 
     private boolean validate() {
@@ -226,5 +338,42 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         return schemaForm;
     }
 
+    @Override
+    public HasClickHandlers getShowRecordJsonButton() {
+        return showRecordJsonButton;
+    }
+    
+    @Override
+    public HasClickHandlers getUploadRecordFromJsonButton() {
+        return uploadRecordFromJsonButton;
+    }
+
+    @Override
+    public HasClickHandlers getUploadButton() {
+        return uploadButton;
+    }
+
+    @Override
+    public void setRecordJson(String json) {
+        recordJsonArea.setValue(json);
+        jsonRecordPanel.setVisible(true);
+        jsonRecordPanel.setCaptionText(Utils.constants.generatedRecordJson());
+        recordJsonArea.getTextArea().setReadOnly(true);
+        uploadButton.setVisible(false);
+    }
+
+    @Override
+    public void showUploadJson() {
+        recordJsonArea.setValue("");
+        jsonRecordPanel.setVisible(true);
+        jsonRecordPanel.setCaptionText(Utils.constants.recordJsonToUpload());
+        recordJsonArea.getTextArea().setReadOnly(false);
+        uploadButton.setVisible(true);
+    }
+
+    @Override
+    public HasValue<String> getRecordJson() {
+        return recordJsonArea;
+    }
 
 }

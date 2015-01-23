@@ -16,6 +16,7 @@
 
 package org.kaaproject.avro.ui.shared;
 
+
 public class BooleanField extends FormField {
 
     private static final long serialVersionUID = -7841564200726288319L;
@@ -30,8 +31,9 @@ public class BooleanField extends FormField {
 
     public BooleanField(String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
     }
     
     public Boolean getDefaultValue() {
@@ -48,6 +50,12 @@ public class BooleanField extends FormField {
 
     public void setValue(Boolean value) {
         this.value = value;
+        fireChanged();
+    }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString() + " " + valueToDisplayString(value);
     }
 
     @Override

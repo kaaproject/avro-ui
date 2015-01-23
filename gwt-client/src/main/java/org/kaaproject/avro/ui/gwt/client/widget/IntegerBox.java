@@ -16,12 +16,14 @@
 
 package org.kaaproject.avro.ui.gwt.client.widget;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.text.client.IntegerParser;
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 
-public class IntegerBox extends DecimalBox<Integer> {
-    public IntegerBox(String numberFormatPattern) {
-        super(Document.get().createTextInputElement(), new NumberRenderer<Integer>(
-                numberFormatPattern), IntegerParser.instance());
+import com.google.gwt.dom.client.Document;
+
+public class IntegerBox extends NumberBox<Integer> {
+    public IntegerBox(AvroUiStyle style, String prompt, String numberFormatPattern) {
+        super(style, Document.get().createTextInputElement(), prompt, new NumberRenderer<Integer>(
+                numberFormatPattern, false), new IntegerParser(numberFormatPattern));
+        setDecimal(false);
     }
 }

@@ -16,12 +16,14 @@
 
 package org.kaaproject.avro.ui.gwt.client.widget;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.text.client.LongParser;
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 
-public class LongBox extends DecimalBox<Long> {
-    public LongBox(String numberFormatPattern) {
-        super(Document.get().createTextInputElement(), new NumberRenderer<Long>(
-                numberFormatPattern), LongParser.instance());
+import com.google.gwt.dom.client.Document;
+
+public class LongBox extends NumberBox<Long> {
+    public LongBox(AvroUiStyle style, String prompt, String numberFormatPattern) {
+        super(style, Document.get().createTextInputElement(), prompt, new NumberRenderer<Long>(
+                numberFormatPattern, false), new LongParser(numberFormatPattern));
+        setDecimal(false);
     }
 }

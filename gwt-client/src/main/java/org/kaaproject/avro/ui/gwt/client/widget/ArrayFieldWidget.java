@@ -21,20 +21,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
+import org.kaaproject.avro.ui.gwt.client.util.Utils;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.AbstractGrid;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowAction;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
+import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationActionListener;
+import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
 import org.kaaproject.avro.ui.shared.ArrayField;
+import org.kaaproject.avro.ui.shared.BooleanField;
 import org.kaaproject.avro.ui.shared.FieldType;
 import org.kaaproject.avro.ui.shared.FormField;
+import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
 import org.kaaproject.avro.ui.shared.RecordField;
+import org.kaaproject.avro.ui.shared.UnionField;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CaptionPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -42,145 +52,442 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AsyncDataProvider;
+import com.google.gwt.view.client.HasData;
 
 public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
 
-    private static ArrayFieldConstants constants = (ArrayFieldConstants) GWT.create(ArrayFieldConstants.class);
+    private static final String ARRAY_PANEL_WIDTH = "600px";
+    private static final String GRID_HEIGHT = "180px";
+    private static final String TABLE_SCROLL_HEIGHT = "200px";
     
-    public interface ArrayFieldConstants extends Constants {
+    private ArrayGrid arrayGrid;
 
-        @DefaultStringValue("Add")
-        String add();
-     
-        @DefaultStringValue("Remove")
-        String remove();
-     
+    public ArrayFieldWidget(NavigationContainer container, boolean readOnly) {
+        super(container, readOnly);
     }
     
-    public ArrayFieldWidget() {
-        super();
-    }
-    
-    public ArrayFieldWidget(Style style, SizedTextBox.Style sizedTextStyle) {
-        super(style, sizedTextStyle);
+    public ArrayFieldWidget(AvroUiStyle style, NavigationContainer container, boolean readOnly) {
+        super(style, container, readOnly);
     }
     
     @Override
     protected Widget constructForm() {
-        CaptionPanel arrayWidget = new CaptionPanel();
-        arrayWidget.setWidth("125%");
         
-        if (value.isOptional()) {
-            arrayWidget.setCaptionText(value.getDisplayName());
+        FieldWidgetPanel fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
+        if (value.isOverride()) {
+            fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+                @Override
+                public void onValueChange(ValueChangeEvent<Boolean> event) {
+                    if (!readOnly && !value.isReadOnly()) {
+                        fireChanged();
+                    }
+                    if (event.getValue()) {
+                        onShown();
+                    }
+                }
+            });
+            fieldWidgetPanel.setLegendNotes(Utils.constants.getString(value
+                    .getOverrideStrategy().name().toLowerCase()
+                    + "Strategy"));
         }
-        else {
-            SpanElement span = Document.get().createSpanElement();
-            span.appendChild(Document.get().createTextNode(value.getDisplayName()));
-            span.addClassName("gwt-Label");
-            span.addClassName(style.requiredField());            
-            arrayWidget.setCaptionHTML(span.getString());
+        fieldWidgetPanel.setWidth(ARRAY_PANEL_WIDTH);
+        
+        value.finalizeMetadata();
+        
+        if (isGridNeeded(value)) {
+            fieldWidgetPanel.setContent(constructGrid());
+        } else {
+            fieldWidgetPanel.setContent(constructTable());
+        }
+        return fieldWidgetPanel;
+    }
+    
+    public static boolean isGridNeeded(ArrayField field) {
+        FormField metadata = field.getElementMetadata();
+        if (metadata.getFieldType().isComplex()) {
+            if (metadata.getFieldType() == FieldType.RECORD) {
+                RecordField recordMetadata = (RecordField)metadata;
+                if (!recordMetadata.getKeyIndexedFields().isEmpty()) {
+                    return true;
+                } else {
+                    return hasComplexFields(recordMetadata.getFieldsWithAccess(FieldAccess.EDITABLE, 
+                                                        FieldAccess.READ_ONLY));
+                }
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+    
+    private static boolean hasComplexFields(List<FormField> metaFields) {
+        for (FormField metaField : metaFields) {
+            if (metaField.getFieldType().isComplex()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    @Override
+    public void onShown() {
+        super.onShown();
+        if (arrayGrid != null) {
+            arrayGrid.reload();
+        }
+    }
+
+    private Widget constructGrid() {
+        VerticalPanel verticalPanel = new VerticalPanel();
+        verticalPanel.setWidth(FULL_WIDTH);
+
+        arrayGrid = new ArrayGrid(value, !readOnly && !value.isReadOnly());
+        arrayGrid.setHeight(GRID_HEIGHT);
+        
+        verticalPanel.add(arrayGrid);
+        
+        HorizontalPanel buttonsPanel = new HorizontalPanel();
+        buttonsPanel.addStyleName(style.buttonsPanel());
+
+        if (!readOnly && !value.isReadOnly()) {
+            Button addRow = new Button(Utils.constants.add());
+            addRow.addStyleName(style.buttonSmall());
+            addRow.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    FormField newField = value.createRow();
+                    navigationContainer.addNewField(newField, new NavigationActionListener() {
+                        @Override
+                        public void onChanged(FormField field) {}
+                        
+                        @Override
+                        public void onAdded(FormField field) {
+                            arrayGrid.getDataProvider().addRow(field);
+                        }
+                    });
+                }
+            });
+            buttonsPanel.add(addRow);
         }
         
+        arrayGrid.addRowActionHandler(new RowActionEventHandler<Integer>() {
+            @Override
+            public void onRowAction(RowActionEvent<Integer> event) {
+                final int index = event.getClickedId();
+                if (event.getAction() == RowAction.CLICK) {
+                    FormField field = arrayGrid.getDataProvider().getData().get(index);
+                    navigationContainer.showField(field, null);
+                } else if (event.getAction() == RowAction.DELETE) {
+                    arrayGrid.getDataProvider().removeRow(index);
+                    fireChanged();
+                }
+            }
+        });
+        
+        verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+        verticalPanel.add(buttonsPanel);
+        return verticalPanel;
+    }
+    
+    private Widget constructTable() {
         VerticalPanel verticalPanel = new VerticalPanel();
         ScrollPanel scroll = new ScrollPanel();
         final FlexTable table = new FlexTable();
         table.setWidth("95%");
         table.setCellPadding(5);
         
-        List<RecordField> records = value.getValue();
+        List<FormField> records = value.getValue();
         final int minRowCount = value.getMinRowCount();
-        final RecordField elementMetadata = value.getElementMetadata();
+        final FormField elementMetadata = value.getElementMetadata();
         
-        float totalWeight = 0f;
-        for (int column=0;column<elementMetadata.getValue().size();column++) {
-            FormField metaField = elementMetadata.getValue().get(column);
-            totalWeight += metaField.getWeight();
-        }
+        final int startRow;
         
-        for (int column=0;column<elementMetadata.getValue().size();column++) {
-            FormField metaField = elementMetadata.getValue().get(column);
-            float weight = metaField.getWeight();
-            String width = String.valueOf(weight/totalWeight*100f)+"%";
-            table.getColumnFormatter().setWidth(column, width);
-            table.setWidget(0, column, new Label(metaField.getDisplayName()));
+        if (elementMetadata.getFieldType() == FieldType.RECORD) {
+            RecordField recordElementData = (RecordField)elementMetadata;
+            float totalWeight = 0f;
+            List<FormField> metaFields = recordElementData.getFieldsWithAccess(FieldAccess.EDITABLE, 
+                    FieldAccess.READ_ONLY);
+            for (int column=0;column<metaFields.size();column++) {
+                FormField metaField = metaFields.get(column);
+                totalWeight += metaField.getWeight();
+            }
+            
+            for (int column=0;column<metaFields.size();column++) {
+                FormField metaField = metaFields.get(column);
+                float weight = metaField.getWeight();
+                String width = String.valueOf(weight/totalWeight*100f)+"%";
+                table.getColumnFormatter().setWidth(column, width);
+                table.setWidget(0, column, new Label(metaField.getDisplayName()));
+            }
+            startRow = 1;
+        } else {
+            startRow = 0;
         }
-        final Map<RecordField, List<HandlerRegistration>> rowHandlerRegistrationMap = 
+
+        final Map<FormField, List<HandlerRegistration>> rowHandlerRegistrationMap = 
                 new HashMap<>();
        
         for (int row=0;row<records.size();row++) {
-            RecordField record = records.get(row);
+            FormField record = records.get(row);
             List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
-            setRow(table, record, row+1, rowHandlerRegistrations);
+            setRow(table, record, row+startRow, rowHandlerRegistrations);
             registrations.addAll(rowHandlerRegistrations);
             rowHandlerRegistrationMap.put(record, rowHandlerRegistrations);
         }
-       
-        scroll.setWidth("100%");
-        scroll.setHeight("200px");
+
+        scroll.setWidth(FULL_WIDTH);
+        scroll.setHeight(TABLE_SCROLL_HEIGHT);
         scroll.add(table);
 
-        verticalPanel.setWidth("100%");
+        verticalPanel.setWidth(FULL_WIDTH);
         verticalPanel.add(scroll);
         
-        Button addRow = new Button(constants.add());
-        final Button removeRow = new Button(constants.remove());
-        removeRow.setEnabled(value.getValue().size()>minRowCount);
-        
-        addRow.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                RecordField newRecord = (RecordField) elementMetadata.clone();
-                value.addArrayData(newRecord);
-                List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
-                setRow(table, newRecord, value.getValue().size(), rowHandlerRegistrations);
-                rowHandlerRegistrationMap.put(newRecord, rowHandlerRegistrations);
-                removeRow.setEnabled(value.getValue().size()>minRowCount);
-                fireChanged();
-            }
-        });
-       
-        removeRow.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                if (value.getValue().size()>0) {
-                    int row = value.getValue().size()-1;
-                    RecordField toDelete = value.getValue().get(row);
-                    List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
-                    if (registrations != null) {
-                        for (HandlerRegistration registration : registrations) {
-                            registration.removeHandler();
-                        }
-                        registrations.clear();
-                    }
-                    table.removeRow(row+1);
-                    value.getValue().remove(row);
+        if (!readOnly && !value.isReadOnly()) {
+            Button addRow = new Button(Utils.constants.add());
+            addRow.addStyleName(style.buttonSmall());
+            final Button removeRow = new Button(Utils.constants.remove());
+            removeRow.addStyleName(style.buttonSmall());
+            removeRow.setEnabled(value.getValue().size()>minRowCount);
+            
+            addRow.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    FormField newField = value.createRow();
+                    value.addArrayData(newField);
+                    List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
+                    setRow(table, newField, value.getValue().size() - 1 + startRow, rowHandlerRegistrations);
+                    rowHandlerRegistrationMap.put(newField, rowHandlerRegistrations);
                     removeRow.setEnabled(value.getValue().size()>minRowCount);
                     fireChanged();
                 }
-            }
-        });
-
-        HorizontalPanel buttonsPanel = new HorizontalPanel();
-        buttonsPanel.addStyleName(style.buttonsPanel());
-        buttonsPanel.add(addRow);
-        buttonsPanel.add(removeRow);
-        
-        verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-        verticalPanel.add(buttonsPanel);
-        
-        arrayWidget.setContentWidget(verticalPanel);
-        
-        return arrayWidget;
+            });
+           
+            removeRow.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    if (value.getValue().size()>0) {
+                        int row = value.getValue().size()-1;
+                        FormField toDelete = value.getValue().get(row);
+                        List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
+                        if (registrations != null) {
+                            for (HandlerRegistration registration : registrations) {
+                                registration.removeHandler();
+                            }
+                            registrations.clear();
+                        }
+                        table.removeRow(row + startRow);
+                        value.getValue().remove(row);
+                        removeRow.setEnabled(value.getValue().size()>minRowCount);
+                        fireChanged();
+                    }
+                }
+            });
+    
+            HorizontalPanel buttonsPanel = new HorizontalPanel();
+            buttonsPanel.addStyleName(style.buttonsPanel());
+            buttonsPanel.add(addRow);
+            buttonsPanel.add(removeRow);
+            
+            verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+            verticalPanel.add(buttonsPanel);
+        }
+        return verticalPanel;
     }
     
-    private void setRow(FlexTable table, RecordField record, int row, List<HandlerRegistration> handlerRegistrations) {
-        for (int column=0;column<record.getValue().size();column++) {
-            FormField cellField = record.getValue().get(column);
-            if (cellField.getFieldType() != FieldType.ARRAY &&
-                    cellField.getFieldType() != FieldType.RECORD) {
-                constructWidget(table, cellField, row, column, handlerRegistrations);
+    private void setRow(FlexTable table, FormField field, int row, List<HandlerRegistration> handlerRegistrations) {
+        if (field.getFieldType() == FieldType.RECORD) {
+            RecordField record = (RecordField)field;
+            List<FormField> recordFields = record.getFieldsWithAccess(FieldAccess.EDITABLE,
+                    FieldAccess.READ_ONLY);
+            for (int column=0;column<recordFields.size();column++) {
+                FormField cellField = recordFields.get(column);
+                constructAndPlaceWidget(table, cellField, row, column, handlerRegistrations);
             }
+        } else {
+            constructAndPlaceWidget(table, field, row, 0, handlerRegistrations);
+        } 
+    }
+    
+    private static class ArrayGrid extends AbstractGrid<FormField, Integer> {
+        
+        private static final int MAX_CELL_STRING_LENGTH = 100;
+
+        private List<FormField> metadata;
+        private ArrayDataProvider dataProvider;
+        private Map<String, Integer> fieldNameIndexMap = new HashMap<>();
+        
+        public ArrayGrid(ArrayField arrayField, boolean enableActions) {
+            super(Unit.PX, enableActions, true, false);
+            this.dataProvider = new ArrayDataProvider(arrayField);
+            FormField elementMetadata = arrayField.getElementMetadata();
+            if (elementMetadata.getFieldType() == FieldType.RECORD) {
+                RecordField recordElementMetadata = (RecordField)elementMetadata;
+                this.metadata = recordElementMetadata.getKeyIndexedFields();
+                if (this.metadata.isEmpty()) {
+                    this.metadata = ((RecordField)elementMetadata).getFieldsWithAccess(FieldAccess.EDITABLE, 
+                            FieldAccess.READ_ONLY);
+                }
+                for (FormField metatadaField : metadata) {
+                    for (int i=0; i<recordElementMetadata.getValue().size(); i++) {
+                        if (metatadaField.equals(recordElementMetadata.getValue().get(i))) {
+                            fieldNameIndexMap.put(metatadaField.getFieldName(), i);
+                        }
+                    }
+                }
+            } else {
+                this.metadata = new ArrayList<>();
+                this.metadata.add(elementMetadata);
+            }
+            init();
+            showShadow(false);
+            this.dataProvider.addDataDisplay(getDisplay());
         }
+        
+        public void reload() {
+            this.dataProvider.reload(getDisplay());
+        }
+        
+        public ArrayDataProvider getDataProvider() {
+            return this.dataProvider;
+        }
+
+        @Override
+        protected float constructColumnsImpl(DataGrid<FormField> table) {
+            float prefWidth = 0;
+            for (final FormField metaField : metadata) {
+                float width = 200 * metaField.getWeight();
+                if (metaField.getFieldType() == FieldType.BOOLEAN) {
+                    prefWidth += constructBooleanColumn(table, metaField.getDisplayName(),
+                            new BooleanValueProvider<FormField>() {
+                        @Override
+                        public Boolean getValue(FormField item) {
+                            FormField field = item;
+                            if (field.getFieldType() == FieldType.RECORD) {
+                                int index = fieldNameIndexMap.get(metaField.getFieldName());
+                                field = ((RecordField)item).getValue().get(index);
+                            }
+                            return ((BooleanField)field).getValue();
+                        }
+                    }, width);
+                } else if (!metaField.getFieldType().isComplex()) {
+                    prefWidth += constructStringColumn(table, metaField.getDisplayName(),
+                            new StringValueProvider<FormField>() {
+                        @Override
+                        public String getValue(FormField item) {
+                            FormField field = item;
+                            if (field.getFieldType() == FieldType.RECORD) {
+                                int index = fieldNameIndexMap.get(metaField.getFieldName());
+                                field = ((RecordField)item).getValue().get(index);
+                            }
+                            String value = extractStringValue(field);
+                            if (value.length() > MAX_CELL_STRING_LENGTH) {
+                                value = value.substring(0, MAX_CELL_STRING_LENGTH-3) + "...";
+                            }
+                            return value;
+                        }
+                    }, width);
+                } else {
+                    prefWidth += constructStringColumn(table, metaField.getDisplayName(),
+                            new StringValueProvider<FormField>() {
+                        @Override
+                        public String getValue(FormField item) {
+                            FormField field = item;
+                            if (field.getFieldType() == FieldType.RECORD) {
+                                int index = fieldNameIndexMap.get(metaField.getFieldName());
+                                field = ((RecordField)item).getValue().get(index);
+                            }
+                            int index = getObjectId(item);
+                            String value = "#" + index; 
+                            if (field.getFieldType() == FieldType.UNION) {
+                                FormField unionVal = ((UnionField)field).getValue();
+                                if (unionVal == null) {
+                                    value += " null";
+                                } else {
+                                    value += " " + unionVal.getDisplayString();
+                                }
+                            } else {
+                                value += " " + field.getDisplayString();
+                            }
+                            if (value.length() > MAX_CELL_STRING_LENGTH) {
+                                value = value.substring(0, MAX_CELL_STRING_LENGTH-3) + "...";
+                            }
+                            return value;
+                        }
+                    }, width);
+                }
+            }
+            return prefWidth;
+        }
+        
+        protected Integer getObjectId(FormField value) {
+            return dataProvider.getData().indexOf(value);
+        }
+    }
+    
+    private static class ArrayDataProvider extends AsyncDataProvider<FormField>{
+
+        private ArrayField arrayField;
+
+        private boolean loaded = false;
+
+        public ArrayDataProvider(ArrayField arrayField) {
+            this.arrayField = arrayField;
+        }
+
+        public void addRow(FormField row) {
+            arrayField.addArrayData(row);
+            updateRowCount(arrayField.getValue().size(), true);
+            updateRowData(arrayField.getValue().size()-1, 
+                    arrayField.getValue().subList(arrayField.getValue().size()-1, 
+                            arrayField.getValue().size()));
+        }
+        
+        public void removeRow(int index) {
+            arrayField.getValue().remove(index);
+            updateRowCount(arrayField.getValue().size(), true);
+            int updateIndex = index;
+            updateIndex = Math.min(updateIndex, arrayField.getValue().size()-1);
+            updateIndex = Math.max(0, updateIndex);
+            updateRowData(updateIndex, 
+                    arrayField.getValue().subList(updateIndex, 
+                            arrayField.getValue().size()));
+        }
+
+        public List<FormField> getData() {
+            return arrayField.getValue();
+        }
+
+        public void reload(HasData<FormField> display) {
+            this.loaded = false;
+            loadData(display);
+        }
+
+        @Override
+        protected void onRangeChanged(final HasData<FormField> display) {
+          if (!loaded) {
+              loadData(display);
+          }
+          else {
+              updateData(display);
+          }
+        }
+        
+        private void loadData(HasData<FormField> display) {
+            updateRowCount(arrayField.getValue().size(), true);
+            updateData(display);
+            loaded = true;
+        }
+        
+        private void updateData (HasData<FormField> display) {
+            int start = display.getVisibleRange().getStart();
+            int end = start + display.getVisibleRange().getLength();
+            end = end >= arrayField.getValue().size() ? arrayField.getValue().size() : end;
+            List<FormField> sub = arrayField.getValue().subList(start, end);
+            updateRowData(start, sub);
+        }
+ 
     }
 
 }

@@ -18,13 +18,37 @@ package org.kaaproject.avro.ui.shared;
 
 public enum FieldType {
 
-    RECORD,
+    RECORD(true),
     STRING,
-    INTEGER,
+    INT,
     LONG,
+    FLOAT,
+    DOUBLE,
     BOOLEAN,
+    BYTES,
     ENUM,
-    ARRAY,
-    UNION
+    ARRAY(true),
+    UNION(true),
+    FIXED;
+    
+    private boolean isComplex;    
+    private String name;
+    
+    FieldType() {
+        this(false);
+    }
+    
+    FieldType(boolean isComplex) {
+        this.isComplex = isComplex;
+        this.name = this.name().toLowerCase();
+    }
+    
+    public boolean isComplex() {
+        return isComplex;
+    }
+    
+    public String getName() { 
+    	return name; 
+    }
     
 }

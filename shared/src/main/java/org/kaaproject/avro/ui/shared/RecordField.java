@@ -17,98 +17,194 @@
 package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class RecordField extends FormField {
+public class RecordField extends FqnField {
 
     private static final long serialVersionUID = -2006331166074707248L;
     
     private List<FormField> value;
     
-    private String typeName;
-
-    private String typeNamespace;
+    private RecordField rootRecord;
     
-    private String schema;
-
+    private Map<String, RecordField> recordsMetadata;
+    
+    private boolean isNull = true;
+    
     public RecordField() {
         super();
-        value = new ArrayList<>();
     }
     
-    public RecordField(String fieldName, 
+    public RecordField(RecordField rootRecord) {
+        super();
+        init(rootRecord);
+    }
+    
+    public RecordField(RecordField rootRecord, 
+            String fieldName, 
             String displayName, 
+            String schema,
             boolean optional) {
-        super(fieldName, displayName, optional);
+        super(fieldName, displayName, schema, optional);
+        init(rootRecord);
+    }
+    
+    private void init(RecordField rootRecord) {
         value = new ArrayList<>();
+        this.rootRecord = rootRecord;
+        if (rootRecord == null) {
+            recordsMetadata = new HashMap<>();
+            this.rootRecord = this;
+            isNull = false;
+        } 
+    }
+    
+    public void putRecordMetadata(String fqn, RecordField field) {
+        recordsMetadata.put(fqn, field);
+    }
+    
+    public boolean containsRecordMetadata(String fqn) {
+        return recordsMetadata.containsKey(fqn);
+    }
+    
+    public RecordField getRecordMetadata(String fqn) {
+        return recordsMetadata.get(fqn);
     }
     
     public List<FormField> getValue() {
         return value;
     }
+    
+    public List<FormField> getFieldsWithAccess(FieldAccess... accesses) {
+        List<FormField> result = new ArrayList<FormField>();
+        for (FormField field : value) {
+            for (FieldAccess access : accesses) {
+                if (field.getFieldAccess() == access) {
+                    result.add(field);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+    
+    public List<FormField> getKeyIndexedFields() {
+        List<FormField> result = new ArrayList<FormField>();
+        List<FormField> activeFields = getFieldsWithAccess(FieldAccess.EDITABLE, 
+                FieldAccess.READ_ONLY);
+        for (FormField field : activeFields) {
+            if (field.getKeyIndex() > -1) {
+                result.add(field);
+            }
+        }
+        Collections.sort(result, new Comparator<FormField>() {
+            @Override
+            public int compare(FormField o1, FormField o2) {
+                return o1.getKeyIndex() - o2.getKeyIndex();
+            }
+            
+        });
+        return result;
+    }
 
     public void addField(FormField field) {
         value.add(field);
+        isNull = false;
     }
     
-    public String getTypeName() {
-        return typeName;
-    }
-
-    public void setTypeName(String typeName) {
-        this.typeName = typeName;
-    }
-
-    public String getTypeNamespace() {
-        return typeNamespace;
-    }
-
-    public void setTypeNamespace(String typeNamespace) {
-        this.typeNamespace = typeNamespace;
-    }
-    
-    public String getSchema() {
-        return schema;
-    }
-
-    public void setSchema(String schema) {
-        this.schema = schema;
-    }
-
-    public boolean isSameType(RecordField otherRecord) {
-        return typeNamespace.equals(otherRecord.getTypeNamespace()) &&
-                typeName.equals(otherRecord.getTypeName());
-    }
-    
-    public String getTypeFullname() {
-        return typeNamespace + "." + typeName;
-    }
-
     @Override
+    public String getDisplayString() {
+        String str = super.getDisplayString();
+        if (isNull) {
+            str += " null";
+        } else {
+            str += " { ";
+            List<FormField> fields = getKeyIndexedFields();
+            if (fields.isEmpty()) {
+                fields = value;
+            }
+            for (int i=0;i<fields.size();i++) {
+                FormField field = fields.get(i);
+                if (i>0) {
+                    str += ", ";
+                }
+                str += field.getDisplayString();
+            }
+            str += " }";
+        }
+        return str;
+    }
+    
+	@Override
     public FieldType getFieldType() {
         return FieldType.RECORD;
     }
     
     @Override
     public boolean isNull() {
-        return false;
+        return isNull;
     }
-
+    
     @Override
+    public void finalizeMetadata() {
+    	create();
+    }
+   
+    @Override
+	public void disableOverride() {
+		super.disableOverride();
+		for (FormField field : value) {
+			field.disableOverride();
+		}
+	}
+
+	@Override
     protected FormField createInstance() {
-        return new RecordField();
+        return new RecordField(rootRecord);
     }
     
     @Override
     protected void copyFields(FormField cloned) {
         super.copyFields(cloned);
-        RecordField clonedRecordField = (RecordField)cloned;
-        for (FormField field : value) {
-            clonedRecordField.value.add(field.clone());
+    }
+    
+    public void create() {
+        if (isNull) {
+            RecordField recordField = rootRecord.getRecordMetadata(getTypeFullname());
+            for (FormField field : recordField.getValue()) {
+                value.add(field.clone());
+            }
+            if (isOverrideDisabled()) {
+            	disableOverride();
+            }
+            isNull = false;
+            fireChanged();
         }
-        clonedRecordField.typeName = typeName;
-        clonedRecordField.typeNamespace = typeNamespace;
-        clonedRecordField.schema = schema;
+    }
+    
+    public void setNull() {
+    	value.clear();
+    	isNull = true;
+    	fireChanged();
+    }
+    
+    @Override
+    public boolean isValid() {
+        if (isOverride() && !isChanged()) {
+            return true;
+        } else if (isOptional()) {
+            if (!isNull) {
+                return valid();
+            } else {
+                return true;
+            }
+        } else {
+            return !isNull && valid();
+        }
     }
 
     @Override

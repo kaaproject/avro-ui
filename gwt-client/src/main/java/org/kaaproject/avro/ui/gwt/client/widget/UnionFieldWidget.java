@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.kaaproject.avro.ui.shared.RecordField;
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
+import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
+import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -28,89 +30,124 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.ValueListBox;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ProvidesKey;
 
-public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements ValueChangeHandler<RecordField> {
+public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements ValueChangeHandler<FormField> {
 
+    private static final String UNION_PANEL_WIDTH = "650px";
+    
     private List<HandlerRegistration> recordTableRegistrations = new ArrayList<HandlerRegistration>();
+    private FieldWidgetPanel fieldWidgetPanel;
     private FlexTable recordTable;
     
-    public UnionFieldWidget() {
-        super();
+    public UnionFieldWidget(NavigationContainer container, boolean readOnly) {
+        super(container, readOnly);
     }
     
-    public UnionFieldWidget(Style style, SizedTextBox.Style sizedTextStyle) {
-        super(style, sizedTextStyle);
+    public UnionFieldWidget(AvroUiStyle style, NavigationContainer container, boolean readOnly) {
+        super(style, container, readOnly);
     }
 
     @Override
     protected Widget constructForm() {
-        FlexTable table = new FlexTable();
-        table.getColumnFormatter().setWidth(0, "200px");
-        table.getColumnFormatter().setWidth(1, "300px");
-        constructLabel(table, value, 0, 0);
         
-        RecordValuesListBox recordValuesBox = new RecordValuesListBox();
-        recordValuesBox.setAcceptableValues(value.getAcceptableValues());
-        recordValuesBox.setWidth("100%");
-        registrations.add(recordValuesBox.addValueChangeHandler(this));
+        fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, value.getValue() != null);
+        if (value.isOverride() && !readOnly && !value.isReadOnly()) {
+            fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+                @Override
+                public void onValueChange(ValueChangeEvent<Boolean> event) {
+                    fireChanged();
+                }
+            });
+        }
         
-        table.setWidget(0, 1, recordValuesBox);
-
         recordTable = new FlexTable();
-        table.setWidget(1, 0, recordTable);
-        table.getFlexCellFormatter().setColSpan(1, 0, 3);
-        recordValuesBox.setValue(value.getValue(), true);
-        return table;
+        fieldWidgetPanel.setWidth(UNION_PANEL_WIDTH);
+        fieldWidgetPanel.setContent(recordTable);
+
+        boolean isReadOnly = readOnly || value.isReadOnly();
+        
+        final FormValuesListBox formValuesBox = new FormValuesListBox(style, isReadOnly ? null : value.getDisplayPrompt());
+        formValuesBox.setEnabled(!isReadOnly);
+        fieldWidgetPanel.setLegendWidget(formValuesBox);
+        
+        value.finalizeMetadata();
+        
+        if (!isReadOnly) {
+            registrations.add(formValuesBox.addValueChangeHandler(this));
+            if (!value.isOptional()) {
+                formValuesBox.setValue(value.getValue());
+            }
+            formValuesBox.setAcceptableValues(value.getAcceptableValues());
+            if (value.isOptional()) {
+                formValuesBox.setValue(value.getValue());
+            }
+        } else {
+            formValuesBox.setValue(value.getValue());
+        }
+        constructFormData(recordTable, value.getValue(), recordTableRegistrations);
+        return fieldWidgetPanel;
+    }
+    
+    public void setOpen(boolean open) {
+        if (value != null && !value.isOverride()) {
+            boolean isOpen = value.getValue() == null ? false : open;
+            fieldWidgetPanel.setOpen(isOpen, false);
+        }
     }
     
     @Override
-    public void onValueChange(ValueChangeEvent<RecordField> event) {
+    public void onValueChange(ValueChangeEvent<FormField> event) {
         for (HandlerRegistration registration : recordTableRegistrations) {
             registration.removeHandler();
         }
         recordTableRegistrations.clear();
         
-        RecordField recordField = event.getValue();
-        value.setValue(recordField);
+        FormField formField = event.getValue();
+        value.setValue(formField);
         
-        if (recordField == null) {
+        if (formField == null) {
             recordTable.clear();
         }
         else {
-            constructFormData(recordTable, recordField, recordTableRegistrations);
+            constructFormData(recordTable, formField, recordTableRegistrations);
         }
+        fieldWidgetPanel.setValue(true, false, true);
         fireChanged();
     }
     
-    static class RecordValuesListBox extends ValueListBox<RecordField> {
+    static class FormValuesListBox extends ExtendedValueListBox<FormField> {
 
-        public RecordValuesListBox() {
-            super(new RecordFieldRenderer(), new RecordFieldKeyProvider());
+        public FormValuesListBox(AvroUiStyle style, String promptText) {
+            super(new FormFieldRenderer(), new FormFieldKeyProvider(), style, promptText);
+        }
+        
+        public ListBox getListBox() {
+            return (ListBox) getWidget();
         }
         
     }
     
-    static class RecordFieldKeyProvider implements ProvidesKey<RecordField> {
+    static class FormFieldKeyProvider implements ProvidesKey<FormField> {
 
         @Override
-        public Object getKey(RecordField item) {
-            return item != null ? item.getTypeFullname() : null;
+        public Object getKey(FormField item) {
+            return item != null ? item.getFieldName() : null;
         }
         
     }
     
-    static class RecordFieldRenderer implements Renderer<RecordField> {
+    static class FormFieldRenderer implements Renderer<FormField> {
 
         @Override
-        public String render(RecordField object) {
+        public String render(FormField object) {
             return object != null ? object.getDisplayName() : "";
         }
 
         @Override
-        public void render(RecordField object, Appendable appendable)
+        public void render(FormField object, Appendable appendable)
                 throws IOException {
             appendable.append(render(object));
         }
