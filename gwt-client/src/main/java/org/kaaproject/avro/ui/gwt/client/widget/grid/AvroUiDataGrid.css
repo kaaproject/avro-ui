@@ -137,3 +137,7 @@ border: inherit;
   border: inherit;
   background: #B5D8F5;
 }
+
+.dataGridColumnInvisible {
+    display: none;
+}

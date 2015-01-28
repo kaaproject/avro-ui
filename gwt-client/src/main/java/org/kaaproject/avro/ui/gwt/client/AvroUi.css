@@ -39,6 +39,21 @@
 	margin-left: 10px;
 }
 
+.resizePanel {
+	position: relative;
+	border-width: 1px 1px 14px;
+	border-style: solid;
+	border-color: #eee #eee #f5f5f5;
+}
+
+@sprite .resizeHandle {
+  gwt-image: 'resizeHandle';
+    position: absolute;
+    bottom: -14px;
+    right: 0px;
+    z-index: 10;
+}
+
 .requiredField:after {
     content: " *";
     font-size: 16px;
@@ -136,9 +151,6 @@
   margin: 0 0 20px;
   list-style: none;
   background-color: #f5f5f5;
-  -webkit-border-radius: 4px;
-     -moz-border-radius: 4px;
-          border-radius: 4px;
 }
 
 .breadcrumb > li {
@@ -212,6 +224,13 @@
     border:0;
 }
 
+.b-app-content {
+    background-color: #FFFFFF;
+    box-shadow: 0px 0px 8px rgba(0,0,0,0.5) inset;
+    height: 100%;
+    display: flex;
+}
+
 .ui-message {
     background: none repeat scroll 0 0 #FCFCFC;
     border: 1px solid #CCCCCC;
@@ -250,7 +269,6 @@
     background: none repeat scroll 0 0 #FCFCFC;
     border-color: #AAB8C6;
 }
-
 
 .ui-message .ui-icon {
     left: 10px;

@@ -34,9 +34,11 @@ import org.kaaproject.avro.ui.shared.UnionField;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -47,7 +49,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implements NavigationContainer {
 
-    private static final int NAVIGATION_HEADER_HEIGHT = 60; 
+    private static final int NAVIGATION_HEADER_HEIGHT = 55; 
     private static final int FRAGMENT_SWITCH_ANIMATION_DURATION = 500;
     private static final String RECORD_PANEL_WIDTH = "700px";
     
@@ -61,6 +63,9 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     
     private boolean isRoot;
     private boolean forceNavigation = false;
+    private boolean navigationDisabled = false;
+    private int preferredWidthPx = -1;
+    private int preferredHeightPx = -1;
     
     public RecordFieldWidget(AvroUiStyle style, boolean readOnly) {
         this(style, null, readOnly);
@@ -97,6 +102,11 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             setValue(null);
             setValue(currentValue);
         }
+    }
+    
+    public void setPreferredSizePx(int width, int height) {
+        preferredWidthPx = width;
+        preferredHeightPx = height;
     }
     
     public static boolean isNavigationNeeded(RecordField recordField) {
@@ -144,18 +154,29 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     
     @Override
     public void setHeight(String height) {
-        super.setHeight(height);
-        if (resizePanel != null ) {
+        if (resizePanel != null && rootPanel != null) {
             resizePanel.setHeight(height);
-        }
-        if (rootPanel != null) {
             rootPanel.setHeight(height);
-        }     
+            super.setHeight("100%");
+        } else {
+            super.setHeight(height);
+        }
+    }
+    
+    @Override
+    public void setWidth(String width) {
+        if (resizePanel != null && rootPanel != null) {
+            resizePanel.setWidth(width);
+            rootPanel.setWidth(width);
+            super.setWidth("100%");
+        } else {
+            super.setWidth(width);
+        }
     }
     
     private void initNavigation() {
         if (resizePanel == null) {
-            resizePanel = new ResizePanel();
+            resizePanel = new ResizePanel(style);
             rootPanel = new LayoutPanel();
             breadcrumbs = new Breadcrumbs();
             fragmentPanel = new FragmentLayoutPanel();
@@ -173,35 +194,74 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             resizePanel.addPanelResizedListener(new PanelResizeListener() {
                 @Override
                 public void onResized(int width, int height) {
+                    setWidth(width+"px");
                     setHeight(height+"px");
                 }
             });
             navElements = new ArrayList<>();
+        }
+    }
+    
+    private void clearNavigation() {
+        if (resizePanel != null) {
+            resizePanel = null;
+            rootPanel = null;
+            breadcrumbs.clear();
+            breadcrumbs = null;
+            fragmentPanel = null;
+            navElements.clear();
+            navElements = null;
+        }
+    }
+    
+    private void doLayout () {
+        if (isRoot) {
             Element element = getElement();
-            int height = 0;
-            if (element.getParentElement() != null) {
-                Element parentElement = element.getParentElement();
-                height = getInnerHeight(parentElement);
-                for (int i=0; i<parentElement.getChildNodes().getLength();i++) {
-                    Node node = parentElement.getChildNodes().getItem(i);
-                    if (Element.is(node)) {
-                        Element childElement = Element.as(node);
-                        if (!element.isOrHasChild(childElement)) {
-                            height -= childElement.getOffsetHeight();
+            element.getStyle().clearOverflow();
+            if (preferredWidthPx > 0 || preferredHeightPx > 0) {
+                if (preferredWidthPx > 0) {
+                    setWidth(preferredWidthPx + "px");
+                }
+                if (preferredHeightPx > 0) {
+                    setHeight(preferredHeightPx + "px");
+                }
+                if (navigationDisabled) {
+                    element.getStyle().setOverflow(Overflow.AUTO);
+                }
+            } else if (!navigationDisabled) {
+                int height = 0;
+                if (element.getParentElement() != null) {
+                    Element parentElement = element.getParentElement();
+                    height = getInnerHeight(parentElement);
+                    for (int i=0; i<parentElement.getChildNodes().getLength();i++) {
+                        Node node = parentElement.getChildNodes().getItem(i);
+                        if (Element.is(node)) {
+                            Element childElement = Element.as(node);
+                            if (!element.isOrHasChild(childElement)) {
+                                height -= childElement.getOffsetHeight();
+                            }
                         }
                     }
                 }
-            }
-            if (height > 0) {
-                setHeight(height+"px");
+                if (height > 0) {
+                    setHeight(height+"px");
+                } else {
+                    setHeight(getInnerHeight(element)+"px");
+                }
             } else {
-                setHeight(getInnerHeight(element)+"px");
+                element.getStyle().clearHeight();
             }
         }
     }
     
     private static int getInnerHeight(Element element) {
         int height = element.getClientHeight();
+        if (height == 0) {
+            height = getComputedStylePropertyPixels(element, "height");
+        }
+        if (height == 0) {
+            height = getComputedStylePropertyPixels(element, "min-height");
+        }
         height -= getComputedStylePropertyPixels(element, "padding-top");
         height -= getComputedStylePropertyPixels(element, "padding-bottom");
         height -= getComputedStylePropertyPixels(element, "border-top-width");
@@ -236,8 +296,10 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
 
     @Override
     protected Widget constructForm() {
+        Widget form;
+        navigationDisabled = isRoot && !(forceNavigation || isNavigationNeeded(value));
         constructFormData(table, value, registrations);
-        if (isRoot && (forceNavigation || isNavigationNeeded(value))) {
+        if (isRoot && !navigationDisabled) {            
             initNavigation();
             breadcrumbs.clear();
             navElements.clear();
@@ -248,12 +310,9 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             } else {
                 breadcrumbs.setVisible(false);
             }
-            return resizePanel;
+            form = resizePanel;
         } else {
-            if (isRoot) {
-                Element element = getElement();
-                element.getStyle().clearHeight();
-            }
+            clearNavigation();
             if (value != null && value.isOverride()) {
                 FieldWidgetPanel fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
                 fieldWidgetPanel.setWidth(RECORD_PANEL_WIDTH);
@@ -266,13 +325,34 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     });
                 }
                 fieldWidgetPanel.setContent(table);
-                return fieldWidgetPanel;
+                form = fieldWidgetPanel;
             } else {
-                return table;
+                form = table;
             }
         }
+        doLayout();
+        return form;
     }
     
+    @Override
+    protected Widget constructLabel(FlexTable table, FormField field, int row,
+            int column) {
+        Widget label = super.constructLabel(table, field, row, column);
+        if (!navigationDisabled) {
+            label.addStyleName(style.padded());
+        }
+        return label;
+    }
+
+    @Override
+    protected int placeWidget(FlexTable table, FieldType type, Widget widget,
+            int row, int column, List<HandlerRegistration> handlerRegistrations) {
+        if (!navigationDisabled && (!type.isComplex() || shouldPlaceNestedWidgetButton(type))) {
+            widget.addStyleName(style.padded());
+        }
+        return super.placeWidget(table, type, widget, row, column, handlerRegistrations);
+    }
+
     @Override
     public void goBack() {
         gotoIndex(navElements.size()-2);

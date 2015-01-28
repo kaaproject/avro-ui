@@ -32,6 +32,10 @@ public interface AvroUiResources extends ClientBundle {
 
         String padded();
         
+        String resizePanel();
+        
+        String resizeHandle();
+        
         String requiredField();
         
         String secondaryLabel();
@@ -91,6 +95,9 @@ public interface AvroUiResources extends ClientBundle {
         String success();
         
         String warning();        
+        
+        @ClassName("b-app-content")
+        String bAppContent();
 
         @ClassName("icon-error")
         String iconError();

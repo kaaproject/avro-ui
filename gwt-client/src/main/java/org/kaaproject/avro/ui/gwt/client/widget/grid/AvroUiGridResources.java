@@ -26,5 +26,10 @@ interface AvroUiGridResources extends DataGrid.Resources {
     AvroUiGridStyle dataGridStyle();
 }
 
-interface AvroUiGridStyle extends DataGrid.Style {}
+interface AvroUiGridStyle extends DataGrid.Style {
+ 
+    String dataGridColumnInvisible();
+    
+}
+
 

@@ -88,7 +88,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     protected final AvroUiStyle style;
     
     protected boolean readOnly = false;
-
+    
     private static AvroUiStyle getDefaultStyle() {
         return Utils.avroUiStyle;
     }
@@ -230,7 +230,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         }
     }
     
-    private boolean shouldPlaceNestedWidgetButton(FieldType type) {
+    protected boolean shouldPlaceNestedWidgetButton(FieldType type) {
         if (type.isComplex()) {
             if (type == FieldType.UNION) {
                 return value.getFieldType() == FieldType.UNION;
@@ -256,20 +256,15 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             table.setWidget(row, column, widget);
             table.getFlexCellFormatter().setColSpan(row, column, 3);
         } else {
-            if (value.getFieldType() == FieldType.RECORD) {
-                widget.addStyleName(style.padded());
-            }
             table.setWidget(row, column, widget);
         }
         return row;
     }
     
-    protected void constructLabel(FlexTable table, FormField field, int row, int column) {
+    protected Widget constructLabel(FlexTable table, FormField field, int row, int column) {
         FieldWidgetLabel label = new FieldWidgetLabel(field);
-        if (value.getFieldType() == FieldType.RECORD) {
-            label.addStyleName(style.padded());
-        }
         table.setWidget(row, column, label);
+        return label;
     }
     
     protected Widget constructWidget(FormField field, List<HandlerRegistration> handlerRegistrations) {
@@ -549,10 +544,10 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         } else {
             openButton.setVisible(true);
             emptyLabel.setVisible(false);
-            openButton.addClickHandler(new ClickHandler() {
+            handlerRegistrations.add(openButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    if (isEmptyRecord) {
+                    if (field.getFieldType() == FieldType.RECORD && field.isNull()) {
                         ((RecordField)field).create();
                         openButton.setText(Utils.constants.open());
                         deleteButon.setVisible(true);
@@ -567,36 +562,31 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                         public void onAdded(FormField field) {}
                     });
                 }
-            });            
-            
-            if (field.getFieldType() == FieldType.RECORD &&  
-                    !field.isNull() && !isReadOnly) {
-                deleteButon.setVisible(true);
-                deleteButon.addClickHandler(new ClickHandler() {
-                    @Override
-                    public void onClick(ClickEvent event) {
-                        ConfirmListener listener = new ConfirmListener() {
-                            @Override
-                            public void onNo() {
-                            }
+            }));            
+            handlerRegistrations.add(deleteButon.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    ConfirmListener listener = new ConfirmListener() {
+                        @Override
+                        public void onNo() {
+                        }
 
-                            @Override
-                            public void onYes() {
-                                ((RecordField)field).setNull();
-                                openButton.setText(Utils.constants.create());
-                                deleteButon.setVisible(false);
-                                fireChanged();
-                            }
-                        };
-                        ConfirmDialog dialog = new ConfirmDialog(listener, Utils.messages.deleteNestedEntryTitle(), 
-                                Utils.messages.deleteNestedEntryQuestion(fieldTypeName, field.getDisplayName()));
-                        dialog.center();
-                        dialog.show();
-                    }
-                });
-            } else {
-                deleteButon.setVisible(false);
-            }            
+                        @Override
+                        public void onYes() {
+                            ((RecordField)field).setNull();
+                            openButton.setText(Utils.constants.create());
+                            deleteButon.setVisible(false);
+                            fireChanged();
+                        }
+                    };
+                    ConfirmDialog dialog = new ConfirmDialog(listener, Utils.messages.deleteNestedEntryTitle(), 
+                            Utils.messages.deleteNestedEntryQuestion(fieldTypeName, field.getDisplayName()));
+                    dialog.center();
+                    dialog.show();
+                }
+            }));            
+            deleteButon.setVisible(field.getFieldType() == FieldType.RECORD &&  
+                    !field.isNull() && !isReadOnly);
         }
  
         nestedWidget.add(label);

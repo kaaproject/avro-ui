@@ -19,11 +19,10 @@ package org.kaaproject.avro.ui.gwt.client.widget;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.kaaproject.avro.ui.gwt.client.util.Utils;
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 
-import com.google.gwt.dom.client.ImageElement;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -33,33 +32,28 @@ import com.google.gwt.user.client.ui.FlowPanel;
 public class ResizePanel extends FlowPanel {
     private boolean resize = false;
     private List<PanelResizeListener> panelResizedListeners = new ArrayList<>();
-    private ImageElement resizeElement;
+    private Element resizeElement;
     
-    private int minHeight;
-    private int minWidth;
+    private int minWidth = 0;
+    private int minHeight = 0;
 
-    public ResizePanel() {
+    public ResizePanel(AvroUiStyle style) {
         super();
         DOM.sinkEvents(this.getElement(), Event.ONMOUSEDOWN | Event.ONMOUSEMOVE
                 | Event.ONMOUSEUP | Event.ONMOUSEOVER);
-        getElement().getStyle().setPosition(Position.RELATIVE);
-        resizeElement = DOM.createImg().cast();
-        resizeElement.setSrc(Utils.resources.resizeHandle().getSafeUri().asString());
-        resizeElement.getStyle().setPosition(Position.ABSOLUTE);
-        resizeElement.getStyle().setBottom(0, Unit.PX);
-        resizeElement.getStyle().setRight(0, Unit.PX);
-        resizeElement.getStyle().setZIndex(10);
+        addStyleName(style.resizePanel());
+        resizeElement = DOM.createDiv();
+        resizeElement.addClassName(style.resizeHandle());
         this.getElement().appendChild(resizeElement);
         
         Event.addNativePreviewHandler(new NativePreviewHandler() {
             
-            @SuppressWarnings("deprecation")
             public void onPreviewNativeEvent(NativePreviewEvent event) {
                 if (resize) {
                     int clientX = event.getNativeEvent().getClientX();
                     int clientY = event.getNativeEvent().getClientY();
-                    int originalX = DOM.getAbsoluteLeft(getElement());
-                    int originalY = DOM.getAbsoluteTop(getElement());
+                    int originalX = getElement().getAbsoluteLeft();
+                    int originalY = getElement().getAbsoluteTop();
                     if (clientX < originalX || clientY < originalY) {
                         event.cancel();
                     }
@@ -68,30 +62,36 @@ public class ResizePanel extends FlowPanel {
             
         });
     }
+    
+    public void setMinSize(int width, int height) {
+        if (width >= 0) {
+            this.minWidth = width;
+        }
+        if (height >= 0) {
+            this.minHeight = height;
+        }
+    }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void onBrowserEvent(Event event) {
         final int eventType = DOM.eventGetType(event);
         if (Event.ONMOUSEOVER == eventType && isCursorResize(event)) {
-            DOM.setStyleAttribute(this.getElement(), "cursor", "default");
+            getElement().getStyle().setCursor(Cursor.DEFAULT);
         }
         if (Event.ONMOUSEDOWN == eventType) {
-            if (minHeight == 0 && minWidth == 0) {
-                minHeight = getElement().getOffsetHeight();
-                minWidth = getElement().getOffsetWidth();
-            }
             if (isCursorResize(event) && !resize) {               
                 resize = true;
                 DOM.setCapture(this.getElement());
             }
         } else if (resize && Event.ONMOUSEMOVE == eventType) {           
-            int absX = DOM.eventGetClientX(event);
-            int absY = DOM.eventGetClientY(event);
-            int originalX = DOM.getAbsoluteLeft(this.getElement());
-            int originalY = DOM.getAbsoluteTop(this.getElement());
+            int absX = event.getClientX();
+            int absY = event.getClientY();
+            int originalX = getElement().getAbsoluteLeft();
+            int originalY = getElement().getAbsoluteTop();
             if (absY > originalY && absX > originalX) {
-                int height = Math.max(minHeight, absY - originalY + 2);      
+                int height = absY - originalY + 2 - 
+                        (getElement().getAbsoluteBottom() - resizeElement.getAbsoluteTop());
+                height = Math.max(minHeight, height);
                 this.setHeight(height + "px");
                 int width = Math.max(minWidth, absX - originalX + 2);
                 this.setWidth(width + "px");
@@ -104,13 +104,12 @@ public class ResizePanel extends FlowPanel {
         }
     }
 
-    @SuppressWarnings("deprecation")
     protected boolean isCursorResize(Event event) {
         if (resizeElement != null) {
-            int cursorY = DOM.eventGetClientY(event);
+            int cursorY = event.getClientY();
             int initialY = resizeElement.getAbsoluteTop();
             int height = resizeElement.getOffsetHeight();
-            int cursorX = DOM.eventGetClientX(event);
+            int cursorX = event.getClientX();
             int initialX = resizeElement.getAbsoluteLeft();
             int width = resizeElement.getOffsetWidth();
 

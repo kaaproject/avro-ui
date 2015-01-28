@@ -21,11 +21,11 @@ import static org.kaaproject.avro.ui.sandbox.client.util.Utils.isNotBlank;
 
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
+import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel;
+import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel.Type;
 import org.kaaproject.avro.ui.gwt.client.widget.RecordFieldWidget;
 import org.kaaproject.avro.ui.gwt.client.widget.SizedTextArea;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.MainView;
-import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel;
-import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel.Type;
 import org.kaaproject.avro.ui.sandbox.client.util.Utils;
 import org.kaaproject.avro.ui.shared.RecordField;
 
@@ -181,7 +181,6 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         schemaFormTable.setWidget(row++, 0, toolbarPanel);
         
         schemaForm = new RecordFieldWidget();
-        schemaForm.setWidth(FULL_WIDTH);
         
         schemaForm.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
             @Override
@@ -192,7 +191,6 @@ public class MainViewImpl extends Composite implements MainView, InputEventHandl
         
         CaptionPanel schemaFormPanel = new CaptionPanel(Utils.constants.generatedForm());
         schemaFormPanel.add(schemaForm);
-        schemaFormPanel.setWidth(FULL_WIDTH);
         schemaFormPanel.getElement().getStyle().setPropertyPx("minHeight", 300);
         
         schemaFormTable.setWidget(row++, 0, schemaFormPanel);

@@ -39,7 +39,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.gwt.user.cellview.client.DataGrid.Resources;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.cellview.client.SimplePager;
@@ -58,9 +57,6 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasRowActionEventHandlers<K> {
     
     protected static final int ACTION_COLUMN_WIDTH = 40;
-    
-    private static AvroUiGridResources gridResources = GWT.create(AvroUiGridResources.class);
-    private static AvroUiGridResourcesSmall gridResourcesSmall = GWT.create(AvroUiGridResourcesSmall.class);
 
     private static SimplePager.Resources pagerResources = GWT.create(SimplePager.Resources.class);
     private static AvroUiPagerResourcesSmall pagerResourcesSmall = GWT.create(AvroUiPagerResourcesSmall.class);
@@ -77,15 +73,15 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     protected Column<T,T> deleteColumn;
     
     public AbstractGrid(Style.Unit unit) {
-        this(unit, true, false, true);
+        this(unit, true);
     }
 
-    public AbstractGrid(Style.Unit unit, boolean init) {
-        this(unit, true, false, init);
+    public AbstractGrid(Style.Unit unit, boolean enableActions) {
+        this(unit, enableActions, false);
     }
 
-    public AbstractGrid(Style.Unit unit, boolean enableActions, boolean init) {
-        this(unit, enableActions, false, init);
+    public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded) {
+        this(unit, enableActions, embedded, true);
     }
 
     public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, boolean init) {
@@ -104,8 +100,7 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
                 return item != null ? getObjectId(item) : null;
             }
         };
-        Resources localGridResources = embedded ? gridResourcesSmall : gridResources;
-        table = new DataGrid<T>(20, localGridResources, keyProvider);
+        table = new AvroUiDataGrid<T>(20, keyProvider, embedded);
         table.setAutoHeaderRefreshDisabled(true);
         Label emptyTableLabel = new Label(Utils.constants.dataGridEmpty());
         if (embedded) {

@@ -27,4 +27,4 @@ interface AvroUiGridResourcesSmall extends DataGrid.Resources {
     AvroUiGridSmallStyle dataGridStyle();
 }
 
-interface AvroUiGridSmallStyle extends DataGrid.Style {}
+interface AvroUiGridSmallStyle extends AvroUiGridStyle {}

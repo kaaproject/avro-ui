@@ -24,6 +24,8 @@ import java.text.ParseException;
 import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -32,16 +34,18 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.text.shared.AbstractRenderer;
 import com.google.gwt.text.shared.Parser;
 import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ValueBox;
 
 public abstract class NumberBox<T extends Number> extends ValueBox<T> implements BlurHandler,
-                                    FocusHandler, ClickHandler, KeyPressHandler {
+                                    FocusHandler, ClickHandler, KeyDownHandler {
 
     private AvroUiStyle style;
     private String promptText;
@@ -51,6 +55,7 @@ public abstract class NumberBox<T extends Number> extends ValueBox<T> implements
     protected NumberBox(AvroUiStyle style, Element element, String promptText,
             final Renderer<T> renderer, final Parser<T> parser) {
         super(element, renderer, parser);
+        sinkEvents(Event.ONPASTE);
         this.style = style;
         this.promptText = promptText;
         this.renderer = renderer;
@@ -61,7 +66,7 @@ public abstract class NumberBox<T extends Number> extends ValueBox<T> implements
             setPrompts();
         }
         
-        this.addKeyPressHandler(this);
+        this.addKeyDownHandler(this);
         this.addBlurHandler(this);
     }
     
@@ -87,7 +92,26 @@ public abstract class NumberBox<T extends Number> extends ValueBox<T> implements
     }
     
     @Override
-    public void onKeyPress(KeyPressEvent event) {
+    public void onBrowserEvent(Event event) {
+        super.onBrowserEvent(event);
+        switch (DOM.eventGetType(event)) {
+            case Event.ONPASTE:
+                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                    @Override
+                    public void execute() {
+                        if (Utils.isNotBlank(promptText) && Utils.isBlank(NumberBox.super.getText())) {
+                            setPrompts();
+                        } else {
+                            setText(renderer.render(getValue()));
+                        }                    }
+                });
+                break;
+        }
+    }
+    
+    @Override
+    public void onKeyDown(KeyDownEvent event) {
+        
         if ( !isEnabled( ) || isReadOnly( ) )
             return;
 
@@ -99,24 +123,65 @@ public abstract class NumberBox<T extends Number> extends ValueBox<T> implements
         int keyCode = event.getNativeEvent().getKeyCode();
 
         // allow special keys
-        if ( keyCode == KeyCodes.KEY_ENTER )
+        switch(keyCode) {
+        case KeyCodes.KEY_TAB: 
+        case KeyCodes.KEY_BACKSPACE: 
+        case KeyCodes.KEY_DELETE: 
+        case KeyCodes.KEY_LEFT: 
+        case KeyCodes.KEY_RIGHT: 
+        case KeyCodes.KEY_UP: 
+        case KeyCodes.KEY_DOWN: 
+        case KeyCodes.KEY_END: 
+        case KeyCodes.KEY_ENTER:
+        case KeyCodes.KEY_ESCAPE:
+        case KeyCodes.KEY_PAGEDOWN:
+        case KeyCodes.KEY_PAGEUP:
+        case KeyCodes.KEY_HOME:
+        case KeyCodes.KEY_SHIFT:
+        case KeyCodes.KEY_ALT:
+        case KeyCodes.KEY_CTRL:
             return;
-
-        // check for decimal '.'
-        if (isDecimal() && '.' == (char)keyCode && !getText().contains("."))
-            return;
-
-        // check for negative sign '-'
-        if (getCursorPos() == 0 && '-' == (char)keyCode && !getText().startsWith("-"))
-            return;
-        
-        // filter out non-digits
-        if (Character.isDigit((char)keyCode)) {
-            return;
+        default:
+            
+            if (event.isAltKeyDown() || (event.isControlKeyDown() && 
+                    (keyCode == KeyCodes.KEY_C || keyCode == KeyCodes.KEY_V 
+                    || keyCode == KeyCodes.KEY_X )))
+                return;
+            
+            if (!event.isShiftKeyDown()) {
+                // check for decimal '.'
+                if (isDecimal() && isDot(keyCode) && !getText().contains("."))
+                    return;
+    
+                // check for negative sign '-'
+                if (getCursorPos() == 0 && isDash(keyCode) && !getText().startsWith("-"))
+                    return;
+                
+                // filter out non-digits
+                if (isDigit(keyCode)) {
+                    return;
+                }
+            }
         }
 
         cancelKey();
     }
+    
+    private static boolean isDot(int keyCode) {
+        return keyCode == 190 || keyCode == 110;
+    }
+    
+    private static boolean isDash(int keyCode) {        
+        return (keyCode == (isFirefox() ? 173 : 189)) || keyCode == 109;
+    }
+    
+    private static boolean isDigit(int keyCode) {
+        return keyCode >= 48 && keyCode <= 57 || keyCode >= 96 && keyCode <= 105;
+    }
+    
+    private static native boolean isFirefox() /*-{
+        return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+    }-*/;
     
     public boolean isDecimal() {
         return isDecimal;
