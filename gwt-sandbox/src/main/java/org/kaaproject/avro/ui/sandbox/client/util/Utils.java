@@ -16,9 +16,8 @@
 
 package org.kaaproject.avro.ui.sandbox.client.util;
 
-import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxConstants;
 import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxResources;
-import org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxMessages;
+import org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxConstants;
 import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxServiceException;
 
 import com.google.gwt.core.client.GWT;
@@ -30,9 +29,6 @@ public class Utils {
 
     public static final AvroUiSandboxConstants constants = GWT.create(
             AvroUiSandboxConstants.class);
-
-    public static final AvroUiSandboxMessages messages = GWT.create(
-            AvroUiSandboxMessages.class);
 
     public static String getErrorMessage(Throwable throwable) {
         if (throwable instanceof AvroUiSandboxServiceException) {

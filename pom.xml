@@ -201,6 +201,8 @@
                         <exclude>**/gen/**/*.java</exclude>
                         <exclude>**/*.iml</exclude>
                         <exclude>**/bin/**</exclude>
+                        <exclude>**/client/i18n/*Constants.java</exclude>
+                        <exclude>**/client/i18n/*Messages.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
