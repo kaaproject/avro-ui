@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,16 @@ import com.google.gwt.view.client.ProvidesKey;
 
 public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements ValueChangeHandler<FormField> {
 
-    private static final String UNION_PANEL_WIDTH = "650px";
-    
     private List<HandlerRegistration> recordTableRegistrations = new ArrayList<HandlerRegistration>();
     private FieldWidgetPanel fieldWidgetPanel;
     private FlexTable recordTable;
     
-    public UnionFieldWidget(NavigationContainer container, boolean readOnly) {
-        super(container, readOnly);
+    public UnionFieldWidget(AvroWidgetsConfig config, NavigationContainer container, boolean readOnly) {
+        super(config, container, readOnly);
     }
     
-    public UnionFieldWidget(AvroUiStyle style, NavigationContainer container, boolean readOnly) {
-        super(style, container, readOnly);
+    public UnionFieldWidget(AvroWidgetsConfig config, AvroUiStyle style, NavigationContainer container, boolean readOnly) {
+        super(config, style, container, readOnly);
     }
 
     @Override
@@ -64,7 +62,7 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
         }
         
         recordTable = new FlexTable();
-        fieldWidgetPanel.setWidth(UNION_PANEL_WIDTH);
+        fieldWidgetPanel.setWidth(config.getUnionPanelWidth());
         fieldWidgetPanel.setContent(recordTable);
 
         boolean isReadOnly = readOnly || value.isReadOnly();

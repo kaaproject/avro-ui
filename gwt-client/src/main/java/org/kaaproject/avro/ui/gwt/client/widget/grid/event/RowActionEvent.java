@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,16 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class RowActionEvent<K> extends GwtEvent<RowActionEventHandler<K>>{
 
+  public static final int CLICK = 1;
+  public static final int DELETE = 2;
+  public static final int MAX_ACTION = DELETE;
+    
   private static Type<RowActionEventHandler<?>> TYPE;
 
   private final K clickedId;
-  private final RowAction action;
+  private final int action;
 
-  public RowActionEvent(K clickedId, RowAction action) {
+  public RowActionEvent(K clickedId, int action) {
     this.clickedId = clickedId;
     this.action = action;
   }
@@ -34,7 +38,7 @@ public class RowActionEvent<K> extends GwtEvent<RowActionEventHandler<K>>{
       return clickedId;
   }
 
-  public RowAction getAction() {
+  public int getAction() {
       return action;
   }
 

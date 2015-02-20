@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,33 +38,48 @@ public interface AvroUiSandboxConstants extends ConstantsWithLookup {
     @DefaultStringValue("Unexpected service error occurred: ")
     String general_error();
     
-    @DefaultStringValue("Avro json schema")
-    String avroJsonSchema();
+    @DefaultStringValue("Read only")
+    String read_only();
     
-    @DefaultStringValue("Generate form")
-    String generateForm();
+    @DefaultStringValue("View display string")
+    String view_display_string();
     
-    @DefaultStringValue("Generated form")
-    String generatedForm();
+    @DefaultStringValue("Display string")
+    String display_string();
     
-    @DefaultStringValue("Reset")
-    String reset();
+    @DefaultStringValue("Form")
+    String form();
     
-    @DefaultStringValue("Show record JSON")
-    String showRecordJson();
+    @DefaultStringValue("Show JSON")
+    String showJson();
     
-    @DefaultStringValue("Upload record from JSON")
-    String uploadRecordFromJson();
+    @DefaultStringValue("Upload from JSON")
+    String uploadFromJson();
     
-    @DefaultStringValue("Generated record JSON")
-    String generatedRecordJson();
-
-    @DefaultStringValue("Record JSON to upload")
-    String recordJsonToUpload();
-
+    @DefaultStringValue("Generated JSON")
+    String generatedJson();
+    
     @DefaultStringValue("Upload")
     String upload();
     
+    @DefaultStringValue("JSON to upload")
+    String jsonToUpload();
+    
+    @DefaultStringValue("Generate record form")
+    String generateRecordForm();
+   
+    @DefaultStringValue("Reset")
+    String reset();
+    
+    @DefaultStringValue("Schema constructor")
+    String schemaConstructor();
+    
+    @DefaultStringValue("Record constructor")
+    String recordConstructor();    
+    
+    @DefaultStringValue("Main console")
+    String mainConsole();
+
 }
 
 

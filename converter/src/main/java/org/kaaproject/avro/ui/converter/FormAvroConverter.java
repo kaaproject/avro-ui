@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericData.EnumSymbol;
 import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -56,65 +55,14 @@ import org.kaaproject.avro.ui.shared.UnionField;
 /**
  * The Class FormAvroConverter.
  */
-public class FormAvroConverter {
-
-    /** The Constant DISPLAY_NAME. */
-    private static final String DISPLAY_NAME = "displayName";
-    
-    /** The Constant DISPLAY_PROMPT. */
-    private static final String DISPLAY_PROMPT = "displayPrompt";
-    
-    /** The Constant BY_DEFAULT. */
-    private static final String BY_DEFAULT = "by_default";
-    
-    /** The Constant DISPLAY_NAMES. */
-    private static final String DISPLAY_NAMES = "displayNames";
-    
-    /** The Constant WEIGHT. */
-    private static final String WEIGHT = "weight";
-    
-    /** The Constant KEY_INDEX. */
-    private static final String KEY_INDEX = "keyIndex";
-    
-    /** The Constant MIN_ROW_COUNT. */
-    private static final String MIN_ROW_COUNT = "minRowCount";
-
-    /** The Constant OVERRIDE_STRATEGY. */
-    private static final String OVERRIDE_STRATEGY = "overrideStrategy";
-
-    /** The Constant MAX_LENGTH. */
-    private static final String MAX_LENGTH = "maxLength";
-    
-    /** The Constant FIELD_ACCESS. */
-    private static final String FIELD_ACCESS = "fieldAccess";
-    
-    /** The Constant INPUT_TYPE. */
-    private static final String INPUT_TYPE = "inputType";
-    
-    /** The Constant DEFAULT_CONFIG_NAMESPACE. */
-    private static final String DEFAULT_CONFIG_NAMESPACE = "org.kaaproject.configuration";
-    
-    private static final String UNCHANGED_NAME = "unchangedT";
-    
-    private static final String UNCHANGED_SYMBOL = "unchanged";
-    
-    private static final Schema defaultUnchangedSchema = new Schema.Parser().parse(
-             "{" +
-                "\"type\" : \"enum\","+
-                "\"name\" : \"" + UNCHANGED_NAME + "\","+
-                "\"namespace\" : \"" + DEFAULT_CONFIG_NAMESPACE + "\","+
-                "\"symbols\" : [ \"" + UNCHANGED_SYMBOL + "\" ]"+
-             "}");
-    
-    private static final GenericEnumSymbol unchangedSymbol = 
-            new GenericData.EnumSymbol(defaultUnchangedSchema, UNCHANGED_SYMBOL);
+public class FormAvroConverter implements ConverterConstants {
 
     /**
      * Creates the record field from schema.
      *
      * @param schema the schema
      * @return the record field
-     * @throws IOException 
+     * @throws IOException Signals that an I/O exception has occurred.
      */
     public static RecordField createRecordFieldFromSchema(Schema schema) throws IOException {
         FormField formField = createFieldFromSchema(null, schema);
@@ -126,8 +74,42 @@ public class FormAvroConverter {
     }
     
     /**
+     * Creates the generic record from record field.
+     *
+     * @param recordField the record field
+     * @return the generic record
+     */
+    public static GenericRecord createGenericRecordFromRecordField(RecordField recordField) {
+        Schema schema = new Schema.Parser().parse(recordField.getSchema());
+        GenericRecordBuilder builder = new GenericRecordBuilder(schema);
+        for (FormField formField : recordField.getValue()) {
+            String fieldName = formField.getFieldName();
+            Field field = schema.getField(fieldName);
+            Object fieldValue = convertValue(formField, field.schema());
+            builder.set(field, fieldValue);
+        }
+        GenericRecord record = builder.build();        
+        return record;
+    }
+    
+    /**
+     * Creates the record field from generic record.
+     *
+     * @param record the record
+     * @return the record field
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public static RecordField createRecordFieldFromGenericRecord(GenericRecord record) throws IOException {
+        Schema schema = record.getSchema();
+        RecordField formData = createRecordFieldFromSchema(schema);
+        fillRecordFieldFromGenericRecord(formData, formData, record);
+        return formData;
+    }
+    
+    /**
      * Creates the field from schema.
      *
+     * @param rootRecord the root record
      * @param schema the schema
      * @return the form field
      * @throws IOException Signals that an I/O exception has occurred.
@@ -138,14 +120,17 @@ public class FormAvroConverter {
         String displayName = fieldName;
         JsonNode displayNameVal = schema.getJsonProp(DISPLAY_NAME);
         if (displayNameVal != null && displayNameVal.isTextual()) {
-            displayName = displayNameVal.asText();
+            String displayNameString = displayNameVal.asText().trim();
+            if (displayNameString.length() > 0) {
+                displayName = displayNameString;
+            }
         }
         boolean optional = isNullTypeSchema(schema);
         boolean isOverride = isOverrideTypeSchema(schema);
         
         FieldType fieldType = toFieldType(schema);
         Schema fieldTypeSchema = getFieldTypeSchema(schema);
-        String fieldTypeSchemaString = fieldTypeSchema.toString();
+        String fieldTypeSchemaString = SchemaFormAvroConverter.createSchemaString(fieldTypeSchema, false);
         if (fieldType == FieldType.UNION) {
             UnionField unionField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
             List<FormField> acceptableValues = new ArrayList<>();
@@ -170,8 +155,13 @@ public class FormAvroConverter {
                 }
                 if (!rootRecord.containsRecordMetadata(fieldTypeSchema.getFullName())) {
                     rootRecord.putRecordMetadata(fieldTypeSchema.getFullName(), newRecordField);
+                    parseFields(rootRecord, newRecordField, fieldTypeSchema);
+                    newRecordField = (RecordField)newRecordField.clone();
+                    newRecordField.finalizeMetadata();
+                    rootRecord.putRecordMetadata(fieldTypeSchema.getFullName(), newRecordField);
+                } else {
+                    parseFields(rootRecord, newRecordField, fieldTypeSchema);
                 }
-                parseFields(rootRecord, newRecordField, fieldTypeSchema);
             }
             if (recordField == null) {
 	            recordField = (RecordField)rootRecord.getRecordMetadata(fieldTypeSchema.getFullName()).clone();
@@ -223,9 +213,10 @@ public class FormAvroConverter {
     /**
      * Parses the fields.
      *
+     * @param rootRecord the root record
      * @param formData the form data
      * @param schema the schema
-     * @throws IOException 
+     * @throws IOException Signals that an I/O exception has occurred.
      */
     private static void parseFields(RecordField rootRecord, RecordField formData, Schema schema) throws IOException {
         List<Field> schemaFields = schema.getFields();
@@ -236,9 +227,13 @@ public class FormAvroConverter {
             
             String fieldName = field.name();
             String displayName = fieldName;
+            
             JsonNode displayNameVal = field.getJsonProp(DISPLAY_NAME);
             if (displayNameVal != null && displayNameVal.isTextual()) {
-                displayName = displayNameVal.asText();
+                String displayNameString = displayNameVal.asText().trim();
+                if (displayNameString.length() > 0) {
+                    displayName = displayNameString;
+                }
             }
             
             formField.setFieldName(fieldName);
@@ -247,6 +242,22 @@ public class FormAvroConverter {
             JsonNode displayPromptVal = field.getJsonProp(DISPLAY_PROMPT);
             if (displayPromptVal != null && displayPromptVal.isTextual()) {
                 formField.setDisplayPrompt(displayPromptVal.asText());
+            }
+            
+            JsonNode weightVal = field.getJsonProp(WEIGHT);
+            if (weightVal != null && weightVal.isNumber()) {
+                Number weight = weightVal.getNumberValue();
+                formField.setWeight(weight.floatValue());
+            }
+            JsonNode keyIndexVal = field.getJsonProp(KEY_INDEX);
+            if (keyIndexVal != null && keyIndexVal.isNumber()) {
+                Number keyIndex = keyIndexVal.getNumberValue();
+                formField.setKeyIndex(keyIndex.intValue());
+            }
+            JsonNode fieldAccessVal = field.getJsonProp(FIELD_ACCESS);
+            if (fieldAccessVal != null && fieldAccessVal.isTextual()) {
+                String fieldAccess = fieldAccessVal.asText();
+                formField.setFieldAccess(FieldAccess.valueOf(fieldAccess.toUpperCase()));
             }
             
             JsonNode defaultValueVal = field.getJsonProp(BY_DEFAULT);
@@ -364,21 +375,6 @@ public class FormAvroConverter {
                         }
                     }
                 }
-                JsonNode weightVal = field.getJsonProp(WEIGHT);
-                if (weightVal != null && weightVal.isNumber()) {
-                    Number weight = weightVal.getNumberValue();
-                    formField.setWeight(weight.floatValue());
-                }
-                JsonNode keyIndexVal = field.getJsonProp(KEY_INDEX);
-                if (keyIndexVal != null && keyIndexVal.isNumber()) {
-                    Number keyIndex = keyIndexVal.getNumberValue();
-                    formField.setKeyIndex(keyIndex.intValue());
-                }
-                JsonNode fieldAccessVal = field.getJsonProp(FIELD_ACCESS);
-                if (fieldAccessVal != null && fieldAccessVal.isTextual()) {
-                    String fieldAccess = fieldAccessVal.asText();
-                    formField.setFieldAccess(FieldAccess.valueOf(fieldAccess.toUpperCase()));
-                }
             }
             formData.addField(formField);
         }
@@ -388,10 +384,13 @@ public class FormAvroConverter {
      * Creates the field.
      *
      * @param <T> the generic type
+     * @param rootRecord the root record
      * @param type the type
      * @param fieldName the field name
      * @param displayName the display name
+     * @param schema the schema
      * @param optional the optional
+     * @param isOverride the is override
      * @return the t
      */
     @SuppressWarnings("unchecked")
@@ -499,6 +498,12 @@ public class FormAvroConverter {
         return value;
     }
     
+    /**
+     * Sets the json value.
+     *
+     * @param field the field
+     * @param jsonValue the json value
+     */
     private static void setJsonValue(FormField field, JsonNode jsonValue) {
         if (jsonValue == null) {
             return;
@@ -564,6 +569,13 @@ public class FormAvroConverter {
         }
     }
     
+    /**
+     * Convert union default value.
+     *
+     * @param acceptableValues the acceptable values
+     * @param jsonValue the json value
+     * @return the form field
+     */
     private static FormField convertUnionDefaultValue(List<FormField> acceptableValues, JsonNode jsonValue) {
         if (jsonValue == null) {
             return null;
@@ -593,6 +605,13 @@ public class FormAvroConverter {
         return value;
     }
     
+    /**
+     * Matches type.
+     *
+     * @param type the type
+     * @param jsonValue the json value
+     * @return true, if successful
+     */
     private static boolean matchesType(FieldType type, JsonNode jsonValue) {
         switch (type) {
         case BOOLEAN:
@@ -600,7 +619,7 @@ public class FormAvroConverter {
         case INT:
             return jsonValue.isInt();
         case LONG:
-            return jsonValue.isLong() || jsonValue.isBigDecimal();
+            return jsonValue.isIntegralNumber();
         case FLOAT:
             return jsonValue.isDouble();
         case DOUBLE:
@@ -663,13 +682,17 @@ public class FormAvroConverter {
                     }
                     throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
                 } else if (isNullTypeSchema(schema)) {
-                    for (Schema typeSchema : schema.getTypes()) {
-                        FieldType type = toFieldType(typeSchema);
-                        if (type != null) {
-                            return type;
+                    if (schema.getTypes().size() > 2) {
+                        return FieldType.UNION;
+                    } else {
+                        for (Schema typeSchema : schema.getTypes()) {
+                            FieldType type = toFieldType(typeSchema);
+                            if (type != null) {
+                                return type;
+                            }
                         }
+                        throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
                     }
-                    throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
                 } else {
                     return FieldType.UNION;
                 }
@@ -686,7 +709,7 @@ public class FormAvroConverter {
      * @param schema the schema
      * @return the field type schema
      */
-    private static Schema getFieldTypeSchema(Schema schema) {
+    protected static Schema getFieldTypeSchema(Schema schema) {
         if (isOverrideTypeSchema(schema)) {
             boolean isNullType = isNullTypeSchema(schema);
             if (isNullType && schema.getTypes().size() > 3 || 
@@ -703,58 +726,29 @@ public class FormAvroConverter {
             }
             throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
         } else if (isNullTypeSchema(schema)) {
-            for (Schema typeSchema : schema.getTypes()) {
-                FieldType type = toFieldType(typeSchema);
-                if (type != null) {
-                    return typeSchema;
+            if (schema.getTypes().size() > 2) {
+                return schema;
+            } else {
+                for (Schema typeSchema : schema.getTypes()) {
+                    FieldType type = toFieldType(typeSchema);
+                    if (type != null) {
+                        return typeSchema;
+                    }
                 }
+                throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
             }
-            throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
         } else {
             return schema;
         }
     }
     
     /**
-     * Creates the generic record form record field.
-     *
-     * @param recordField the record field
-     * @param schema the schema
-     * @return the generic record
-     */
-    public static GenericRecord createGenericRecordFromRecordField(RecordField recordField) {
-        Schema schema = new Schema.Parser().parse(recordField.getSchema());
-        GenericRecordBuilder builder = new GenericRecordBuilder(schema);
-        for (FormField formField : recordField.getValue()) {
-            String fieldName = formField.getFieldName();
-            Field field = schema.getField(fieldName);
-            Object fieldValue = convertValue(formField, field.schema());
-            builder.set(field, fieldValue);
-        }
-        GenericRecord record = builder.build();        
-        return record;
-    }
-    
-    /**
-     * Creates the record field from generic record.
-     *
-     * @param record the record
-     * @return the record field
-     * @throws IOException 
-     */
-    public static RecordField createRecordFieldFromGenericRecord(GenericRecord record) throws IOException {
-        Schema schema = record.getSchema();
-        RecordField formData = createRecordFieldFromSchema(schema);
-        fillRecordFieldFromGenericRecord(formData, formData, record);
-        return formData;
-    }
-    
-    /**
      * Fill record field from generic record.
      *
+     * @param rootRecord the root record
      * @param recordField the record field
      * @param record the record
-     * @throws IOException 
+     * @throws IOException Signals that an I/O exception has occurred.
      */
     private static void fillRecordFieldFromGenericRecord(RecordField rootRecord, RecordField recordField, GenericRecord record) throws IOException {
     	if (recordField != rootRecord) {
@@ -769,9 +763,10 @@ public class FormAvroConverter {
     /**
      * Sets the form field value.
      *
+     * @param rootRecord the root record
      * @param field the field
      * @param value the value
-     * @throws IOException 
+     * @throws IOException Signals that an I/O exception has occurred.
      */
     @SuppressWarnings("unchecked")
     private static void setFormFieldValue(RecordField rootRecord, FormField field, Object value) throws IOException {
@@ -844,10 +839,9 @@ public class FormAvroConverter {
                 }
                 break;              
             case ENUM:
-                EnumSymbol enumSymbol = (EnumSymbol)value;
                 EnumField enumField = (EnumField)field;
-                if (enumSymbol != null) {
-                    enumField.setValueFromSymbol(enumSymbol.toString());
+                if (value != null) {
+                    enumField.setValueFromSymbol(value.toString());
                 }
                 else {
                     enumField.setValue(null);
@@ -857,11 +851,13 @@ public class FormAvroConverter {
                 ArrayField arrayField = (ArrayField)field;
                 arrayField.getValue().clear();
                 arrayField.finalizeMetadata();
-                GenericData.Array<Object> genericArrayData = (GenericData.Array<Object>)value;
-                for (Object arrayValue : genericArrayData) {
-                    FormField fieldValue = arrayField.createRow();
-                    setFormFieldValue(rootRecord, fieldValue, arrayValue);
-                    ((ArrayField)field).addArrayData(fieldValue);
+                Iterable<Object> arrayData = (Iterable<Object>)value;
+                if (arrayData != null) {
+                    for (Object arrayValue : arrayData) {
+                        FormField fieldValue = arrayField.createRow();
+                        setFormFieldValue(rootRecord, fieldValue, arrayValue);
+                        ((ArrayField)field).addArrayData(fieldValue);
+                    }
                 }
                 break;
             default:
@@ -982,7 +978,7 @@ public class FormAvroConverter {
      * @param schema the schema
      * @return true, if is null type schema
      */
-    private static boolean isNullTypeSchema(Schema schema) {
+    protected static boolean isNullTypeSchema(Schema schema) {
         if (schema.getType() == Type.UNION) {
                 for (Schema typeSchema : schema.getTypes()) {
                     if (typeSchema.getType() == Schema.Type.NULL) {
@@ -993,6 +989,12 @@ public class FormAvroConverter {
         return false;
     }
     
+    /**
+     * Checks if is override type schema.
+     *
+     * @param schema the schema
+     * @return true, if is override type schema
+     */
     private static boolean isOverrideTypeSchema(Schema schema) {
         if (schema.getType() == Type.UNION && schema.getTypes().size() >= 2) {
             for (Schema typeSchema : schema.getTypes()) {
@@ -1004,12 +1006,24 @@ public class FormAvroConverter {
         return false;
     }
     
+    /**
+     * Checks if is override type.
+     *
+     * @param typeSchema the type schema
+     * @return true, if is override type
+     */
     private static boolean isOverrideType(Schema typeSchema) {
         return typeSchema.getType() == Schema.Type.ENUM && 
                 typeSchema.getNamespace().equals(DEFAULT_CONFIG_NAMESPACE) &&
                 typeSchema.getName().equals(UNCHANGED_NAME);
     }
     
+    /**
+     * Checks if is override unchanged datum.
+     *
+     * @param datum the datum
+     * @return true, if is override unchanged datum
+     */
     private static boolean isOverrideUnchangedDatum(Object datum) {
         if (datum != null && datum instanceof GenericEnumSymbol) {
             Schema schema = ((GenericContainer)datum).getSchema();

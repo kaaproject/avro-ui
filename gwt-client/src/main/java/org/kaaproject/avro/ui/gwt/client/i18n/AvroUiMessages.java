@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,5 +43,8 @@ public interface AvroUiMessages extends Messages {
     
     @DefaultMessage("Nested {0}")
     String nestedEntry(String entryTitle);
+    
+    @DefaultMessage("You have unsaved changes for ''{0}''. If you navigate away from this form without first saving, all changes will be lost.")
+    String detailsMayCloseMessage(String formName);
 
 }

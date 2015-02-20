@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,5 +55,33 @@ public abstract class SizedField extends FormField {
         SizedField clonedSizedField = (SizedField)cloned;
         clonedSizedField.maxLength = maxLength;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result
+                + ((maxLength == null) ? 0 : maxLength.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SizedField other = (SizedField) obj;
+        if (maxLength == null) {
+            if (other.maxLength != null)
+                return false;
+        } else if (!maxLength.equals(other.maxLength))
+            return false;
+        return true;
+    }
+    
+    
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,29 @@ package org.kaaproject.avro.ui.shared;
 
 public enum FieldType {
 
-    RECORD(true),
-    STRING,
-    INT,
-    LONG,
-    FLOAT,
-    DOUBLE,
-    BOOLEAN,
-    BYTES,
-    ENUM,
-    ARRAY(true),
-    UNION(true),
-    FIXED;
+    RECORD("Record", true),
+    STRING("String"),
+    INT("Integer"),
+    LONG("Long"),
+    FLOAT("Float"),
+    DOUBLE("Double"),
+    BOOLEAN("Boolean"),
+    BYTES("Bytes"),
+    ENUM("Enumeration"),
+    ARRAY("Array", true),
+    UNION("Union", true),
+    FIXED("Fixed");
     
     private boolean isComplex;    
     private String name;
+    private String displayName;
     
-    FieldType() {
-        this(false);
+    FieldType(String displayName) {
+        this(displayName, false);
     }
     
-    FieldType(boolean isComplex) {
+    FieldType(String displayName, boolean isComplex) {
+        this.displayName = displayName;
         this.isComplex = isComplex;
         this.name = this.name().toLowerCase();
     }
@@ -49,6 +51,10 @@ public enum FieldType {
     
     public String getName() { 
     	return name; 
+    }
+    
+    public String getDisplayName() {
+        return displayName;
     }
     
 }

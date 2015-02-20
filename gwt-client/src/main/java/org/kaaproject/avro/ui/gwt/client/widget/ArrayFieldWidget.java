@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.Map;
 import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.AbstractGrid;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowAction;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationActionListener;
@@ -56,19 +55,15 @@ import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 
 public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
-
-    private static final String ARRAY_PANEL_WIDTH = "600px";
-    private static final String GRID_HEIGHT = "180px";
-    private static final String TABLE_SCROLL_HEIGHT = "200px";
     
     private ArrayGrid arrayGrid;
 
-    public ArrayFieldWidget(NavigationContainer container, boolean readOnly) {
-        super(container, readOnly);
+    public ArrayFieldWidget(AvroWidgetsConfig config, NavigationContainer container, boolean readOnly) {
+        super(config, container, readOnly);
     }
     
-    public ArrayFieldWidget(AvroUiStyle style, NavigationContainer container, boolean readOnly) {
-        super(style, container, readOnly);
+    public ArrayFieldWidget(AvroWidgetsConfig config, AvroUiStyle style, NavigationContainer container, boolean readOnly) {
+        super(config, style, container, readOnly);
     }
     
     @Override
@@ -91,7 +86,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                     .getOverrideStrategy().name().toLowerCase()
                     + "Strategy"));
         }
-        fieldWidgetPanel.setWidth(ARRAY_PANEL_WIDTH);
+        fieldWidgetPanel.setWidth(config.getArrayPanelWidth());
         
         value.finalizeMetadata();
         
@@ -144,7 +139,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         verticalPanel.setWidth(FULL_WIDTH);
 
         arrayGrid = new ArrayGrid(value, !readOnly && !value.isReadOnly());
-        arrayGrid.setHeight(GRID_HEIGHT);
+        arrayGrid.setHeight(config.getGridHeight());
         
         verticalPanel.add(arrayGrid);
         
@@ -176,10 +171,10 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             @Override
             public void onRowAction(RowActionEvent<Integer> event) {
                 final int index = event.getClickedId();
-                if (event.getAction() == RowAction.CLICK) {
+                if (event.getAction() == RowActionEvent.CLICK) {
                     FormField field = arrayGrid.getDataProvider().getData().get(index);
                     navigationContainer.showField(field, null);
-                } else if (event.getAction() == RowAction.DELETE) {
+                } else if (event.getAction() == RowActionEvent.DELETE) {
                     arrayGrid.getDataProvider().removeRow(index);
                     fireChanged();
                 }
@@ -238,7 +233,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         }
 
         scroll.setWidth(FULL_WIDTH);
-        scroll.setHeight(TABLE_SCROLL_HEIGHT);
+        scroll.setHeight(config.getTableHeight());
         scroll.add(table);
 
         verticalPanel.setWidth(FULL_WIDTH);
@@ -316,7 +311,6 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
 
         private List<FormField> metadata;
         private ArrayDataProvider dataProvider;
-        private Map<String, Integer> fieldNameIndexMap = new HashMap<>();
         
         public ArrayGrid(ArrayField arrayField, boolean enableActions) {
             super(Unit.PX, enableActions, true, false);
@@ -329,14 +323,44 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                     this.metadata = ((RecordField)elementMetadata).getFieldsWithAccess(FieldAccess.EDITABLE, 
                             FieldAccess.READ_ONLY);
                 }
-                for (FormField metatadaField : metadata) {
-                    for (int i=0; i<recordElementMetadata.getValue().size(); i++) {
-                        if (metatadaField.equals(recordElementMetadata.getValue().get(i))) {
-                            fieldNameIndexMap.put(metatadaField.getFieldName(), i);
+            } else if (elementMetadata.getFieldType() == FieldType.UNION && !elementMetadata.isOptional()) {
+                UnionField unionElementMetadata = (UnionField)elementMetadata;
+                List<FormField> acceptableValues = unionElementMetadata.getAcceptableValues();
+                boolean useFirstRecord = true;
+                List<FormField> keyIndexedFields = null;
+                for (FormField acceptableValue : acceptableValues) {
+                    if (acceptableValue != null && acceptableValue instanceof RecordField) {
+                        List<FormField> recordKeyIndexedFields = ((RecordField)acceptableValue).getKeyIndexedFields();
+                        if (recordKeyIndexedFields != null && !recordKeyIndexedFields.isEmpty()) {
+                            if (keyIndexedFields == null) {
+                                keyIndexedFields = recordKeyIndexedFields;
+                            } else {
+                                if (keyIndexedFields.size() != recordKeyIndexedFields.size()) {
+                                    useFirstRecord = false;
+                                    break;
+                                } else {
+                                    for (int i=0;i<recordKeyIndexedFields.size();i++) {
+                                        if (!keyIndexedFields.get(i).getFieldName().equals(recordKeyIndexedFields.get(i).getFieldName())) {
+                                            useFirstRecord = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            useFirstRecord = false;
+                            break;
                         }
+                    } else {
+                        useFirstRecord = false;
+                        break;
                     }
                 }
-            } else {
+                if (useFirstRecord && keyIndexedFields != null) {
+                    this.metadata = keyIndexedFields;
+                }
+            }
+            if (this.metadata == null) {
                 this.metadata = new ArrayList<>();
                 this.metadata.add(elementMetadata);
             }
@@ -365,8 +389,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                         public Boolean getValue(FormField item) {
                             FormField field = item;
                             if (field.getFieldType() == FieldType.RECORD) {
-                                int index = fieldNameIndexMap.get(metaField.getFieldName());
-                                field = ((RecordField)item).getValue().get(index);
+                                field = ((RecordField)item).getFieldByName(metaField.getFieldName());
                             }
                             return ((BooleanField)field).getValue();
                         }
@@ -378,11 +401,13 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                         public String getValue(FormField item) {
                             FormField field = item;
                             if (field.getFieldType() == FieldType.RECORD) {
-                                int index = fieldNameIndexMap.get(metaField.getFieldName());
-                                field = ((RecordField)item).getValue().get(index);
+                                field = ((RecordField)item).getFieldByName(metaField.getFieldName());
+                            } else if (field.getFieldType() == FieldType.UNION) {
+                                FormField unionVal = ((UnionField)field).getValue();
+                                field = ((RecordField)unionVal).getFieldByName(metaField.getFieldName());
                             }
                             String value = extractStringValue(field);
-                            if (value.length() > MAX_CELL_STRING_LENGTH) {
+                            if (value != null && value.length() > MAX_CELL_STRING_LENGTH) {
                                 value = value.substring(0, MAX_CELL_STRING_LENGTH-3) + "...";
                             }
                             return value;
@@ -395,20 +420,22 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                         public String getValue(FormField item) {
                             FormField field = item;
                             if (field.getFieldType() == FieldType.RECORD) {
-                                int index = fieldNameIndexMap.get(metaField.getFieldName());
-                                field = ((RecordField)item).getValue().get(index);
+                                field = ((RecordField)item).getFieldByName(metaField.getFieldName());
                             }
-                            int index = getObjectId(item);
-                            String value = "#" + index; 
+                            String value = "";
+                            if (metadata.size()==1) {
+                                int index = getObjectId(item);
+                                value = "#" + index + " ";
+                            }
                             if (field.getFieldType() == FieldType.UNION) {
                                 FormField unionVal = ((UnionField)field).getValue();
                                 if (unionVal == null) {
-                                    value += " null";
+                                    value += "null";
                                 } else {
-                                    value += " " + unionVal.getDisplayString();
+                                    value += unionVal.getDisplayName();
                                 }
                             } else {
-                                value += " " + field.getDisplayString();
+                                value += field.getFieldType().getDisplayName();
                             }
                             if (value.length() > MAX_CELL_STRING_LENGTH) {
                                 value = value.substring(0, MAX_CELL_STRING_LENGTH-3) + "...";

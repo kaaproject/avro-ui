@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,29 +55,31 @@ public class FormEnum implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result
+                + ((displayValue == null) ? 0 : displayValue.hashCode());
+        result = prime * result
                 + ((enumSymbol == null) ? 0 : enumSymbol.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         FormEnum other = (FormEnum) obj;
-        if (enumSymbol == null) {
-            if (other.enumSymbol != null) {
+        if (displayValue == null) {
+            if (other.displayValue != null)
                 return false;
-            }
-        } else if (!enumSymbol.equals(other.enumSymbol)) {
+        } else if (!displayValue.equals(other.displayValue))
             return false;
-        }
+        if (enumSymbol == null) {
+            if (other.enumSymbol != null)
+                return false;
+        } else if (!enumSymbol.equals(other.enumSymbol))
+            return false;
         return true;
     }
 

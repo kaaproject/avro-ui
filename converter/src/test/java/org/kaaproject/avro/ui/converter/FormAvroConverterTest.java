@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,6 +168,7 @@ public class FormAvroConverterTest {
         Object val = record.get("testArrayElements");
         Assert.assertNotNull(val);
         Assert.assertTrue(val instanceof GenericData.Array);
+        @SuppressWarnings("unchecked")
         GenericData.Array<GenericRecord> genericArrayData = (GenericData.Array<GenericRecord>)val;
         Assert.assertEquals(2, genericArrayData.size());
         GenericRecord row = genericArrayData.get(0);
@@ -232,6 +233,15 @@ public class FormAvroConverterTest {
         RecordField convertedField = FormAvroConverter.createRecordFieldFromGenericRecord(record);
         
         Assert.assertNotNull(convertedField);
+        
+        Assert.assertNotNull(convertedField.getValue());
+        Assert.assertEquals(1, convertedField.getValue().size());
+        formField = convertedField.getValue().get(0);
+        Assert.assertNotNull(formField);
+        Assert.assertTrue(formField instanceof UnionField);
+        unionField = (UnionField)formField;
+        unionField.finalizeMetadata();
+        
         Assert.assertEquals(field, convertedField);
     }
     

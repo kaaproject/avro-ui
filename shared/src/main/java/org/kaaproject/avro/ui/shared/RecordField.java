@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,10 @@ public class RecordField extends FqnField {
         } 
     }
     
+    public RecordField getRootRecord() {
+        return rootRecord;
+    }
+    
     public void putRecordMetadata(String fqn, RecordField field) {
         recordsMetadata.put(fqn, field);
     }
@@ -110,31 +114,83 @@ public class RecordField extends FqnField {
         });
         return result;
     }
+    
+    public FormField getFieldByName(String name) {
+        if (!isNull) {
+            for (int i=0;i<value.size();i++) {
+                if (value.get(i).getFieldName().equals(name)) {
+                    return value.get(i);
+                }
+            }
+        }
+        return null;
+    }
+    
+    public int getFieldIndex(String name) {
+        if (!isNull) {
+            for (int i=0;i<value.size();i++) {
+                if (value.get(i).getFieldName().equals(name)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
 
     public void addField(FormField field) {
         value.add(field);
         isNull = false;
     }
     
+    public void insertFieldAtIndex(FormField field, int index) {
+        if (!isNull && index > -1 && index <= value.size()) {
+            value.add(index, field);
+        }
+    }
+    
+    public boolean removeFieldByName(String name) {
+        if (!isNull) {
+            int index = getFieldIndex(name);
+            if (index > -1) {
+                value.remove(index);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public boolean hideFieldByName(String name) {
+        if (!isNull) {
+            FormField field = getFieldByName(name);
+            if (field != null) {
+                field.setFieldAccess(FieldAccess.HIDDEN);
+                return true;
+            }
+        }
+        return false;
+    }
+    
     @Override
     public String getDisplayString() {
         String str = super.getDisplayString();
         if (isNull) {
-            str += " null";
+            str += ": null";
         } else {
-            str += " { ";
             List<FormField> fields = getKeyIndexedFields();
             if (fields.isEmpty()) {
-                fields = value;
+                fields = getFieldsWithAccess(FieldAccess.EDITABLE, FieldAccess.READ_ONLY);
             }
-            for (int i=0;i<fields.size();i++) {
-                FormField field = fields.get(i);
-                if (i>0) {
-                    str += ", ";
+            if (!fields.isEmpty()) {
+                str += ": { ";
+                for (int i=0;i<fields.size();i++) {
+                    FormField field = fields.get(i);
+                    if (i>0) {
+                        str += ", ";
+                    }
+                    str += field.getDisplayString();
                 }
-                str += field.getDisplayString();
+                str += " }";
             }
-            str += " }";
         }
         return str;
     }
@@ -220,29 +276,27 @@ public class RecordField extends FqnField {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
+        result = prime * result + (isNull ? 1231 : 1237);
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (!super.equals(obj)) {
+        if (!super.equals(obj))
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         RecordField other = (RecordField) obj;
-        if (value == null) {
-            if (other.value != null) {
-                return false;
-            }
-        } else if (!value.equals(other.value)) {
+        if (isNull != other.isNull)
             return false;
-        }
+        if (value == null) {
+            if (other.value != null)
+                return false;
+        } else if (!value.equals(other.value))
+            return false;
         return true;
     }
 

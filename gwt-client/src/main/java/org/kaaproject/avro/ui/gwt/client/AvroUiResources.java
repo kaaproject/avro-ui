@@ -135,6 +135,10 @@ public interface AvroUiResources extends ClientBundle {
         @ClassName("ui-message")
         String uiMessage();
         
+        String busyPopup();
+        
+        String busyGlass();
+        
     }
     
     @NotStrict
@@ -154,6 +158,10 @@ public interface AvroUiResources extends ClientBundle {
     @ImageOptions(width = 14, height = 14)
     @Source("images/resizeHandle.png")
     ImageResource resizeHandle();
+    
+    @ImageOptions(width = 48, height = 48)
+    @Source("images/busyIndicator.gif")
+    ImageResource busyIndicator();
 
 }
 

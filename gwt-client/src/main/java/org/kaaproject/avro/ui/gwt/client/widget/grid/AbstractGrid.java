@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionsButtonCell;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.LinkCell;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.UneditableCheckboxCell;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.HasRowActionEventHandlers;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowAction;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
 
@@ -68,7 +67,6 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
 
     protected boolean enableActions;
     protected boolean embedded;
-    protected boolean editable;
 
     protected Column<T,T> deleteColumn;
     
@@ -183,12 +181,12 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     }
 
     protected void onRowClicked(K id) {
-        RowActionEvent<K> rowClickEvent = new RowActionEvent<>(id, RowAction.CLICK);
+        RowActionEvent<K> rowClickEvent = new RowActionEvent<>(id, RowActionEvent.CLICK);
         fireEvent(rowClickEvent);
     }
 
     protected void onRowDelete(K id) {
-        RowActionEvent<K> rowClickEvent = new RowActionEvent<>(id, RowAction.DELETE);
+        RowActionEvent<K> rowClickEvent = new RowActionEvent<>(id, RowActionEvent.DELETE);
         fireEvent(rowClickEvent);
     }
 

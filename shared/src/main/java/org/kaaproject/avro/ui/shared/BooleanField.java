@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class BooleanField extends FormField {
     
     @Override
     public String getDisplayString() {
-        return super.getDisplayString() + " " + valueToDisplayString(value);
+        return super.getDisplayString() + ": " + valueToDisplayString(value);
     }
 
     @Override

@@ -64,7 +64,7 @@ public class BytesField extends FormField {
     
     @Override
     public String getDisplayString() {
-        return super.getDisplayString() + " " + valueToDisplayString(value);
+        return super.getDisplayString() + ": " + valueToDisplayString(value);
     }
     
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,22 +36,24 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implements NavigationContainer {
 
     private static final int NAVIGATION_HEADER_HEIGHT = 55; 
     private static final int FRAGMENT_SWITCH_ANIMATION_DURATION = 500;
-    private static final String RECORD_PANEL_WIDTH = "700px";
     
     private ResizePanel resizePanel;
     private LayoutPanel rootPanel;
@@ -64,29 +66,30 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     private boolean isRoot;
     private boolean forceNavigation = false;
     private boolean navigationDisabled = false;
+    private boolean isLayoutComplete = false;
     private int preferredWidthPx = -1;
     private int preferredHeightPx = -1;
     
-    public RecordFieldWidget(AvroUiStyle style, boolean readOnly) {
-        this(style, null, readOnly);
+    public RecordFieldWidget(AvroWidgetsConfig config, AvroUiStyle style, boolean readOnly) {
+        this(config, style, null, readOnly);
     }
     
-    public RecordFieldWidget(AvroUiStyle style, NavigationContainer container, boolean readOnly) {
-        super(style, container, readOnly);
+    public RecordFieldWidget(AvroWidgetsConfig config, AvroUiStyle style, NavigationContainer container, boolean readOnly) {
+        super(config, style, container, readOnly);
         this.isRoot = container == null;
         init();
     }
     
-    public RecordFieldWidget() {
-        this(false);
+    public RecordFieldWidget(AvroWidgetsConfig config) {
+        this(config, false);
     }
 
-    public RecordFieldWidget(boolean readOnly) {
-        this((NavigationContainer)null, readOnly);
+    public RecordFieldWidget(AvroWidgetsConfig config, boolean readOnly) {
+        this(config, (NavigationContainer)null, readOnly);
     }
 
-    public RecordFieldWidget(NavigationContainer container, boolean readOnly) {
-        super(container, readOnly);
+    public RecordFieldWidget(AvroWidgetsConfig config, NavigationContainer container, boolean readOnly) {
+        super(config, container, readOnly);
         this.isRoot = container == null;
         init();
     }
@@ -104,9 +107,14 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         }
     }
     
-    public void setPreferredSizePx(int width, int height) {
-        preferredWidthPx = width;
+    public void setPreferredHeightPx(int height) {
         preferredHeightPx = height;
+        doLayout();
+    }
+    
+    public void setPreferredWidthPx(int width) {
+        preferredWidthPx = width;
+        doLayout();
     }
     
     public static boolean isNavigationNeeded(RecordField recordField) {
@@ -224,34 +232,66 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 }
                 if (preferredHeightPx > 0) {
                     setHeight(preferredHeightPx + "px");
+                    if (element.getParentElement() != null) {
+                        Element parentElement = element.getParentElement();
+                        parentElement.getStyle().setPropertyPx("minHeight", childsOffsetHeight(parentElement));
+                    }
                 }
                 if (navigationDisabled) {
                     element.getStyle().setOverflow(Overflow.AUTO);
                 }
             } else if (!navigationDisabled) {
                 int height = 0;
+                setHeight("0px");
                 if (element.getParentElement() != null) {
                     Element parentElement = element.getParentElement();
-                    height = getInnerHeight(parentElement);
-                    for (int i=0; i<parentElement.getChildNodes().getLength();i++) {
-                        Node node = parentElement.getChildNodes().getItem(i);
-                        if (Element.is(node)) {
-                            Element childElement = Element.as(node);
-                            if (!element.isOrHasChild(childElement)) {
-                                height -= childElement.getOffsetHeight();
-                            }
-                        }
-                    }
+                    height = maxHeight(parentElement);
                 }
-                if (height > 0) {
-                    setHeight(height+"px");
-                } else {
-                    setHeight(getInnerHeight(element)+"px");
-                }
+                if (height <= 0) {
+                    height = maxHeight(element);
+                } 
+                height += NAVIGATION_HEADER_HEIGHT;
+                setHeight(height+"px");
             } else {
                 element.getStyle().clearHeight();
             }
         }
+    }
+    
+    private static int childsOffsetHeight(Element element) {
+        int height = 0;
+        for (int i=0; i<element.getChildNodes().getLength();i++) {
+            Node node = element.getChildNodes().getItem(i);
+            if (Element.is(node)) {
+                Element childElement = Element.as(node);
+                height += childElement.getOffsetHeight();
+            }
+        }
+        return height;
+    }
+    
+    private static int maxHeight(Element element) {
+        int height = getInnerHeight(element);
+        for (int i=0; i<element.getChildNodes().getLength();i++) {
+            Node node = element.getChildNodes().getItem(i);
+            if (Element.is(node)) {
+                Element childElement = Element.as(node);
+                if (isElementVisible(element)) {
+                    height = Math.max(height, maxHeight(childElement));
+                }
+            }
+        }
+        return height;
+    }
+    
+    private static boolean isElementVisible(Element element) {
+        if (UIObject.isVisible(element)) {
+            String visibility = element.getStyle().getVisibility();
+            if (visibility == null || !visibility.equals(Visibility.HIDDEN.getCssName())) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private static int getInnerHeight(Element element) {
@@ -297,9 +337,12 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     @Override
     protected Widget constructForm() {
         Widget form;
+        if (isRoot) {
+            isLayoutComplete = false;
+        }
         navigationDisabled = isRoot && !(forceNavigation || isNavigationNeeded(value));
         constructFormData(table, value, registrations);
-        if (isRoot && !navigationDisabled) {            
+        if (isRoot && !navigationDisabled) {     
             initNavigation();
             breadcrumbs.clear();
             navElements.clear();
@@ -315,7 +358,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             clearNavigation();
             if (value != null && value.isOverride()) {
                 FieldWidgetPanel fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
-                fieldWidgetPanel.setWidth(RECORD_PANEL_WIDTH);
+                fieldWidgetPanel.setWidth(config.getRecordPanelWidth());
                 if (value.isOverride() && !readOnly && !value.isReadOnly()) {
                     fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
                         @Override
@@ -330,7 +373,6 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 form = table;
             }
         }
-        doLayout();
         return form;
     }
     
@@ -359,25 +401,41 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     }
 
     @Override
-    public void gotoIndex(final int index) {
-        final NavigationElement navElement = navElements.get(index);
-        fragmentPanel.setAnimationCallback(new AnimationCallback() {
-            
-            @Override
-            public void onLayout(Layer layer, double progress) {}
-            
-            @Override
-            public void onAnimationComplete() {
-                for (NavigationElement oldNavElement : navElements.subList(index+1, navElements.size())) {
-                    breadcrumbs.remove(oldNavElement.getLink());
-                    fragmentPanel.remove(oldNavElement.getWidget());
+    public void gotoIndex(final int gotoIndex) {
+        final int index = confirmIndex(gotoIndex);
+        if (index < navElements.size()-1) {
+            final NavigationElement navElement = navElements.get(index);
+            fragmentPanel.setAnimationCallback(new AnimationCallback() {
+                
+                @Override
+                public void onLayout(Layer layer, double progress) {}
+                
+                @Override
+                public void onAnimationComplete() {
+                    for (NavigationElement oldNavElement : navElements.subList(index+1, navElements.size())) {
+                        breadcrumbs.remove(oldNavElement.getLink());
+                        fragmentPanel.remove(oldNavElement.getWidget());
+                    }
+                    navElements = navElements.subList(0, index+1);
+                    navElement.onShown();
+                    fragmentPanel.setAnimationCallback(null);
                 }
-                navElements = navElements.subList(0, index+1);
-                navElement.onShown();
-                fragmentPanel.setAnimationCallback(null);
+            });
+            fragmentPanel.showWidget(navElement.getIndex());
+        }
+    }
+    
+    private int confirmIndex(int index) {
+        int confirmedIndex = index;
+        for (int i=navElements.size()-1;i>index;i--) {
+            NavigationElement navElement = navElements.get(i);
+            String mayClose = navElement.mayClose();
+            if (mayClose != null && !Window.confirm(mayClose)) {
+                confirmedIndex = i;
+                break;
             }
-        });
-        fragmentPanel.showWidget(navElement.getIndex());
+        }
+        return confirmedIndex;
     }
 
     @Override
@@ -392,7 +450,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     }
     
     private void constructNavigationElement(FormField field, NavigationAction action, final NavigationActionListener listener) {
-        final NavigationElement navElement = new NavigationElement(style, this, navElements.size(), 
+        final NavigationElement navElement = new NavigationElement(config, style, this, navElements.size(), 
                 field, action, 
                         new NavigationActionListener() {
                     @Override
@@ -414,17 +472,33 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         navElements.add(navElement);
         breadcrumbs.add(navElement.getLink());
         fragmentPanel.add(navElement.getWidget());
+        final boolean doLayout = navElements.size()==1 && !isLayoutComplete;
         fragmentPanel.setAnimationCallback(new AnimationCallback() {
             @Override
             public void onLayout(Layer layer, double progress) {}
             
             @Override
             public void onAnimationComplete() {
-                navElement.onShown();
-                fragmentPanel.setAnimationCallback(null);
+                if (doLayout && !isLayoutComplete) {
+                    doLayout();
+                    isLayoutComplete = true;
+                    fragmentPanel.remove(navElement.getIndex());
+                    fragmentPanel.setAnimationDuration(FRAGMENT_SWITCH_ANIMATION_DURATION);
+                    fragmentPanel.add(navElement.getWidget());
+                    fragmentPanel.showWidget(navElement.getIndex());
+                } else {
+                    navElement.onShown();
+                    fragmentPanel.setAnimationCallback(null);
+                }
             }
         });
-        fragmentPanel.showWidget(navElement.getIndex());
+        
+        if (doLayout) {
+            fragmentPanel.setAnimationDuration(0);
+            fragmentPanel.showWidget(navElement.getIndex());
+        } else {
+            fragmentPanel.showWidget(navElement.getIndex());
+        }
     }
  
     private class FragmentLayoutPanel extends DeckLayoutPanel {

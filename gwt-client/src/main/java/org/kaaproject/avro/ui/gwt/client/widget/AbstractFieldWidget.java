@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,11 +73,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 public abstract class AbstractFieldWidget<T extends FormField> extends SimplePanel implements HasValue<T> {
     
-    protected static final String FIELDS_COLUMN_WIDTH = "300px";
-    protected static final String LABELS_COLUMN_WIDTH = "200px";
     private static final String DEFAULT_INTEGER_FORMAT = "#";
     private static final String DEFAULT_DECIMAL_FORMAT = "#.#############################";
     protected static final String FULL_WIDTH = "100%";
+    
+    protected final AvroWidgetsConfig config;
     
     protected List<HandlerRegistration> registrations = new ArrayList<HandlerRegistration>();
     
@@ -93,12 +93,13 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         return Utils.avroUiStyle;
     }
     
-    public AbstractFieldWidget(NavigationContainer navigationContainer, boolean readOnly) {
-        this(getDefaultStyle(), navigationContainer, readOnly);
+    public AbstractFieldWidget(AvroWidgetsConfig config, NavigationContainer navigationContainer, boolean readOnly) {
+        this(config, getDefaultStyle(), navigationContainer, readOnly);
     }
     
-    public AbstractFieldWidget(AvroUiStyle style, NavigationContainer navigationContainer, boolean readOnly) {
+    public AbstractFieldWidget(AvroWidgetsConfig config, AvroUiStyle style, NavigationContainer navigationContainer, boolean readOnly) {
         
+        this.config = config;
         this.navigationContainer = navigationContainer;
         this.readOnly = readOnly;
         
@@ -187,14 +188,16 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
 
     protected void constructFormData(FlexTable table, FormField field, List<HandlerRegistration> handlerRegistrations) {
         table.removeAllRows();
-        table.getColumnFormatter().setWidth(0, LABELS_COLUMN_WIDTH);
-        table.getColumnFormatter().setWidth(1, FIELDS_COLUMN_WIDTH);
+        table.getColumnFormatter().setWidth(0, config.getLabelsColumnWidth());
+        table.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
         if (field != null && field.getFieldAccess() != FieldAccess.HIDDEN) {
             int row = 0;
             if (field.getFieldType()==FieldType.RECORD) {
                 for (FormField formField : ((RecordField)field).getValue()) {
-                    row = constructField(table, row, formField, handlerRegistrations);
-                    row++;
+                    if (formField.getFieldAccess() != FieldAccess.HIDDEN) {
+                        row = constructField(table, row, formField, handlerRegistrations);
+                        row++;
+                    }
                 }
             } else {
                 constructField(table, row, field, handlerRegistrations);
@@ -478,6 +481,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     private Widget constructBooleanWidget(final BooleanField field, List<HandlerRegistration> handlerRegistrations) {
         CheckBox checkBox = new CheckBox();
         checkBox.setValue(field.getValue());
+        checkBox.setTitle(field.getDisplayPrompt());
         checkBox.setEnabled(!readOnly && !field.isReadOnly());
         if (!readOnly && !field.isReadOnly()) {
             handlerRegistrations.add(checkBox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -492,7 +496,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
     
     private Widget constructArrayWidget(final ArrayField field, List<HandlerRegistration> handlerRegistrations) {
-        ArrayFieldWidget arrayWidget = new ArrayFieldWidget(style, navigationContainer, readOnly);
+        ArrayFieldWidget arrayWidget = new ArrayFieldWidget(config, style, navigationContainer, readOnly);
         arrayWidget.setValue(field);
         if (!readOnly && !field.isReadOnly()) {
             handlerRegistrations.add(arrayWidget.addValueChangeHandler(new ValueChangeHandler<ArrayField>() {
@@ -506,7 +510,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
     
     private Widget constructUnionWidget(final UnionField field, List<HandlerRegistration> handlerRegistrations) {
-        UnionFieldWidget unionWidget = new UnionFieldWidget(style, navigationContainer, readOnly);
+        UnionFieldWidget unionWidget = new UnionFieldWidget(config, style, navigationContainer, readOnly);
         unionWidget.setValue(field);
         if (!readOnly && !field.isReadOnly()) {
             handlerRegistrations.add(unionWidget.addValueChangeHandler(new ValueChangeHandler<UnionField>() {
