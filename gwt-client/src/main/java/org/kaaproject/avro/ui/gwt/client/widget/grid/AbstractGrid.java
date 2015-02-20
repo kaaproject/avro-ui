@@ -134,7 +134,7 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
                 if (total == 0) {
                     total = 1;
                 }
-                return Utils.messages.pagerText(currentPage, total);
+                return Utils.messages.pagerText(String.valueOf(currentPage), String.valueOf(total));
             }
         };
         pager.setDisplay(table);

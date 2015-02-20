@@ -40,10 +40,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class MainViewImpl extends Composite implements MainView {
@@ -57,8 +55,6 @@ public class MainViewImpl extends Composite implements MainView {
     @UiField (provided=true) public AlertPanel infoPanel;
     @UiField public FlowPanel footer;
 
-    private Presenter presenter;
-    
     private Button generateFormButton;
     private Button resetButton;
     
@@ -133,11 +129,6 @@ public class MainViewImpl extends Composite implements MainView {
         resetButton.setEnabled(false);
         schemaConstructorView.reset();
         recordConstructorView.reset();
-    }
-
-    @Override
-    public void setPresenter(Presenter presenter) {
-        this.presenter = presenter;
     }
 
     @Override

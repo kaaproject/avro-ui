@@ -86,7 +86,7 @@ public class SizedTextArea extends VerticalPanel implements HasValue<String>, Ha
     private void updateCharactersLabel() {
         if (maxChars > -1) {
             int currentLength = text.getText().length();
-            charactersLabel.setText(Utils.messages.charactersLength(currentLength, maxChars));
+            charactersLabel.setText(Utils.messages.charactersLength(String.valueOf(currentLength), String.valueOf(maxChars)));
         }
     }
 
