@@ -1,0 +1,262 @@
+{
+    "namespace": "org.kaaproject.avro.ui.gen",
+    "type": "record",
+    "name": "RecordFieldType",
+    "displayName": "Record",
+    "fields": 
+    [
+         {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter record name"},
+         {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter record namespace"},
+         {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter record display name"},
+         {"name": "fields", 
+          "displayName": "Fields", 
+          "type": {
+                    "type": "array",
+                    "items": 
+                        {
+                            "namespace": "org.kaaproject.avro.ui.gen",
+                            "type": "record",
+                            "name": "Field",
+                            "displayName": "Field", 
+                            "fields": 
+                                [
+                                    {"name": "fieldName", "displayName": "Field name", "type": "string", "keyIndex": 1, "weight": 0.7, "displayPrompt": "Enter field name"},
+                                    {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter field label text"},
+                                    {"name": "displayPrompt", "displayName": "Display prompt", "type": ["string", "null"], "displayPrompt": "Enter field input prompt"},
+                                    {"name": "optional", "displayName": "Is optional", "type": "boolean", "by_default": true, "keyIndex": 3, "weight": 0.25, "displayPrompt": "Select to make field optional"},
+                                    {"name": "weight", "displayName": "Weight", "type": ["float", "null"], "displayPrompt": "Enter relative column width"},
+                                    {"name": "keyIndex", "displayName": "Key index", "type": ["int", "null"], "displayPrompt": "Enter column order number"},
+                                    {"name": "fieldType", 
+                                     "displayName": "Field type", 
+                                     "keyIndex": 2, 
+                                     "weight": 0.3,
+                                     "displayPrompt": "Select field type", 
+                                     "type":
+                                        [
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "StringFieldType",
+                                                "displayName": "String",
+                                                "fields": 
+                                                    [
+                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input symbols"},
+                                                        {"name": "inputType", 
+                                                         "displayName": "Input type", 
+                                                         "displayPrompt": "Select field input type", 
+                                                         "displayNames" : ["Plain", "Password"],
+                                                         "type": [{
+                                                                    "namespace": "org.kaaproject.avro.ui.gen",
+                                                                    "type": "enum",
+                                                                    "name": "InputType",
+                                                                    "symbols" : ["PLAIN", "PASSWORD"]
+                                                                }, "null"]
+                                                        },
+                                                        {"name": "defaultValue", "displayName": "Default value", "type": ["string", "null"], "displayPrompt": "Enter default string field value"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "IntegerFieldType",
+                                                "displayName": "Integer",
+                                                "fields": 
+                                                    [
+                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
+                                                        {"name": "defaultValue", "displayName": "Default value", "type": ["int", "null"], "displayPrompt": "Enter default integer field value"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "LongFieldType",
+                                                "displayName": "Long",
+                                                "fields": 
+                                                    [
+                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
+                                                        {"name": "defaultValue", "displayName": "Default value", "type": ["long", "null"], "displayPrompt": "Enter default long field value"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "FloatFieldType",
+                                                "displayName": "Float",
+                                                "fields": 
+                                                    [
+                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
+                                                        {"name": "defaultValue", "displayName": "Default value", "type": ["float", "null"], "displayPrompt": "Enter default float field value"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "DoubleFieldType",
+                                                "displayName": "Double",
+                                                "fields": 
+                                                    [
+                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
+                                                        {"name": "defaultValue", "displayName": "Default value", "type": ["double", "null"], "displayPrompt": "Enter default double field value"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "BooleanFieldType",
+                                                "displayName": "Boolean",
+                                                "fields": 
+                                                    [
+                                                        {"name": "defaultValue", "displayName": "Default value", "type": ["boolean", "null"], "displayPrompt": "Select to set default boolean field value to true"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "BytesFieldType",
+                                                "displayName": "Bytes",
+                                                "fields": 
+                                                    [
+                                                        {"name": "defaultValue", "displayName": "Default value", "type": ["string", "null"], "displayPrompt": "Enter default bytes field value in Base64 format"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "FixedFieldType",
+                                                "displayName": "Fixed",
+                                                "fields": 
+                                                    [
+                                                         {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter fixed type name"},
+                                                         {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter fixed type namespace"},
+                                                         {"name": "fixedSize", "displayName": "Size", "type": "int", "displayPrompt": "Enter fixed size"},                                                    
+                                                         {"name": "defaultValue", "displayName": "Default value", "type": ["string", "null"], "displayPrompt": "Enter default fixed field value in Base64 format"}
+                                                    ]
+                                            },       
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "EnumFieldType",
+                                                "displayName": "Enumeration",
+                                                "fields": 
+                                                    [
+                                                         {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter enum type name"},
+                                                         {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter enum type namespace"},                                                                                                   
+                                                         {"name": "defaultValue", "displayName": "Default symbol", "type": ["string", "null"], "displayPrompt": "Enter enum default symbol"},
+                                                         {"name": "symbols", 
+                                                          "displayName": "Symbols", 
+                                                          "type": {
+                                                                    "type": "array",
+                                                                    "items": 
+                                                                        {
+                                                                            "namespace": "org.kaaproject.avro.ui.gen",
+                                                                            "type": "record",
+                                                                            "name": "EnumSymbol",
+                                                                            "fields": 
+                                                                                [
+                                                                                    {"name": "symbol", "displayName": "Symbol", "type": "string", "displayPrompt": "Enter enum symbol"},      
+                                                                                    {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter enum symbol display name"}
+                                                                                ]
+                                                                        }
+                                                                   }
+                                                         }
+                                                    ]
+                                            },       
+                                            "org.kaaproject.avro.ui.gen.RecordFieldType",
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "NamedReferenceFieldType",
+                                                "displayName": "FQN reference",
+                                                "fields":
+                                                    [
+                                                        {"name": "fqn", "displayName": "Type FQN", "type": "string", "displayPrompt": "Enter fully qualified name of existing type"}
+                                                    ]
+                                            },
+                                            {
+                                                "type": "record",
+                                                "namespace": "org.kaaproject.avro.ui.gen",      
+                                                "name": "ArrayFieldType",
+                                                "displayName": "Array",
+                                                "fields": 
+                                                    [
+                                                         {"name": "minRowCount", "displayName": "Minimum row count", "type": ["int", "null"], "displayPrompt": "Enter min required number of rows"},
+                                                         {"name": "arrayItem", 
+                                                          "displayName": "Item type", 
+                                                          "displayPrompt": "Select array element type", 
+                                                          "type": 
+                                                              [
+                                                                "org.kaaproject.avro.ui.gen.StringFieldType",
+                                                                "org.kaaproject.avro.ui.gen.IntegerFieldType",
+                                                                "org.kaaproject.avro.ui.gen.LongFieldType",
+                                                                "org.kaaproject.avro.ui.gen.FloatFieldType",
+                                                                "org.kaaproject.avro.ui.gen.DoubleFieldType",
+                                                                "org.kaaproject.avro.ui.gen.BooleanFieldType",
+                                                                "org.kaaproject.avro.ui.gen.BytesFieldType",
+                                                                "org.kaaproject.avro.ui.gen.FixedFieldType",
+                                                                "org.kaaproject.avro.ui.gen.EnumFieldType",
+                                                                "org.kaaproject.avro.ui.gen.RecordFieldType",
+                                                                "org.kaaproject.avro.ui.gen.NamedReferenceFieldType",
+                                                                "org.kaaproject.avro.ui.gen.ArrayFieldType",
+                                                                {
+                                                                    "type": "record",
+                                                                    "namespace": "org.kaaproject.avro.ui.gen",      
+                                                                    "name": "UnionFieldType",
+                                                                    "displayName": "Union",
+                                                                    "fields": 
+                                                                    [
+                                                                        {"name": "defaultValue", 
+                                                                         "displayName": "Default value", 
+                                                                         "displayPrompt": "Select union default value",
+                                                                         "type": 
+                                                                            [
+                                                                                "org.kaaproject.avro.ui.gen.StringFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.IntegerFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.LongFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.FloatFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.DoubleFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.BooleanFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.BytesFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.FixedFieldType",
+                                                                                "org.kaaproject.avro.ui.gen.EnumFieldType",
+                                                                                "null"                                                   
+                                                                            ]
+                                                                        },
+                                                                        {"name": "acceptableValues", 
+                                                                         "displayName": "Possible values", 
+                                                                         "type": {
+                                                                                "type": "array",
+                                                                                "items": 
+                                                                                        [
+                                                                                            "org.kaaproject.avro.ui.gen.StringFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.IntegerFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.LongFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.FloatFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.DoubleFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.BooleanFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.BytesFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.FixedFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.EnumFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.RecordFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.NamedReferenceFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.ArrayFieldType",
+                                                                                            "org.kaaproject.avro.ui.gen.UnionFieldType",
+                                                                                            "null"                                                                                     
+                                                                                        ]
+                                                                                  }
+                                                                        }
+                                                                    ]
+                                                                }       
+                                                              ]
+                                                         }
+                                                    ]
+                                            },          
+                                            "org.kaaproject.avro.ui.gen.UnionFieldType"
+                                        ]
+                                    }
+                            
+                                ]
+                        }
+                  }                
+         }
+    ]
+}

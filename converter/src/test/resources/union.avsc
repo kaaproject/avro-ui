@@ -14,7 +14,7 @@
             "name": "FirstRecord",
             "displayName": "First Record",
 	    "fields": [
-        	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "default": "", "type": "string"}
+        	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": "string"}
 	    ]
            },
            {
@@ -23,7 +23,7 @@
             "name": "SecondRecord",
             "displayName": "Second Record",
 	    "fields": [
-        	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "default": "", "type": "string"}
+        	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": "string"}
 	    ]
            }
          ]

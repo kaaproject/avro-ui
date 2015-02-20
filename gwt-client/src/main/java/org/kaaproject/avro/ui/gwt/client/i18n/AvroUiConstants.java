@@ -56,4 +56,7 @@ public interface AvroUiConstants extends ConstantsWithLookup {
     @DefaultStringValue("Empty")
     String empty();
     
+    @DefaultStringValue("Processing request...")
+    String busyPopupText();
+    
 }

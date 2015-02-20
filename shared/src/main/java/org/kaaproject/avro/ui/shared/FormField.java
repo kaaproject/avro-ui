@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ public abstract class FormField implements Serializable, Cloneable {
         if (isOverride) {
             str += " (" + (changed ? "changed" : "unchanged") + ")";
         } 
-        str += "\"" + ":";
+        str += "\"";
         return str;
     }
     
@@ -241,8 +241,17 @@ public abstract class FormField implements Serializable, Cloneable {
         int result = 1;
         result = prime * result + (changed ? 1231 : 1237);
         result = prime * result
+                + ((displayName == null) ? 0 : displayName.hashCode());
+        result = prime * result
+                + ((displayPrompt == null) ? 0 : displayPrompt.hashCode());
+        result = prime * result
+                + ((fieldAccess == null) ? 0 : fieldAccess.hashCode());
+        result = prime * result
                 + ((fieldName == null) ? 0 : fieldName.hashCode());
+        result = prime * result + keyIndex;
+        result = prime * result + (optional ? 1231 : 1237);
         result = prime * result + rowIndex;
+        result = prime * result + Float.floatToIntBits(weight);
         return result;
     }
 
@@ -257,16 +266,34 @@ public abstract class FormField implements Serializable, Cloneable {
         FormField other = (FormField) obj;
         if (changed != other.changed)
             return false;
+        if (displayName == null) {
+            if (other.displayName != null)
+                return false;
+        } else if (!displayName.equals(other.displayName))
+            return false;
+        if (displayPrompt == null) {
+            if (other.displayPrompt != null)
+                return false;
+        } else if (!displayPrompt.equals(other.displayPrompt))
+            return false;
+        if (fieldAccess != other.fieldAccess)
+            return false;
         if (fieldName == null) {
             if (other.fieldName != null)
                 return false;
         } else if (!fieldName.equals(other.fieldName))
             return false;
+        if (keyIndex != other.keyIndex)
+            return false;
+        if (optional != other.optional)
+            return false;
         if (rowIndex != other.rowIndex)
+            return false;
+        if (Float.floatToIntBits(weight) != Float.floatToIntBits(other.weight))
             return false;
         return true;
     }
-
+    
     protected static boolean strIsEmpty(String str) {
         return str == null || str.length() == 0;
     }

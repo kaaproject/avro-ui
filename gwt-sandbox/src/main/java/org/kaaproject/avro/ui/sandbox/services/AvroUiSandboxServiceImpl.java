@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,21 +32,30 @@ import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.kaaproject.avro.ui.converter.FormAvroConverter;
+import org.kaaproject.avro.ui.converter.SchemaFormAvroConverter;
 import org.kaaproject.avro.ui.sandbox.services.util.Utils;
 import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxService;
 import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxServiceException;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 
 @Service("avroUiSandboxService")
-public class AvroUiSandboxServiceImpl implements AvroUiSandboxService {
+public class AvroUiSandboxServiceImpl implements AvroUiSandboxService, InitializingBean {
 
     /** The Constant LOG. */
     private static final Logger LOG = LoggerFactory.getLogger(AvroUiSandboxServiceImpl.class);
     
     private static final Charset UTF8 = Charset.forName("UTF-8");
+    
+    private SchemaFormAvroConverter schemaFormConverter;
+    
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        schemaFormConverter = new SchemaFormAvroConverter();
+    }
     
     @Override
     public RecordField generateFormFromSchema(String avroSchema)
@@ -89,6 +98,39 @@ public class AvroUiSandboxServiceImpl implements AvroUiSandboxService {
             DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(schema);
             GenericRecord genericRecord = datumReader.read(null, jsonDecoder);
             return FormAvroConverter.createRecordFieldFromGenericRecord(genericRecord);
+        } catch (Exception e) {
+            throw Utils.handleException(e);
+        }
+    }
+    
+    @Override
+    public RecordField getEmptySchemaForm()
+            throws AvroUiSandboxServiceException {
+        try {
+            return schemaFormConverter.getEmptySchemaFormInstance();
+        } catch (Exception e) {
+            throw Utils.handleException(e);
+        }
+    }
+
+    @Override
+    public RecordField generateSchemaFormFromSchema(String avroSchema)
+            throws AvroUiSandboxServiceException {
+        try {
+            Schema schema = new Schema.Parser().parse(avroSchema);
+            RecordField generatedForm = schemaFormConverter.createSchemaFormFromSchema(schema);
+            return generatedForm;
+        } catch (Exception e) {
+            throw Utils.handleException(e);
+        }
+    }
+
+    @Override
+    public String getJsonStringFromSchemaForm(RecordField field)
+            throws AvroUiSandboxServiceException {
+        try {
+            Schema schema = schemaFormConverter.createSchemaFromSchemaForm(field);
+            return SchemaFormAvroConverter.createSchemaString(schema, true);
         } catch (Exception e) {
             throw Utils.handleException(e);
         }

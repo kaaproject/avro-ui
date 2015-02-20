@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,4 +30,10 @@ public interface AvroUiSandboxService extends RemoteService {
     
     public RecordField generateFormDataFromJson(String avroSchema, String json) throws AvroUiSandboxServiceException;
     
+    public RecordField getEmptySchemaForm() throws AvroUiSandboxServiceException;
+    
+    public RecordField generateSchemaFormFromSchema(String avroSchema) throws AvroUiSandboxServiceException;
+
+    public String getJsonStringFromSchemaForm(RecordField field) throws AvroUiSandboxServiceException;
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 CyberVision, Inc.
+ * Copyright 2014-2015 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class ArrayField extends FormField {
     
     @Override
     public String getDisplayString() {
-        return super.getDisplayString() + " " + elementMetadata.getDisplayName() +" (" + value.size() + " rows)";
+        return super.getDisplayString() + ": " + elementMetadata.getDisplayName() +" (" + value.size() + " rows)";
     }
 
     @Override
@@ -168,36 +168,37 @@ public class ArrayField extends FormField {
         int result = super.hashCode();
         result = prime * result
                 + ((elementMetadata == null) ? 0 : elementMetadata.hashCode());
+        result = prime * result + minRowCount;
+        result = prime
+                * result
+                + ((overrideStrategy == null) ? 0 : overrideStrategy.hashCode());
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (!super.equals(obj)) {
+        if (!super.equals(obj))
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         ArrayField other = (ArrayField) obj;
         if (elementMetadata == null) {
-            if (other.elementMetadata != null) {
+            if (other.elementMetadata != null)
                 return false;
-            }
-        } else if (!elementMetadata.equals(other.elementMetadata)) {
+        } else if (!elementMetadata.equals(other.elementMetadata))
             return false;
-        }
+        if (minRowCount != other.minRowCount)
+            return false;
+        if (overrideStrategy != other.overrideStrategy)
+            return false;
         if (value == null) {
-            if (other.value != null) {
+            if (other.value != null)
                 return false;
-            }
-        } else if (!value.equals(other.value)) {
+        } else if (!value.equals(other.value))
             return false;
-        }
         return true;
     }
 

@@ -78,7 +78,7 @@ public class FixedField extends FqnField {
 
     @Override
     public String getDisplayString() {
-        return super.getDisplayString() + " " + valueToDisplayString(value);
+        return super.getDisplayString() + ": " + valueToDisplayString(value);
     }
     
     @Override
@@ -129,6 +129,9 @@ public class FixedField extends FqnField {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
+        result = prime * result
+                + ((defaultValue == null) ? 0 : defaultValue.hashCode());
+        result = prime * result + fixedSize;
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
@@ -142,6 +145,13 @@ public class FixedField extends FqnField {
         if (getClass() != obj.getClass())
             return false;
         FixedField other = (FixedField) obj;
+        if (defaultValue == null) {
+            if (other.defaultValue != null)
+                return false;
+        } else if (!defaultValue.equals(other.defaultValue))
+            return false;
+        if (fixedSize != other.fixedSize)
+            return false;
         if (value == null) {
             if (other.value != null)
                 return false;
@@ -149,5 +159,6 @@ public class FixedField extends FqnField {
             return false;
         return true;
     }
+
 
 }

@@ -20,6 +20,7 @@ import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
 import org.kaaproject.avro.ui.gwt.client.widget.AbstractFieldWidget;
 import org.kaaproject.avro.ui.gwt.client.widget.ArrayFieldWidget;
+import org.kaaproject.avro.ui.gwt.client.widget.AvroWidgetsConfig;
 import org.kaaproject.avro.ui.gwt.client.widget.RecordFieldWidget;
 import org.kaaproject.avro.ui.gwt.client.widget.UnionFieldWidget;
 import org.kaaproject.avro.ui.shared.ArrayField;
@@ -40,18 +41,18 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class NavigationElement {
     
-    private NavigationContainer container;
-    private int index;
-    private NavLink link;
-    private FormField field;
-    private ScrollPanel widget = new ScrollPanel();
-    private AbstractFieldWidget<?> fieldWidget;
-    private NavigationAction action;
-    private NavigationActionListener listener;
+    private final NavigationContainer container;
+    private final int index;
+    private final NavLink link;
+    private final FormField field;
+    private final ScrollPanel widget = new ScrollPanel();
+    private final AbstractFieldWidget<?> fieldWidget;
+    private final NavigationAction action;
+    private final NavigationActionListener listener;
     private Button addButton;
+    private boolean added = false;
     
-    @SuppressWarnings("incomplete-switch")
-    public NavigationElement(AvroUiStyle style, NavigationContainer container, int index, 
+    public NavigationElement(AvroWidgetsConfig config, AvroUiStyle style, NavigationContainer container, int index, 
             FormField field, NavigationAction action, NavigationActionListener listener) {
         this.container = container;
         this.index = index;
@@ -69,7 +70,7 @@ public class NavigationElement {
         
         switch (field.getFieldType()) {
         case RECORD:
-            RecordFieldWidget recordFieldWidget = new RecordFieldWidget(style, container, readOnly);
+            RecordFieldWidget recordFieldWidget = new RecordFieldWidget(config, style, container, readOnly);
             recordFieldWidget.setValue((RecordField)field);
             if (!readOnly) {
                 recordFieldWidget.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
@@ -83,7 +84,7 @@ public class NavigationElement {
             verticalPanel.add(recordFieldWidget);
             break;
         case ARRAY:
-            ArrayFieldWidget arrayFieldWidget = new ArrayFieldWidget(style, container, readOnly);
+            ArrayFieldWidget arrayFieldWidget = new ArrayFieldWidget(config, style, container, readOnly);
             arrayFieldWidget.setValue((ArrayField)field);
             if (!readOnly) {
                 arrayFieldWidget.addValueChangeHandler(new ValueChangeHandler<ArrayField>() {
@@ -97,7 +98,7 @@ public class NavigationElement {
             verticalPanel.add(arrayFieldWidget);
             break;
         case UNION:
-            UnionFieldWidget unionFieldWidget = new UnionFieldWidget(style, container, readOnly);
+            UnionFieldWidget unionFieldWidget = new UnionFieldWidget(config, style, container, readOnly);
             unionFieldWidget.setValue((UnionField)field);
             unionFieldWidget.setOpen(true);
             if (!readOnly) {
@@ -111,8 +112,10 @@ public class NavigationElement {
             fieldWidget = unionFieldWidget;
             verticalPanel.add(unionFieldWidget);
             break;
+        default:
+            fieldWidget = null;
+            break;
         }
-        
         
         HorizontalPanel buttonsPanel = new HorizontalPanel();
         buttonsPanel.addStyleName(style.buttonsPanel());
@@ -167,10 +170,18 @@ public class NavigationElement {
         fieldWidget.onShown();
     }
     
+    public String mayClose() {
+        if (this.action == NavigationAction.ADD && !added) {
+            return Utils.messages.detailsMayCloseMessage(field.getDisplayName());
+        }
+        return null;
+    }
+    
     private void valueAdded() {
         if (listener != null) {
             listener.onAdded(field);
         }
+        added = true;
         container.goBack();
     }
     
