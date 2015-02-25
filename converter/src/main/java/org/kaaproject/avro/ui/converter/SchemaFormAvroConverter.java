@@ -46,6 +46,7 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Record;
+import org.apache.avro.generic.GenericData.StringType;
 import org.apache.avro.generic.GenericRecord;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -774,6 +775,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
             fieldSchema = Schema.create(Type.NULL);
         } else if (fieldTypeName.equals(STRING_FIELD_TYPE)) {
             fieldSchema = Schema.create(Type.STRING);
+            GenericData.setStringType(fieldSchema, StringType.String);
         } else if (fieldTypeName.equals(INTEGER_FIELD_TYPE)) {
             fieldSchema = Schema.create(Type.INT);
         } else if (fieldTypeName.equals(LONG_FIELD_TYPE)) {
