@@ -13,18 +13,18 @@
             "namespace": "org.kaaproject.avro.ui.test",      
             "name": "FirstRecord",
             "displayName": "First Record",
-	    "fields": [
-        	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": "string"}
-	    ]
+    	    "fields": [
+            	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": {"type":"string","avro.java.string":"String"}}
+    	    ]
            },
            {
             "type": "record",
             "namespace": "org.kaaproject.avro.ui.test",      
             "name": "SecondRecord",
             "displayName": "Second Record",
-	    "fields": [
-        	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": "string"}
-	    ]
+    	    "fields": [
+            	    {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": {"type":"string","avro.java.string":"String"}}
+    	    ]
            }
          ]
         }

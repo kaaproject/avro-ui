@@ -15,7 +15,7 @@
                     "type": "record",
                     "name": "TestArrayRecord",
                     "fields": [
-		        {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": "string"}
+		                  {"name": "test", "displayName": "Test field", "maxLength": 1000, "by_default": "", "type": {"type":"string","avro.java.string":"String"}}
                     ]
                 }
             }

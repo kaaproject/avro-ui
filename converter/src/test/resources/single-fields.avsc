@@ -3,8 +3,8 @@
     "type": "record",
     "name": "Test",
     "fields": [
-            {"name": "testString", "displayName": "Test string field", "maxLength": 1000, "by_default": "default string", "type": "string"},
-            {"name": "testPasswordString", "displayName": "Test password string field", "maxLength": 1000, "by_default": "default password", "inputType": "password", "type": "string"},
+            {"name": "testString", "displayName": "Test string field", "maxLength": 1000, "by_default": "default string", "type": {"type":"string","avro.java.string":"String"}},
+            {"name": "testPasswordString", "displayName": "Test password string field", "maxLength": 1000, "by_default": "default password", "inputType": "password", "type": {"type":"string","avro.java.string":"String"}},
             {"name": "testInteger", "displayName": "Test integer field", "maxLength": 1000, "by_default": 20, "type": "int"},
             {"name": "testLong", "displayName": "Test long field", "maxLength": 1000, "by_default": 30, "type": "long"},
             {"name": "testBoolean", "displayName": "Test boolean field", "by_default": true, "type": "boolean"},
