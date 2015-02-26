@@ -32,6 +32,7 @@ import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -64,6 +65,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     private List<NavigationElement> navElements;
     
     private boolean isRoot;
+    private boolean isAnimating = false;
     private boolean forceNavigation = false;
     private boolean navigationDisabled = false;
     private boolean isLayoutComplete = false;
@@ -403,8 +405,9 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     @Override
     public void gotoIndex(final int gotoIndex) {
         final int index = confirmIndex(gotoIndex);
-        if (index < navElements.size()-1) {
+        if (!isAnimating && index < navElements.size()-1) {
             final NavigationElement navElement = navElements.get(index);
+            isAnimating = true;
             fragmentPanel.setAnimationCallback(new AnimationCallback() {
                 
                 @Override
@@ -419,6 +422,10 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     navElements = navElements.subList(0, index+1);
                     navElement.onShown();
                     fragmentPanel.setAnimationCallback(null);
+                    if (!readOnly) {
+                        fireChanged();
+                    }
+                    isAnimating = false;
                 }
             });
             fragmentPanel.showWidget(navElement.getIndex());
@@ -430,23 +437,43 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         for (int i=navElements.size()-1;i>index;i--) {
             NavigationElement navElement = navElements.get(i);
             String mayClose = navElement.mayClose();
+            GWT.debugger();
             if (mayClose != null && !Window.confirm(mayClose)) {
                 confirmedIndex = i;
                 break;
-            }
+            } 
         }
         return confirmedIndex;
     }
 
     @Override
     public void showField(FormField field, NavigationActionListener listener) {
-        NavigationAction action = (readOnly || field.isReadOnly()) ? NavigationAction.VIEW : NavigationAction.EDIT;
-        constructNavigationElement(field, action, listener);
+        if (!isAnimating) {
+            NavigationAction action = (readOnly || field.isReadOnly()) ? NavigationAction.VIEW : NavigationAction.EDIT;
+            constructNavigationElement(field, action, listener);
+        }
     }
 
     @Override
     public void addNewField(FormField field, NavigationActionListener listener) {
-        constructNavigationElement(field, NavigationAction.ADD, listener);
+        if (!isAnimating) {
+            constructNavigationElement(field, NavigationAction.ADD, listener);
+            fireChanged();
+        }
+    }
+    
+    @Override
+    public boolean validate() {
+        boolean valid = true;
+        if (navElements != null) {
+            for (NavigationElement navElement : navElements) {
+                valid &= navElement.isAdded();
+            }
+        }
+        if (valid) {
+            valid &= super.validate();
+        }
+        return valid;
     }
     
     private void constructNavigationElement(FormField field, NavigationAction action, final NavigationActionListener listener) {
@@ -473,6 +500,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         breadcrumbs.add(navElement.getLink());
         fragmentPanel.add(navElement.getWidget());
         final boolean doLayout = navElements.size()==1 && !isLayoutComplete;
+        isAnimating = true;
         fragmentPanel.setAnimationCallback(new AnimationCallback() {
             @Override
             public void onLayout(Layer layer, double progress) {}
@@ -489,6 +517,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 } else {
                     navElement.onShown();
                     fragmentPanel.setAnimationCallback(null);
+                    isAnimating = false;
                 }
             }
         });

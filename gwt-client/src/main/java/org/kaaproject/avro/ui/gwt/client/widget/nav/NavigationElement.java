@@ -62,6 +62,8 @@ public class NavigationElement {
         String title = field.getDisplayName();
         if (action == NavigationAction.ADD) {
             title = Utils.messages.addNewEntry(title);
+        } else {
+            added = true;
         }
         link = new NavLink(title);
         VerticalPanel verticalPanel = new VerticalPanel();
@@ -171,10 +173,14 @@ public class NavigationElement {
     }
     
     public String mayClose() {
-        if (this.action == NavigationAction.ADD && !added) {
+        if (!added) {
             return Utils.messages.detailsMayCloseMessage(field.getDisplayName());
         }
         return null;
+    }
+    
+    public boolean isAdded () {
+        return added;
     }
     
     private void valueAdded() {
