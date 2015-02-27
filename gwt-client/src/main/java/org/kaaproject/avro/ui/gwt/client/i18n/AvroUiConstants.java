@@ -43,6 +43,15 @@ public interface AvroUiConstants extends com.google.gwt.i18n.client.ConstantsWit
   String busyPopupText();
 
   /**
+   * Translated "Close".
+   * 
+   * @return translated "Close"
+   */
+  @DefaultStringValue("Close")
+  @Key("close")
+  String close();
+
+  /**
    * Translated "Create".
    * 
    * @return translated "Create"

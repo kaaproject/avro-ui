@@ -85,10 +85,25 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
         } else {
             formValuesBox.setValue(value.getValue());
         }
+        recordTable.getColumnFormatter().setWidth(0, config.getLabelsColumnWidth());
+        recordTable.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
         constructFormData(recordTable, value.getValue(), recordTableRegistrations);
         return fieldWidgetPanel;
     }
     
+    
+    @Override
+    public void updateConfig(AvroWidgetsConfig config) {
+        super.updateConfig(config);
+        if (fieldWidgetPanel != null) {
+            fieldWidgetPanel.setWidth(config.getUnionPanelWidth());
+        }
+        if (recordTable != null) {
+            recordTable.getColumnFormatter().setWidth(0, config.getLabelsColumnWidth());
+            recordTable.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
+        }
+    }
+
     public void setOpen(boolean open) {
         if (value != null && !value.isOverride()) {
             boolean isOpen = value.getValue() == null ? false : open;

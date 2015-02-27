@@ -77,7 +77,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     private static final String DEFAULT_DECIMAL_FORMAT = "#.#############################";
     protected static final String FULL_WIDTH = "100%";
     
-    protected final AvroWidgetsConfig config;
+    protected AvroWidgetsConfig config;
     
     protected List<HandlerRegistration> registrations = new ArrayList<HandlerRegistration>();
     
@@ -168,6 +168,28 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         }
     }
     
+    public void updateConfig(AvroWidgetsConfig config) {
+        this.config = config;
+        traverseUpdateConfig(this, this.config);
+    }
+    
+    private void traverseUpdateConfig(HasWidgets hasWidgets, AvroWidgetsConfig config) {
+        for (Widget childWidget : hasWidgets) {
+            if (childWidget instanceof AbstractFieldWidget) {
+                ((AbstractFieldWidget<?>)childWidget).updateConfig(config);
+            } else if (childWidget instanceof HasWidgets) {
+                traverseUpdateConfig((HasWidgets)childWidget, config);
+            } else if (childWidget instanceof FieldWidgetPanel) {
+                Widget w = ((FieldWidgetPanel)childWidget).getContent();
+                if (w instanceof AbstractFieldWidget) {
+                    ((AbstractFieldWidget<?>)w).updateConfig(config);
+                } else if (w instanceof HasWidgets) {
+                    traverseUpdateConfig((HasWidgets)w, config);
+                }
+            }
+        }
+    }
+    
     protected void setNavigationContainer(NavigationContainer container) {
         this.navigationContainer = container;
     }
@@ -176,7 +198,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         ValueChangeEvent.fire(this, value);
     }
 
-    private void updateFields() {
+    protected void updateFields() {
         for (HandlerRegistration registration : registrations) {
             registration.removeHandler();
         }
@@ -188,8 +210,6 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
 
     protected void constructFormData(FlexTable table, FormField field, List<HandlerRegistration> handlerRegistrations) {
         table.removeAllRows();
-        table.getColumnFormatter().setWidth(0, config.getLabelsColumnWidth());
-        table.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
         if (field != null && field.getFieldAccess() != FieldAccess.HIDDEN) {
             int row = 0;
             if (field.getFieldType()==FieldType.RECORD) {

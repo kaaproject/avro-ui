@@ -164,6 +164,10 @@ public class NavigationElement {
         return widget;
     }
     
+    public AbstractFieldWidget<?> getFieldWidget() {
+        return fieldWidget;
+    }
+    
     public int getIndex() {
         return index;
     }

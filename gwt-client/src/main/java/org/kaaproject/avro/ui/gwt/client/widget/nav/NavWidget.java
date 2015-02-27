@@ -17,7 +17,6 @@
 package org.kaaproject.avro.ui.gwt.client.widget.nav;
 
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
-import org.kaaproject.avro.ui.gwt.client.widget.ListItem;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;

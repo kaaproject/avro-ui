@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.kaaproject.avro.ui.gwt.client.widget;
+package org.kaaproject.avro.ui.gwt.client.widget.nav;
 
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
 

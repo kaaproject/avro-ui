@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package org.kaaproject.avro.ui.gwt.client.widget;
+package org.kaaproject.avro.ui.gwt.client.widget.nav;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Widget;
 
-public class UnorderedList extends ComplexPanel implements HasWidgets {
+public class ListItem extends ComplexPanel implements HasWidgets {
     
     @SuppressWarnings("deprecation")
-    public UnorderedList() {
-        setElement(DOM.createElement("ul"));
+    public ListItem() {
+        setElement(DOM.createElement("li"));
     }
     
     @SuppressWarnings("deprecation")
@@ -34,11 +34,11 @@ public class UnorderedList extends ComplexPanel implements HasWidgets {
         add(w, getElement());
     }
     
-    public UnorderedList(ListItem... widgets) {
+    public ListItem(Widget... widgets) {
         this();
-        for (ListItem li : widgets) {
-            add(li);
+        for (Widget w : widgets) {
+            add(w);
         }
     }
-
+    
 }

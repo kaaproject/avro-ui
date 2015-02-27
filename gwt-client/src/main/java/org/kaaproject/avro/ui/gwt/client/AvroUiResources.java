@@ -72,6 +72,14 @@ public interface AvroUiResources extends ClientBundle {
         
         String breadcrumb();
         
+        String zoomAction();
+        
+        String zoomActionPanel();
+        
+        String formPopup();
+        
+        String closeAction();
+        
         String divider();
         
         String active();
@@ -154,6 +162,14 @@ public interface AvroUiResources extends ClientBundle {
     @ImageOptions(width = 14, height = 14)
     @Source("images/remove.png")
     ImageResource remove();
+    
+    @ImageOptions(width = 14, height = 14)
+    @Source("images/close.png")
+    ImageResource close();
+    
+    @ImageOptions(width = 16, height = 16)
+    @Source("images/zoom_out.png")
+    ImageResource zoomOut();
     
     @ImageOptions(width = 14, height = 14)
     @Source("images/resizeHandle.png")

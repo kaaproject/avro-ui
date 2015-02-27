@@ -57,6 +57,8 @@ import com.google.gwt.view.client.HasData;
 public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     
     private ArrayGrid arrayGrid;
+    private ScrollPanel tableScroll; 
+    private FieldWidgetPanel fieldWidgetPanel;
 
     public ArrayFieldWidget(AvroWidgetsConfig config, NavigationContainer container, boolean readOnly) {
         super(config, container, readOnly);
@@ -69,7 +71,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     @Override
     protected Widget constructForm() {
         
-        FieldWidgetPanel fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
+        fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
         if (value.isOverride()) {
             fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
                 @Override
@@ -98,6 +100,20 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         return fieldWidgetPanel;
     }
     
+    @Override
+    public void updateConfig(AvroWidgetsConfig config) {
+        super.updateConfig(config);
+        if (fieldWidgetPanel != null) {
+            fieldWidgetPanel.setWidth(config.getArrayPanelWidth());
+        }
+        if (arrayGrid != null) {
+            arrayGrid.setHeight(config.getGridHeight());
+        }
+        if (tableScroll != null) {
+            tableScroll.setHeight(config.getTableHeight());
+        }
+    }
+
     public static boolean isGridNeeded(ArrayField field) {
         FormField metadata = field.getElementMetadata();
         if (metadata.getFieldType().isComplex()) {
@@ -188,7 +204,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     
     private Widget constructTable() {
         VerticalPanel verticalPanel = new VerticalPanel();
-        ScrollPanel scroll = new ScrollPanel();
+        tableScroll = new ScrollPanel();
         final FlexTable table = new FlexTable();
         table.setWidth("95%");
         table.setCellPadding(5);
@@ -232,12 +248,12 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             rowHandlerRegistrationMap.put(record, rowHandlerRegistrations);
         }
 
-        scroll.setWidth(FULL_WIDTH);
-        scroll.setHeight(config.getTableHeight());
-        scroll.add(table);
+        tableScroll.setWidth(FULL_WIDTH);
+        tableScroll.setHeight(config.getTableHeight());
+        tableScroll.add(table);
 
         verticalPanel.setWidth(FULL_WIDTH);
-        verticalPanel.add(scroll);
+        verticalPanel.add(tableScroll);
         
         if (!readOnly && !value.isReadOnly()) {
             Button addRow = new Button(Utils.constants.add());

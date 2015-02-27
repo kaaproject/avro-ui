@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package org.kaaproject.avro.ui.gwt.client.widget;
+package org.kaaproject.avro.ui.gwt.client.widget.nav;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
-import org.kaaproject.avro.ui.gwt.client.widget.nav.NavWidget;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.DOM;

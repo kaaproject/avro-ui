@@ -26,18 +26,23 @@ import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationAction;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationActionListener;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationElement;
+import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationPanel;
+import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationPanel.ZoomListener;
 import org.kaaproject.avro.ui.shared.ArrayField;
 import org.kaaproject.avro.ui.shared.FieldType;
 import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -45,9 +50,11 @@ import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -58,9 +65,10 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     
     private ResizePanel resizePanel;
     private LayoutPanel rootPanel;
-    private Breadcrumbs breadcrumbs;
+    private NavigationPanel navPanel;
     private FragmentLayoutPanel fragmentPanel;
     private FlexTable table = new FlexTable();
+    private FieldWidgetPanel fieldWidgetPanel;
     
     private List<NavigationElement> navElements;
     
@@ -71,6 +79,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
     private boolean isLayoutComplete = false;
     private int preferredWidthPx = -1;
     private int preferredHeightPx = -1;
+    private String lastWidth = null;
+    private String lastHeight = null;
     
     public RecordFieldWidget(AvroWidgetsConfig config, AvroUiStyle style, boolean readOnly) {
         this(config, style, null, readOnly);
@@ -168,6 +178,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             resizePanel.setHeight(height);
             rootPanel.setHeight(height);
             super.setHeight("100%");
+            lastHeight = height;
         } else {
             super.setHeight(height);
         }
@@ -179,22 +190,101 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             resizePanel.setWidth(width);
             rootPanel.setWidth(width);
             super.setWidth("100%");
+            lastWidth = width;
         } else {
             super.setWidth(width);
         }
+    }
+    
+    public void enableZoom(boolean enable) {
+        if (navPanel != null) {
+            navPanel.enableZoom(enable);
+        }
+    }
+    
+    public Widget getAnchorWidget() {
+        return resizePanel;
     }
     
     private void initNavigation() {
         if (resizePanel == null) {
             resizePanel = new ResizePanel(style);
             rootPanel = new LayoutPanel();
-            breadcrumbs = new Breadcrumbs();
+            navPanel = new NavigationPanel();
+            
+            navPanel.setZoomListener(new ZoomListener() {
+                @Override
+                public void onZoom() {
+                    
+                    final int prevPreferredWidthPx = preferredWidthPx;
+                    final int prevPreferredHeightPx = preferredHeightPx;
+                    final String prevWidth;
+                    if (lastWidth != null) {
+                        prevWidth = lastWidth;
+                    } else {
+                        prevWidth = resizePanel.getElement().getClientWidth() + "px";
+                    }
+                    final String prevHeight;
+                    if (lastHeight != null) {
+                        prevHeight = lastHeight;
+                    } else {
+                        prevHeight = resizePanel.getElement().getClientHeight() + "px";
+                    }
+                    final AvroWidgetsConfig prevConfig = config;
+                    
+                    final FormPopup popup = new FormPopup();
+                    
+                    popup.setTitle(value.getDisplayName());
+                    
+                    int dWidth = Window.getClientWidth() - 150;
+                    int dHeight = Window.getClientHeight() - 200;
+                    
+                    AvroWidgetsConfig config = new AvroWidgetsConfig.Builder().recordPanelWidth(dWidth-100).
+                            gridHeight(dHeight-350).tableHeight(dHeight-370).createConfig();
+           
+                    enableZoom(false);
+                    setPreferredWidthPx(dWidth);
+                    setPreferredHeightPx(dHeight);
+                    updateConfig(config);
+                    
+                    popup.add(getAnchorWidget());
+
+                    Button close = new Button(Utils.constants.close(), new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            popup.hide();
+                        }
+                    });
+                    popup.addButton(close);
+                    
+                    popup.addCloseHandler(new CloseHandler<PopupPanel>() {
+                                @Override
+                                public void onClose(CloseEvent<PopupPanel> event) {
+                                    enableZoom(true);
+                                    setWidget(getAnchorWidget());
+                                    updateConfig(prevConfig);
+                                    setPreferredWidthPx(prevPreferredWidthPx);
+                                    setPreferredHeightPx(prevPreferredHeightPx);
+                                    if (prevWidth != null) {
+                                        setWidth(prevWidth);
+                                    }
+                                    if (prevHeight != null) {
+                                        setHeight(prevHeight);
+                                    }
+                                }
+                            });
+                    
+                    popup.center();
+                    popup.show();
+                }
+            });
+            
             fragmentPanel = new FragmentLayoutPanel();
             fragmentPanel.setAnimationDuration(FRAGMENT_SWITCH_ANIMATION_DURATION);
-            rootPanel.add(breadcrumbs);
-            rootPanel.setWidgetLeftRight(breadcrumbs, 0, Unit.PX, 0, Unit.PX);
-            rootPanel.setWidgetTopHeight(breadcrumbs, 0, Unit.PX, NAVIGATION_HEADER_HEIGHT, Unit.PX);
-            rootPanel.setWidgetVerticalPosition(breadcrumbs, Alignment.END);
+            rootPanel.add(navPanel);
+            rootPanel.setWidgetLeftRight(navPanel, 0, Unit.PX, 0, Unit.PX);
+            rootPanel.setWidgetTopHeight(navPanel, 0, Unit.PX, NAVIGATION_HEADER_HEIGHT, Unit.PX);
+            rootPanel.setWidgetVerticalPosition(navPanel, Alignment.END);
             rootPanel.add(fragmentPanel);
             rootPanel.setWidgetLeftRight(fragmentPanel, 0, Unit.PX, 0, Unit.PX);
             rootPanel.setWidgetTopBottom(fragmentPanel, NAVIGATION_HEADER_HEIGHT, Unit.PX, 0, Unit.PX);    
@@ -216,8 +306,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         if (resizePanel != null) {
             resizePanel = null;
             rootPanel = null;
-            breadcrumbs.clear();
-            breadcrumbs = null;
+            navPanel.clear();
+            navPanel = null;
             fragmentPanel = null;
             navElements.clear();
             navElements = null;
@@ -228,6 +318,10 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         if (isRoot) {
             Element element = getElement();
             element.getStyle().clearOverflow();
+            element.getStyle().clearHeight();
+            if (element.getParentElement() != null) {
+                element.getParentElement().getStyle().clearProperty("minHeight");
+            }
             if (preferredWidthPx > 0 || preferredHeightPx > 0) {
                 if (preferredWidthPx > 0) {
                     setWidth(preferredWidthPx + "px");
@@ -254,9 +348,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 } 
                 height += NAVIGATION_HEADER_HEIGHT;
                 setHeight(height+"px");
-            } else {
-                element.getStyle().clearHeight();
-            }
+            } 
         }
     }
     
@@ -343,23 +435,25 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             isLayoutComplete = false;
         }
         navigationDisabled = isRoot && !(forceNavigation || isNavigationNeeded(value));
+        table.getColumnFormatter().setWidth(0, config.getLabelsColumnWidth());
+        table.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
         constructFormData(table, value, registrations);
         if (isRoot && !navigationDisabled) {     
             initNavigation();
-            breadcrumbs.clear();
+            navPanel.clearNavElements();
             navElements.clear();
             fragmentPanel.clear();
             if (value != null) {
-                breadcrumbs.setVisible(true);
+                navPanel.setVisible(true);
                 showField(value, null);
             } else {
-                breadcrumbs.setVisible(false);
+                navPanel.setVisible(false);
             }
             form = resizePanel;
         } else {
             clearNavigation();
             if (value != null && value.isOverride()) {
-                FieldWidgetPanel fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
+                fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, true);
                 fieldWidgetPanel.setWidth(config.getRecordPanelWidth());
                 if (value.isOverride() && !readOnly && !value.isReadOnly()) {
                     fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -378,6 +472,19 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         return form;
     }
     
+    
+    @Override
+    public void updateConfig(AvroWidgetsConfig config) {
+        super.updateConfig(config);
+        if (table != null) {
+            table.getColumnFormatter().setWidth(0, config.getLabelsColumnWidth());
+            table.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
+        }
+        if (fieldWidgetPanel != null) {
+            fieldWidgetPanel.setWidth(config.getRecordPanelWidth());
+        }
+    }
+
     @Override
     protected Widget constructLabel(FlexTable table, FormField field, int row,
             int column) {
@@ -416,7 +523,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 @Override
                 public void onAnimationComplete() {
                     for (NavigationElement oldNavElement : navElements.subList(index+1, navElements.size())) {
-                        breadcrumbs.remove(oldNavElement.getLink());
+                        navPanel.removeNavElement(oldNavElement.getLink());
                         fragmentPanel.remove(oldNavElement.getWidget());
                     }
                     navElements = navElements.subList(0, index+1);
@@ -437,7 +544,6 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         for (int i=navElements.size()-1;i>index;i--) {
             NavigationElement navElement = navElements.get(i);
             String mayClose = navElement.mayClose();
-            GWT.debugger();
             if (mayClose != null && !Window.confirm(mayClose)) {
                 confirmedIndex = i;
                 break;
@@ -497,7 +603,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     }
         });
         navElements.add(navElement);
-        breadcrumbs.add(navElement.getLink());
+        navPanel.addNavElement(navElement.getLink());
         fragmentPanel.add(navElement.getWidget());
         final boolean doLayout = navElements.size()==1 && !isLayoutComplete;
         isAnimating = true;
