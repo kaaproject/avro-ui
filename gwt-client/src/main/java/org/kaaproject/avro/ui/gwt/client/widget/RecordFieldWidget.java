@@ -439,6 +439,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         table.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
         constructFormData(table, value, registrations);
         if (isRoot && !navigationDisabled) {     
+            isAnimating = false;
             initNavigation();
             navPanel.clearNavElements();
             navElements.clear();
@@ -613,7 +614,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             
             @Override
             public void onAnimationComplete() {
-                if (doLayout && !isLayoutComplete) {
+                if (doLayout && !isLayoutComplete && isAnimating) {
                     doLayout();
                     isLayoutComplete = true;
                     fragmentPanel.remove(navElement.getIndex());
