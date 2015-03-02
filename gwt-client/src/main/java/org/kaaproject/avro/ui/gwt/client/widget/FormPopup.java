@@ -40,8 +40,6 @@ import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.client.HasSafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -49,7 +47,6 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DecoratorPanel;
-import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -57,33 +54,32 @@ import com.google.gwt.user.client.ui.MouseListener;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-
 @SuppressWarnings("deprecation")
-public class FormPopup extends PopupPanel implements HasHTML, HasSafeHtml, MouseListener {
-    
-  public static class CloseWidget extends InlineLabel {
-      
+public class FormPopup extends PopupPanel implements MouseListener {
+
+    public static class CloseWidget extends InlineLabel {
+
         public CloseWidget() {
-            super();            
+            super();
             setStyleName(Utils.avroUiStyle.closeAction());
         }
-      
+
         public void doAttach() {
             super.onAttach();
         }
-        
+
         public void doDetach() {
             super.onDetach();
         }
-  }
-  
+    }
+
     private static class BottomPanel extends HorizontalPanel {
-        
+
         public BottomPanel() {
             setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
             setWidth("100%");
         }
-        
+
         public void doAttach() {
             super.onAttach();
         }
@@ -92,360 +88,281 @@ public class FormPopup extends PopupPanel implements HasHTML, HasSafeHtml, Mouse
             super.onDetach();
         }
     }
-  
-  public static class DecoratorPanelImpl extends DecoratorPanel {
+
+    public static class DecoratorPanelImpl extends DecoratorPanel {
 
         public DecoratorPanelImpl() {
-          super();
+            super();
         }
-        
+
         public void doAttach() {
             super.onAttach();
         }
-        
+
         public void doDetach() {
             super.onDetach();
         }
-        
+
         protected Element getCellElement(int row, int cell) {
             return super.getCellElement(row, cell);
         }
-}
-  
-  private class MouseHandler implements MouseDownHandler, MouseUpHandler,
-    MouseOutHandler, MouseOverHandler, MouseMoveHandler {
-
-    public void onMouseDown(MouseDownEvent event) {
-      beginDragging(event);
     }
-    
-    public void onMouseMove(MouseMoveEvent event) {
-      continueDragging(event);
+
+    private class MouseHandler implements MouseDownHandler, MouseUpHandler,
+            MouseOutHandler, MouseOverHandler, MouseMoveHandler {
+
+        public void onMouseDown(MouseDownEvent event) {
+            beginDragging(event);
+        }
+
+        public void onMouseMove(MouseMoveEvent event) {
+            continueDragging(event);
+        }
+
+        public void onMouseOut(MouseOutEvent event) {
+            FormPopup.this.onMouseLeave(decPanel.asWidget());
+        }
+
+        public void onMouseOver(MouseOverEvent event) {
+            FormPopup.this.onMouseEnter(decPanel.asWidget());
+        }
+
+        public void onMouseUp(MouseUpEvent event) {
+            endDragging(event);
+        }
     }
-    
-    public void onMouseOut(MouseOutEvent event) {
-        FormPopup.this.onMouseLeave(decPanel.asWidget());
+
+    private DecoratorPanelImpl decPanel;
+    private CloseWidget closeWidget;
+    private boolean dragging;
+    private int dragStartX, dragStartY;
+    private int windowWidth;
+    private int clientLeft;
+    private int clientTop;
+
+    private String desiredHeight;
+
+    private String desiredWidth;
+
+    private HandlerRegistration resizeHandlerRegistration;
+
+    private BottomPanel bottomPanel;
+    private HorizontalPanel buttonsPanel;
+
+    public FormPopup() {
+        this(false);
     }
-    
-    public void onMouseOver(MouseOverEvent event) {
-        FormPopup.this.onMouseEnter(decPanel.asWidget());
+
+    public FormPopup(boolean autoHide) {
+        this(autoHide, true, true, false);
     }
-    
-    public void onMouseUp(MouseUpEvent event) {
-      endDragging(event);
-    }
-  }
 
-  private DecoratorPanelImpl decPanel;
-  private CloseWidget closeWidget;
-  private boolean dragging;
-  private int dragStartX, dragStartY;
-  private int windowWidth;
-  private int clientLeft;
-  private int clientTop;
-  
-  private String desiredHeight;
+    public FormPopup(boolean autoHide, boolean modal, boolean showCloseButton,
+            boolean autoHideOnHistoryEvents) {
+        super(autoHide, modal);
+        this.setAutoHideOnHistoryEventsEnabled(autoHideOnHistoryEvents);
 
-  private String desiredWidth;
+        setGlassEnabled(true);
+        setAnimationEnabled(true);
 
-  private HandlerRegistration resizeHandlerRegistration;
-  
-  private BottomPanel bottomPanel;
-  private HorizontalPanel buttonsPanel;
+        if (showCloseButton) {
+            closeWidget = new CloseWidget();
+        }
 
-  public FormPopup() {
-    this(false);
-  }
+        decPanel = new DecoratorPanelImpl();
+        decPanel.setStyleName("");
+        decPanel.setSize("100%", "100%");
 
-  public FormPopup(boolean autoHide) {
-    this(autoHide, true, true, false);
-  }
+        setStylePrimaryName(Utils.avroUiStyle.formPopup());
+        super.setWidget(decPanel);
+        setStyleName(getContainerElement(), "popupContent", false);
 
-  public FormPopup(boolean autoHide, boolean modal, boolean showCloseButton, boolean autoHideOnHistoryEvents) {
-    super(autoHide, modal);
-    this.setAutoHideOnHistoryEventsEnabled(autoHideOnHistoryEvents);
-    
-    setGlassEnabled(true);
-    setAnimationEnabled(true);
-    
-    if (showCloseButton) {
-        closeWidget = new CloseWidget();
-    }
-    
-    decPanel = new DecoratorPanelImpl();
-    decPanel.setStyleName("");
-    decPanel.setSize("100%", "100%");
-      
-    setStylePrimaryName(Utils.avroUiStyle.formPopup());
-    super.setWidget(decPanel);
-    setStyleName(getContainerElement(), "popupContent", false);
-    
-    if (showCloseButton) {
-        Element td = getCellElement(1, 2);
-        DOM.appendChild(td, closeWidget.asWidget().getElement());
-        adopt(closeWidget.asWidget());
-    }
-    
-    windowWidth = Window.getClientWidth();
-    clientLeft = Document.get().getBodyOffsetLeft();
-    clientTop = Document.get().getBodyOffsetTop();
+        if (showCloseButton) {
+            Element td = getCellElement(1, 2);
+            DOM.appendChild(td, closeWidget.asWidget().getElement());
+            adopt(closeWidget.asWidget());
+        }
 
-    MouseHandler mouseHandler = new MouseHandler();
-    addDomHandler(mouseHandler, MouseDownEvent.getType());
-    addDomHandler(mouseHandler, MouseUpEvent.getType());
-    addDomHandler(mouseHandler, MouseMoveEvent.getType());
-    addDomHandler(mouseHandler, MouseOverEvent.getType());
-    addDomHandler(mouseHandler, MouseOutEvent.getType());
-    
-    if (showCloseButton) {
-        closeWidget.addClickHandler(new ClickHandler() {
+        windowWidth = Window.getClientWidth();
+        clientLeft = Document.get().getBodyOffsetLeft();
+        clientTop = Document.get().getBodyOffsetTop();
+
+        MouseHandler mouseHandler = new MouseHandler();
+        addDomHandler(mouseHandler, MouseDownEvent.getType());
+        addDomHandler(mouseHandler, MouseUpEvent.getType());
+        addDomHandler(mouseHandler, MouseMoveEvent.getType());
+        addDomHandler(mouseHandler, MouseOverEvent.getType());
+        addDomHandler(mouseHandler, MouseOutEvent.getType());
+
+        if (showCloseButton) {
+            closeWidget.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    hide();
+                }
+            });
+        }
+
+        addAttachHandler(new AttachEvent.Handler() {
+
             @Override
-            public void onClick(ClickEvent event) {
-                hide();
+            public void onAttachOrDetach(AttachEvent event) {
+                if (event.isAttached()) {
+                    int popupWidth = getOffsetWidth();
+                    int popupHeight = getOffsetHeight();
+
+                    int deltaWidth = (Window.getClientWidth() - popupWidth);
+                    int deltaHeight = (Window.getClientHeight() - popupHeight);
+                    if (deltaWidth < 0 || deltaHeight < 0) {
+                        if (deltaWidth < 0) {
+                            popupWidth += deltaWidth;
+                        } else {
+                            deltaWidth = 0;
+                        }
+                        if (deltaHeight < 0) {
+                            popupHeight += deltaHeight;
+                        } else {
+                            deltaHeight = 0;
+                        }
+                        getElement().getStyle().setWidth(popupWidth, Unit.PX);
+                        getElement().getStyle().setHeight(popupHeight, Unit.PX);
+                        onSizeOverflow(deltaWidth, deltaHeight);
+                    }
+                }
+
             }
         });
+
     }
-    
-    addAttachHandler(new AttachEvent.Handler() {
-        
-        @Override
-        public void onAttachOrDetach(AttachEvent event) {
-            if (event.isAttached()) {
-                int popupWidth = getOffsetWidth();
-                int popupHeight = getOffsetHeight();
-                
-                int deltaWidth = (Window.getClientWidth() - popupWidth);
-                int deltaHeight = (Window.getClientHeight() - popupHeight);
-                if (deltaWidth < 0 || deltaHeight < 0) {
-                    if (deltaWidth < 0) {
-                        popupWidth += deltaWidth;
-                    }
-                    else {
-                        deltaWidth = 0;
-                    }
-                    if (deltaHeight < 0) {
-                        popupHeight += deltaHeight;
-                    }
-                    else {
-                        deltaHeight = 0;
-                    }
-                    getElement().getStyle().setWidth(popupWidth, Unit.PX);
-                    getElement().getStyle().setHeight(popupHeight, Unit.PX);
-                    onSizeOverflow(deltaWidth, deltaHeight);
-                }
-            }
-            
-        }
-    });
-    
-  }
-  
-  public void onSizeOverflow(int deltaWidth, int deltaHeight) {
-  }
-  
-  private void initButtonsPanel() {
-      buttonsPanel = new HorizontalPanel();
-      buttonsPanel.setSpacing(5);
-    
-      buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-    
-      bottomPanel = new BottomPanel();
-      bottomPanel.add(buttonsPanel);
-        
-      Element td = getCellElement(2, 1);
-      DOM.insertChild(td,bottomPanel.getElement(),0);
-      adopt(bottomPanel);
-  }
-  
+
+    public void onSizeOverflow(int deltaWidth, int deltaHeight) {
+    }
+
+    private void initButtonsPanel() {
+        buttonsPanel = new HorizontalPanel();
+        buttonsPanel.setSpacing(5);
+
+        buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+
+        bottomPanel = new BottomPanel();
+        bottomPanel.add(buttonsPanel);
+
+        Element td = getCellElement(2, 1);
+        DOM.insertChild(td, bottomPanel.getElement(), 0);
+        adopt(bottomPanel);
+    }
+
     public void addButton(com.google.gwt.user.client.ui.Button button) {
         if (buttonsPanel == null)
             initButtonsPanel();
         buttonsPanel.add(button);
     }
-  
-  @Override
-  public void hide() {
-    if (resizeHandlerRegistration != null) {
-      resizeHandlerRegistration.removeHandler();
-      resizeHandlerRegistration = null;
-    }
-    super.hide();
-  }
-  
-  @Override
-  public void show() {
-    if (resizeHandlerRegistration == null) {
-      resizeHandlerRegistration = Window.addResizeHandler(new ResizeHandler() {
-        public void onResize(ResizeEvent event) {
-          windowWidth = event.getWidth();
+
+    @Override
+    public void hide() {
+        if (resizeHandlerRegistration != null) {
+            resizeHandlerRegistration.removeHandler();
+            resizeHandlerRegistration = null;
         }
-      });
+        super.hide();
     }
-    Timer timer = new Timer() {
-          public void run() {
+
+    @Override
+    public void show() {
+        if (resizeHandlerRegistration == null) {
+            resizeHandlerRegistration = Window
+                    .addResizeHandler(new ResizeHandler() {
+                        public void onResize(ResizeEvent event) {
+                            windowWidth = event.getWidth();
+                        }
+                    });
+        }
+        Timer timer = new Timer() {
+            public void run() {
                 getElement().getStyle().setProperty("clip", "auto");
-          }
+            }
         };
-    timer.schedule(300);
+        timer.schedule(300);
 
-    super.show();
-  }
-  
-  @Override
-  public void onBrowserEvent(Event event) {
-    // If we're not yet dragging, only trigger mouse events if the event occurs
-    // in the caption wrapper
-    switch (event.getTypeInt()) {
-      case Event.ONMOUSEDOWN:
-      case Event.ONMOUSEUP:
-      case Event.ONMOUSEMOVE:
-      case Event.ONMOUSEOVER:
-      case Event.ONMOUSEOUT:
-        if (!dragging && !isCaptionEvent(event)) {
-          return;
-        }
+        super.show();
     }
 
-    super.onBrowserEvent(event);
-  }
+    @Override
+    public void onBrowserEvent(Event event) {
+        switch (event.getTypeInt()) {
+        case Event.ONMOUSEDOWN:
+        case Event.ONMOUSEUP:
+        case Event.ONMOUSEMOVE:
+        case Event.ONMOUSEOVER:
+        case Event.ONMOUSEOUT:
+            if (!dragging && !isCaptionEvent(event)) {
+                return;
+            }
+        }
 
-  @Override
-  public void clear() {
-    decPanel.clear();
-  }
-  
-  @Override
-  public Widget getWidget() {
-    return decPanel.getWidget();
-  }
+        super.onBrowserEvent(event);
+    }
 
-  @Override
-  public Iterator<Widget> iterator() {
-    return decPanel.iterator();
-  }
+    @Override
+    public void clear() {
+        decPanel.clear();
+    }
 
-  @Override
-  public boolean remove(Widget w) {
-    return decPanel.remove(w);
-  }
+    @Override
+    public Widget getWidget() {
+        return decPanel.getWidget();
+    }
 
-  @Override
-  public void setWidget(Widget w) {
-       decPanel.setWidget(w);
-       maybeUpdateSizeInternal();
-  }
-  
-  void maybeUpdateSizeInternal() {
+    @Override
+    public Iterator<Widget> iterator() {
+        return decPanel.iterator();
+    }
+
+    @Override
+    public boolean remove(Widget w) {
+        return decPanel.remove(w);
+    }
+
+    @Override
+    public void setWidget(Widget w) {
+        decPanel.setWidget(w);
+        maybeUpdateSizeInternal();
+    }
+
+    void maybeUpdateSizeInternal() {
         Widget w = super.getWidget();
         if (w != null) {
-          if (desiredHeight != null) {
-            w.setHeight(desiredHeight);
-          }
-          if (desiredWidth != null) {
-            w.setWidth(desiredWidth);
-          }
-        }
-  }
-  
-  @Override
-  public void setHeight(String height) {
-      super.setHeight(height);
-    desiredHeight = height;
-    // If the user cleared the size, revert to not trying to control children.
-    if (height.length() == 0) {
-      desiredHeight = null;
-    }
-  }
-  
-  @Override
-  public void setWidth(String width) {
-      super.setWidth(width);
-    desiredWidth = width;
-    // If the user cleared the size, revert to not trying to control children.
-    if (width.length() == 0) {
-      desiredWidth = null;
-    }
-  }
-  
-
-
-    @Override
-    public String getText() {
-        return "";
-    }
-    
-    @Override
-    public void setText(String text) {
-    }
-    
-    @Override
-    public void onMouseDown(Widget sender, int x, int y) {
-        if (DOM.getCaptureElement() == null) {
-            /*
-             * Need to check to make sure that we aren't already capturing an element
-             * otherwise events will not fire as expected. If this check isn't here,
-             * any class which extends custom button will not fire its click event for
-             * example.
-             */
-            dragging = true;
-            DOM.setCapture(getElement());
-            dragStartX = x;
-            dragStartY = y;
-          }
-    }
-    
-    @Override
-    public void onMouseEnter(Widget sender) {
-    }
-    
-    @Override
-    public void onMouseLeave(Widget sender) {
-    }
-    
-    @Override
-    public void onMouseMove(Widget sender, int x, int y) {
-        if (dragging) {
-            int absX = x + getAbsoluteLeft();
-            int absY = y + getAbsoluteTop();
-
-            // if the mouse is off the screen to the left, right, or top, don't
-            // move the dialog box. This would let users lose dialog boxes, which
-            // would be bad for modal popups.
-            if (absX < clientLeft || absX >= windowWidth || absY < clientTop) {
-              return;
+            if (desiredHeight != null) {
+                w.setHeight(desiredHeight);
             }
-
-            setPopupPosition(absX - dragStartX, absY - dragStartY);
-          }
-    }
-    
-    @Override
-    public void onMouseUp(Widget sender, int x, int y) {
-        dragging = false;
-        DOM.releaseCapture(getElement());
-    }
-    
-    @Override
-    public void setHTML(SafeHtml html) {
-    }
-    
-    @Override
-    public String getHTML() {
-        return "";
-    }
-    
-    @Override
-    public void setHTML(String html) {
+            if (desiredWidth != null) {
+                w.setWidth(desiredWidth);
+            }
+        }
     }
 
-    protected void beginDragging(MouseDownEvent event) {
-            onMouseDown(decPanel.asWidget(), event.getX(), event.getY());
+    @Override
+    public void setHeight(String height) {
+        super.setHeight(height);
+        desiredHeight = height;
+        // If the user cleared the size, revert to not trying to control
+        // children.
+        if (height.length() == 0) {
+            desiredHeight = null;
+        }
     }
-    
-    protected void continueDragging(MouseMoveEvent event) {
-            onMouseMove(decPanel.asWidget(), event.getX(), event.getY());
+
+    @Override
+    public void setWidth(String width) {
+        super.setWidth(width);
+        desiredWidth = width;
+        // If the user cleared the size, revert to not trying to control
+        // children.
+        if (width.length() == 0) {
+            desiredWidth = null;
+        }
     }
-    
+
     @Override
     protected void doAttachChildren() {
         try {
@@ -457,9 +374,9 @@ public class FormPopup extends PopupPanel implements HasHTML, HasSafeHtml, Mouse
                 bottomPanel.doAttach();
         }
     }
-    
-      @Override
-      protected void doDetachChildren() {
+
+    @Override
+    protected void doDetachChildren() {
         try {
             decPanel.doDetach();
         } finally {
@@ -468,58 +385,117 @@ public class FormPopup extends PopupPanel implements HasHTML, HasSafeHtml, Mouse
             if (bottomPanel != null)
                 bottomPanel.doDetach();
         }
-      }
-      
-    protected void endDragging(MouseUpEvent event) {
-            onMouseUp(decPanel.asWidget(), event.getX(), event.getY());
     }
-    
-      @Override
-      protected void onEnsureDebugId(String baseID) {
-        super.onEnsureDebugId(baseID);
-        ensureDebugId(getCellElement(1, 1), baseID, "content");
-      }
-      
-      @Override
-      protected void onPreviewNativeEvent(NativePreviewEvent event) {
+
+    @Override
+    public void onMouseDown(Widget sender, int x, int y) {
+        if (DOM.getCaptureElement() == null) {
+            /*
+             * Need to check to make sure that we aren't already capturing an
+             * element otherwise events will not fire as expected. If this check
+             * isn't here, any class which extends custom button will not fire
+             * its click event for example.
+             */
+            dragging = true;
+            DOM.setCapture(getElement());
+            dragStartX = x;
+            dragStartY = y;
+        }
+    }
+
+    @Override
+    public void onMouseEnter(Widget sender) {
+    }
+
+    @Override
+    public void onMouseLeave(Widget sender) {
+    }
+
+    @Override
+    public void onMouseMove(Widget sender, int x, int y) {
+        if (dragging) {
+            int absX = x + getAbsoluteLeft();
+            int absY = y + getAbsoluteTop();
+
+            if (absX < clientLeft || absX >= windowWidth || absY < clientTop) {
+                return;
+            }
+
+            setPopupPosition(absX - dragStartX, absY - dragStartY);
+        }
+    }
+
+    @Override
+    public void onMouseUp(Widget sender, int x, int y) {
+        dragging = false;
+        DOM.releaseCapture(getElement());
+    }
+
+    protected void beginDragging(MouseDownEvent event) {
+        onMouseDown(decPanel.asWidget(), event.getX(), event.getY());
+    }
+
+    protected void continueDragging(MouseMoveEvent event) {
+        onMouseMove(decPanel.asWidget(), event.getX(), event.getY());
+    }
+
+    protected void endDragging(MouseUpEvent event) {
+        onMouseUp(decPanel.asWidget(), event.getX(), event.getY());
+    }
+
+    @Override
+    protected void onPreviewNativeEvent(NativePreviewEvent event) {
         NativeEvent nativeEvent = event.getNativeEvent();
 
         if (!event.isCanceled() && (event.getTypeInt() == Event.ONMOUSEDOWN)
-            && isCaptionEvent(nativeEvent)) {
-          nativeEvent.preventDefault();
+                && isCaptionEvent(nativeEvent)) {
+            nativeEvent.preventDefault();
         }
 
         super.onPreviewNativeEvent(event);
-      }
+    }
 
-      private boolean isCaptionEvent(NativeEvent event) {
-            EventTarget target = event.getEventTarget();
-            if (Element.is(target)) {
-                com.google.gwt.dom.client.Element element = Element.as(target);
-                if (decPanel.getElement().isOrHasChild(element)) {
-                    String tag = element.getTagName();
-                    if (tag.equalsIgnoreCase("button") || tag.equalsIgnoreCase("input")) {
-                        return false;
+    private boolean isCaptionEvent(NativeEvent event) {
+        EventTarget target = event.getEventTarget();
+        if (Element.is(target)) {
+            com.google.gwt.dom.client.Element element = Element.as(target);
+            if (decPanel.getElement().isOrHasChild(element)) {
+                String tag = element.getTagName();
+                String className = element.getClassName();
+                if (tag.equalsIgnoreCase("tr")) {
+                    if ("top".equalsIgnoreCase(className)) {
+                        return true;
                     }
-                    else if (tag.equalsIgnoreCase("div")) {
-                        com.google.gwt.dom.client.Element parent = element.getParentElement();
-                        if (parent != null && 
-                                parent.getAttribute("role") != null && 
-                                parent.getAttribute("role").equals("button")) {
-                            return false;
-                        }
+                } else if (tag.equalsIgnoreCase("td")) {
+                    if ("topLeft".equalsIgnoreCase(className)
+                            || "topCenter".equalsIgnoreCase(className)
+                            || "topRight".equalsIgnoreCase(className)) {
+                        return true;
                     }
-                    return true;
+                } else if (tag.equalsIgnoreCase("div")) {
+                    if ("topLeftInner".equalsIgnoreCase(className)
+                            || "topCenterInner".equalsIgnoreCase(className)
+                            || "topRightInner".equalsIgnoreCase(className)) {
+                        return true;
+                    }
                 }
             }
-            return false;
-      }
-      
-      public void setTitle(String title) {
-          getCellElement(0,1).setInnerText(title);
-      }
- 
-    protected Element getCellElement(int row, int cell) {
-            return decPanel.getCellElement(row, cell);
+        }
+        return false;
     }
+
+    public void setTitle(String title) {
+        getCellElement(0, 1).setInnerText(title);
+    }
+
+    protected Element getCellElement(int row, int cell) {
+        return decPanel.getCellElement(row, cell);
+    }
+
+    @Override
+    protected void onEnsureDebugId(String baseID) {
+        super.onEnsureDebugId(baseID);
+        ensureDebugId(getCellElement(1, 1), baseID, "content");
+    }
+
 }
