@@ -203,6 +203,8 @@
                         <exclude>**/bin/**</exclude>
                         <exclude>**/client/i18n/*Constants.java</exclude>
                         <exclude>**/client/i18n/*Messages.java</exclude>
+                        <exclude>**/client/AvroUiTheme.java</exclude>
+                        <exclude>**/client/AvroUiSandboxTheme.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>

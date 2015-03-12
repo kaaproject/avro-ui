@@ -159,20 +159,27 @@
                 <configuration>
                     <i18nConstantsWithLookupBundle>org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxConstants</i18nConstantsWithLookupBundle>
                     <cssFile>org/kaaproject/avro/ui/sandbox/client/AvroUiSandboxTheme.css</cssFile>
-                    <generateDirectory>${basedir}/src/main/java</generateDirectory>
                     <gwtSdkFirstInClasspath>true</gwtSdkFirstInClasspath>
                     <runTarget>AvroUiSandbox.html</runTarget>                    
                 </configuration>
                 <executions>
                     <execution>
-                        <id>compile-gwt</id>
+                        <id>generateAsync</id>
                         <goals>
                             <goal>generateAsync</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>compile-gwt</id>
+                        <goals>
                             <goal>i18n</goal>
                             <goal>css</goal>
                             <goal>compile</goal>
                             <goal>test</goal>
                         </goals>
+                        <configuration>
+                            <generateDirectory>${basedir}/src/main/java</generateDirectory>
+                        </configuration>
                     </execution>
                 </executions>                
             </plugin>
