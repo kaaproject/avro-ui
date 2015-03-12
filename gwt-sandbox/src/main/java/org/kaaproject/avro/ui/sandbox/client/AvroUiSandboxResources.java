@@ -24,20 +24,24 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 
 public interface AvroUiSandboxResources extends ClientBundle {
 
-    public interface Css extends CssResource {
+    public interface KaaTheme extends CssResource {
+        
+        String DEFAULT_CSS = "KaaTheme.css";
 
     }
+    
+    public interface AvroUiSandboxStyle extends AvroUiSandboxTheme {
+
+        String DEFAULT_CSS = "AvroUiSandboxTheme.css";
+        
+    }
+    
+    @NotStrict
+    @Source(KaaTheme.DEFAULT_CSS)
+    KaaTheme kaaTheme();
 
     @NotStrict
-    @Source("AvroUiSandbox.css")
-    Css css();
-
-    @ImageOptions(width = 0, height = 0)
-    @Source("images/circles.png")
-    ImageResource circles();
-
-    @ImageOptions(width = 0, height = 0)
-    @Source("images/circles_ie6.png")
-    ImageResource circles_ie6();
+    @Source(AvroUiSandboxStyle.DEFAULT_CSS)
+    AvroUiSandboxStyle avroUiSandboxStyle();
 
 }

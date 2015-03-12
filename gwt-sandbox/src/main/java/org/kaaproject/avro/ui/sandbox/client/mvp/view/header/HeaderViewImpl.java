@@ -16,6 +16,7 @@
 
 package org.kaaproject.avro.ui.sandbox.client.mvp.view.header;
 
+import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxResources.AvroUiSandboxStyle;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.HeaderView;
 import org.kaaproject.avro.ui.sandbox.client.util.Utils;
 
@@ -32,8 +33,10 @@ public class HeaderViewImpl extends Composite implements HeaderView {
     private static HeaderViewImplUiBinder uiBinder = GWT.create(HeaderViewImplUiBinder.class);
 
     @UiField public HTMLPanel headerTitlePanel;
-
+    @UiField(provided=true) final AvroUiSandboxStyle avroUiSandboxStyle;
+    
     public HeaderViewImpl() {
+        avroUiSandboxStyle = Utils.avroUiSandboxStyle;
         initWidget(uiBinder.createAndBindUi(this));
         headerTitlePanel.getElement().setInnerHTML(Utils.constants.avroUiSandboxHeaderTitle());
     }

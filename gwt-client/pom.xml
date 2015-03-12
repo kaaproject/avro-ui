@@ -86,37 +86,32 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
                 <version>${gwt.version}</version>
+                <configuration>
+                    <i18nConstantsWithLookupBundle>org.kaaproject.avro.ui.gwt.client.i18n.AvroUiConstants</i18nConstantsWithLookupBundle>
+                    <i18nMessagesBundle>org.kaaproject.avro.ui.gwt.client.i18n.AvroUiMessages</i18nMessagesBundle>
+                    <cssFile>org/kaaproject/avro/ui/gwt/client/AvroUiTheme.css</cssFile>
+                    <generateDirectory>${basedir}/src/main/java</generateDirectory>
+                    <strict>true</strict>
+                    <mode>htmlunit</mode>
+                    <testTimeOut>180</testTimeOut>
+                    <includes>**/*GwtTest.java</includes>
+                    <extraJvmArgs>-Xss1024k -Xmx1024m -XX:MaxPermSize=256m</extraJvmArgs>
+                    <compileSourcesArtifacts>
+                        <artifact>org.kaaproject.avro-ui:shared</artifact>
+                    </compileSourcesArtifacts>                    
+                    <module>org.kaaproject.avro.ui.gwt.client.AvroUIClient</module>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>compile</id>
-                        <goals>
-                            <goal>test</goal>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <strict>true</strict>
-                            <mode>htmlunit</mode>
-                            <testTimeOut>180</testTimeOut>
-                            <includes>**/*GwtTest.java</includes>
-                            <extraJvmArgs>-Xss1024k -Xmx1024m -XX:MaxPermSize=256m</extraJvmArgs>
-                            <compileSourcesArtifacts>
-                                <artifact>org.kaaproject.avro-ui:shared</artifact>
-                            </compileSourcesArtifacts>                    
-                            <module>org.kaaproject.avro.ui.gwt.client.AvroUIClient</module>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>i18n</id>
+                        <id>compile-gwt</id>
                         <goals>
                             <goal>i18n</goal>
+                            <goal>css</goal>
+                            <goal>compile</goal>
+                            <goal>test</goal>
                         </goals>
-                        <configuration>
-                            <i18nConstantsWithLookupBundle>org.kaaproject.avro.ui.gwt.client.i18n.AvroUiConstants</i18nConstantsWithLookupBundle>
-                            <i18nMessagesBundle>org.kaaproject.avro.ui.gwt.client.i18n.AvroUiMessages</i18nMessagesBundle>
-                            <generateDirectory>${basedir}/src/main/java</generateDirectory>
-                        </configuration>                    
                     </execution>
-                </executions>
+                </executions>                
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

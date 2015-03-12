@@ -16,6 +16,9 @@
 
 package org.kaaproject.avro.ui.sandbox.client.layout;
 
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
+import org.kaaproject.avro.ui.gwt.client.util.Utils;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -29,9 +32,11 @@ public class AppLayout extends Composite {
 
         @UiField SimplePanel appHeader;
         @UiField SimpleWidgetPanel appContent;
-
+        @UiField(provided=true) final AvroUiStyle avroUiStyle;
+        
         public AppLayout() {
-                initWidget(uiBinder.createAndBindUi(this));
+            avroUiStyle = Utils.avroUiStyle;
+            initWidget(uiBinder.createAndBindUi(this));
         }
 
         public SimplePanel getAppHeaderHolder() {
@@ -39,7 +44,7 @@ public class AppLayout extends Composite {
         }
 
         public SimpleWidgetPanel getAppContentHolder() {
-                return this.appContent;
+            return this.appContent;
         }
 
 }

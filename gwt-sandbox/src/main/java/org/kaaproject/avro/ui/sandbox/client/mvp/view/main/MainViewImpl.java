@@ -19,6 +19,7 @@ package org.kaaproject.avro.ui.sandbox.client.mvp.view.main;
 
 import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel;
 import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel.Type;
+import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxResources.AvroUiSandboxStyle;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.FormConstructorView;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.MainView;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.form.FormConstructorViewImpl;
@@ -51,8 +52,9 @@ public class MainViewImpl extends Composite implements MainView {
 
     @UiField public Label titleLabel;
     @UiField public FlexTable detailsTable;
-    @UiField (provided=true) public AlertPanel errorPanel;
-    @UiField (provided=true) public AlertPanel infoPanel;
+    @UiField (provided=true) public final AlertPanel errorPanel;
+    @UiField (provided=true) public final AlertPanel infoPanel;
+    @UiField (provided=true) public final AvroUiSandboxStyle avroUiSandboxStyle;
     @UiField public FlowPanel footer;
 
     private Button generateFormButton;
@@ -64,6 +66,8 @@ public class MainViewImpl extends Composite implements MainView {
     public MainViewImpl() {
         errorPanel = new AlertPanel(Type.ERROR);
         infoPanel =  new AlertPanel(Type.INFO);
+        avroUiSandboxStyle = Utils.avroUiSandboxStyle;
+        
         initWidget(uiBinder.createAndBindUi(this));
 
         titleLabel.setText(Utils.constants.mainConsole());

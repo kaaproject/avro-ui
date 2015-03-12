@@ -156,32 +156,25 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
                 <version>${gwt.version}</version>
-				<executions>
-					<execution>
-                        <id>generateAsync</id>
-						<goals>
-							<goal>generateAsync</goal>
-							<goal>compile</goal>
-							<goal>test</goal>  
-						</goals>
-                        <configuration>
-                            <strict>true</strict>
-                            <extraJvmArgs>-Xss1024k -Xmx1024m -XX:MaxPermSize=256m</extraJvmArgs>
-                            <gwtSdkFirstInClasspath>true</gwtSdkFirstInClasspath>
-                            <runTarget>AvroUiSandbox.html</runTarget>                    
-                        </configuration>
-					</execution>
+                <configuration>
+                    <i18nConstantsWithLookupBundle>org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxConstants</i18nConstantsWithLookupBundle>
+                    <cssFile>org/kaaproject/avro/ui/sandbox/client/AvroUiSandboxTheme.css</cssFile>
+                    <generateDirectory>${basedir}/src/main/java</generateDirectory>
+                    <gwtSdkFirstInClasspath>true</gwtSdkFirstInClasspath>
+                    <runTarget>AvroUiSandbox.html</runTarget>                    
+                </configuration>
+                <executions>
                     <execution>
-                        <id>i18n</id>
+                        <id>compile-gwt</id>
                         <goals>
+                            <goal>generateAsync</goal>
                             <goal>i18n</goal>
+                            <goal>css</goal>
+                            <goal>compile</goal>
+                            <goal>test</goal>
                         </goals>
-                        <configuration>
-                            <i18nConstantsWithLookupBundle>org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxConstants</i18nConstantsWithLookupBundle>
-                            <generateDirectory>${basedir}/src/main/java</generateDirectory>
-                        </configuration>                    
-                    </execution>                    
-				</executions>
+                    </execution>
+                </executions>                
             </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

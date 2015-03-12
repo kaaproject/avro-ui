@@ -19,12 +19,14 @@
         xmlns:gwt="urn:import:com.google.gwt.user.client.ui"
         xmlns:kaa="urn:import:org.kaaproject.avro.ui.sandbox.client">
        
+        <ui:with field='avroUiStyle' type='org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle'/>  
+    
         <gwt:DockLayoutPanel unit="PX">
                 <gwt:north size="60">
                 		<gwt:SimplePanel ui:field="appHeader" />
                 </gwt:north>    
                 <gwt:center>
-                        <kaa:layout.SimpleWidgetPanel styleName="b-app-content" ui:field="appContent" />
+                        <kaa:layout.SimpleWidgetPanel styleName="{avroUiStyle.bAppContent}" ui:field="appContent" />
                 </gwt:center>
         </gwt:DockLayoutPanel>
        

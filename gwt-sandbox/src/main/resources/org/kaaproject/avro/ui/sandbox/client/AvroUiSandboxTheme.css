@@ -1,0 +1,42 @@
+@external .gwt-Label, .gwt-HTML;
+
+.b-app-header-title {
+	font-family: Arial; 
+	font-size: 34px; 
+	font-weight: bold; 
+	color: #666666; 
+	padding-left: 30px;
+}
+
+.b-app-content-title {
+	font-family: Arial;
+	font-size: 18px;
+  	font-weight: bold;
+  	color: #666666; 
+  	padding-left: 30px;
+}
+
+.b-app-content-details-table {
+	padding-left: 35px;
+	padding-top: 5px;
+}
+
+.b-app-content-details-table td{
+	vertical-align: top;
+}
+
+.b-app-content-details-table .gwt-Label, 
+.b-app-content-details-table .gwt-HTML {
+	font-family: Arial;
+	font-size: 14px;
+	color: #000000;
+	font-weight: bold;
+}
+
+.b-app-content-details-table .b-app-content-title {
+    color: #999999;
+    font-family: Arial;
+    font-size: 18px;
+    font-weight: bold;
+    padding-left: 0px;
+}

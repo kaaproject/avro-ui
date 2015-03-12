@@ -73,7 +73,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         toolbarPanel.add(readOnlyCheckBox);
         Button showDisplayStringButton = new Button(Utils.constants.view_display_string());
         showDisplayStringButton.getElement().getStyle().setMarginLeft(10, Unit.PX);
-        showDisplayStringButton.addStyleName("b-app-button-small");
+        showDisplayStringButton.addStyleName(Utils.avroUiStyle.buttonSmall());
         showDisplayStringButton.addClickHandler(new ClickHandler() {
             
             @Override

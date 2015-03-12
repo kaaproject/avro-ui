@@ -26,7 +26,7 @@
   <inherits name='com.google.gwt.user.User'/>
   <inherits name="com.google.gwt.i18n.I18N"/>
   <inherits name="com.google.gwt.i18n.CldrLocales"/>
-  <inherits name="com.google.gwt.user.theme.clean.CleanResources"/>
+  <inherits name="com.google.gwt.user.theme.clean.Clean"/>
 
     <!-- Enable debug ID. -->
   <inherits name="com.google.gwt.user.Debug"/>
@@ -57,7 +57,7 @@
 
     <set-property-fallback name="locale" value="en"/>
     
-    <!-- set-property name="locale" value="en"/-->
+    <set-property name="locale" value="en"/>
     
     <set-configuration-property name="locale.cookie" value="AVRO_UI_LOCALE"/>
     <set-configuration-property name="locale.useragent" value="Y"/>

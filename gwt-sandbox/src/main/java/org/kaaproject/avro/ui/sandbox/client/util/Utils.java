@@ -16,7 +16,11 @@
 
 package org.kaaproject.avro.ui.sandbox.client.util;
 
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources;
+import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxResources;
+import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxResources.AvroUiSandboxStyle;
+import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxResources.KaaTheme;
 import org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxConstants;
 import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxServiceException;
 
@@ -29,6 +33,24 @@ public class Utils {
 
     public static final AvroUiSandboxConstants constants = GWT.create(
             AvroUiSandboxConstants.class);
+    
+    public static final AvroUiResources avroUiResources = 
+            GWT.create(AvroUiResources.class);
+    
+    public static final KaaTheme kaaTheme = 
+            resources.kaaTheme();
+    
+    public static final AvroUiSandboxStyle avroUiSandboxStyle = 
+            resources.avroUiSandboxStyle();
+    
+    public static final AvroUiStyle avroUiStyle =
+            avroUiResources.avroUiStyle();
+    
+    public static void injectSandboxStyles() {
+        kaaTheme.ensureInjected();
+        avroUiSandboxStyle.ensureInjected();
+        avroUiStyle.ensureInjected();
+    }
 
     public static String getErrorMessage(Throwable throwable) {
         if (throwable instanceof AvroUiSandboxServiceException) {
