@@ -20,6 +20,7 @@ import static org.kaaproject.avro.ui.gwt.client.util.Utils.avroUiStyle;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 
@@ -54,6 +55,7 @@ public class AlertPanel extends Label {
 
         getElement().appendChild(icon.getElement());
         textNode = Document.get().createDivElement();
+        textNode.getStyle().setWidth(100, Unit.PCT);
         getElement().appendChild(textNode);
     }
 
