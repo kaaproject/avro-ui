@@ -19,7 +19,6 @@ package org.kaaproject.avro.ui.gwt.client.widget;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -41,7 +40,6 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.impl.PopupImpl;
 
 public class BusyPopup extends SimplePanel {
     
@@ -62,7 +60,9 @@ public class BusyPopup extends SimplePanel {
     
     private static final int ANIMATION_DURATION = 300;
     
-    private static final PopupImpl impl = GWT.create(PopupImpl.class);
+    private static final int GLASS_Z_INDEX = 32766;
+    
+    private static final int POPUP_Z_INDEX = 32767;
     
     private ResizeHandler glassResizer = new ResizeHandler() {
         public void onResize(ResizeEvent event) {
@@ -101,6 +101,9 @@ public class BusyPopup extends SimplePanel {
         glass.getStyle().setPosition(Position.ABSOLUTE);
         glass.getStyle().setLeft(0, Unit.PX);
         glass.getStyle().setTop(0, Unit.PX);
+        glass.getStyle().setZIndex(GLASS_Z_INDEX);
+        
+        getElement().getStyle().setZIndex(POPUP_Z_INDEX);
         
         HorizontalPanel panel = new HorizontalPanel();
         panel.setSize("320px", "70px");
@@ -118,6 +121,7 @@ public class BusyPopup extends SimplePanel {
         panel.setCellHorizontalAlignment(label, HasHorizontalAlignment.ALIGN_CENTER);
         panel.setCellVerticalAlignment(label, HasVerticalAlignment.ALIGN_MIDDLE);
         setWidget(panel);
+        
     }
     
     public void setAnimationEnabled(boolean enable) {
@@ -170,9 +174,7 @@ public class BusyPopup extends SimplePanel {
     @Override
     public void setVisible(boolean visible) {
       getElement().getStyle().setProperty("visibility", visible ? "visible" : "hidden");
-      impl.setVisible(getElement(), visible);
       if (glass != null) {
-        impl.setVisible(glass, visible);
         glass.getStyle().setProperty("visibility", visible ? "visible" : "hidden");
       }
     }
@@ -254,7 +256,6 @@ public class BusyPopup extends SimplePanel {
                             curPanel.topPosition);
                     }
                     RootPanel.get().add(curPanel);
-                    impl.onShow(curPanel.getElement());
                     showTimer = new Timer() {
                         @Override
                         public void run() {
@@ -278,7 +279,6 @@ public class BusyPopup extends SimplePanel {
                 if (!isUnloading) {
                     RootPanel.get().remove(curPanel);
                 }
-                impl.onHide(curPanel.getElement());
             }
             curPanel.getElement().getStyle().setProperty("overflow", "visible");
         }
@@ -304,13 +304,11 @@ public class BusyPopup extends SimplePanel {
         private void maybeShowGlass() {
             if (showing) {
                 Document.get().getBody().appendChild(curPanel.glass);
-                impl.onShow(curPanel.glass);
                 resizeRegistration = Window.addResizeHandler(curPanel.glassResizer);
                 curPanel.glassResizer.onResize(null);
                 glassShowing = true;
             } else if (glassShowing) {
                 Document.get().getBody().removeChild(curPanel.glass);
-                impl.onHide(curPanel.glass);
                 resizeRegistration.removeHandler();
                 resizeRegistration = null;
                 glassShowing = false;
@@ -325,12 +323,10 @@ public class BusyPopup extends SimplePanel {
                     curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
                   }
                   RootPanel.get().add(curPanel);
-                  impl.onShow(curPanel.getElement());
             } else {
                 if (!isUnloading) {
                     RootPanel.get().remove(curPanel);
                 }
-                impl.onHide(curPanel.getElement());
             }
             curPanel.getElement().getStyle().setProperty("overflow", "visible");
         }

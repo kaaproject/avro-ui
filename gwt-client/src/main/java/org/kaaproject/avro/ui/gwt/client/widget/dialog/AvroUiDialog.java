@@ -28,6 +28,10 @@ public class AvroUiDialog extends DialogBox {
 
     private BottomPanel bottomPanel;
     private HorizontalPanel buttonsPanel;
+    
+    private static final int GLASS_Z_INDEX = 32764;
+    
+    private static final int DIALOG_Z_INDEX = 32765;
 
     private static class BottomPanel extends HorizontalPanel {
 
@@ -65,6 +69,9 @@ public class AvroUiDialog extends DialogBox {
 
         DOM.insertChild(td,bottomPanel.getElement(),0);
         adopt(bottomPanel);
+        
+        getGlassElement().getStyle().setZIndex(GLASS_Z_INDEX);
+        getElement().getStyle().setZIndex(DIALOG_Z_INDEX);
     }
 
     public void addButton(Button button) {
