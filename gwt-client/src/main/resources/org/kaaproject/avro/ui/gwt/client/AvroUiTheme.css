@@ -198,7 +198,7 @@
     padding: 20px;
 }
 
-.fieldWidget input, textarea, select {
+.fieldWidget input, .fieldWidget textarea, .fieldWidget select {
   display: inline-block;
   padding: 4px;
   margin-bottom: 4px;
@@ -224,7 +224,7 @@
    height: 18px;
 }
 
-.fieldWidget input:focus, textarea:focus, select:focus {
+.fieldWidget input:focus, .fieldWidget textarea:focus, .fieldWidget select:focus {
     border-color: rgba(82, 168, 236, 0.8);
     outline: 0;
     outline: thin dotted \9;
@@ -283,7 +283,7 @@
     color: #666666;
 }
 
-.fieldWidget input.prompt, select.prompt, option.prompt {
+.fieldWidget input.prompt, .fieldWidget select.prompt, .fieldWidget option.prompt {
     color: #999;
 }
 
@@ -451,7 +451,7 @@
 	color: #777;
 }
 
-.formPopup .bottomLeft, .bottomCenter, .bottomRight {
+.formPopup .bottomLeft, .formPopup .bottomCenter, .formPopup .bottomRight {
     background-color: #F5F5F5;
     border-top: 1px solid #DDDDDD;
     box-shadow: 0 1px 0 #FFFFFF inset;
