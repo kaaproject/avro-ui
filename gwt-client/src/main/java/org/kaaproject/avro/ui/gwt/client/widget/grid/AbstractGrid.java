@@ -57,7 +57,7 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     
     protected static final int ACTION_COLUMN_WIDTH = 40;
 
-    private static SimplePager.Resources pagerResources = GWT.create(SimplePager.Resources.class);
+    private static SimplePager.Resources pagerResourcesDefault = GWT.create(SimplePager.Resources.class);
     private static AvroUiPagerResourcesSmall pagerResourcesSmall = GWT.create(AvroUiPagerResourcesSmall.class);
 
     protected DataGrid<T> table;
@@ -67,6 +67,8 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
 
     protected boolean enableActions;
     protected boolean embedded;
+    protected AvroUiGridResources gridResources;
+    protected SimplePager.Resources pagerResources;
 
     protected Column<T,T> deleteColumn;
     
@@ -81,11 +83,20 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded) {
         this(unit, enableActions, embedded, true);
     }
-
+    
     public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, boolean init) {
+        this(unit, enableActions, embedded, init, 
+                embedded ? AvroUiDataGrid.gridResourcesSmall : AvroUiDataGrid.gridResources,
+                        embedded ? pagerResourcesSmall : pagerResourcesDefault);
+    }
+
+    public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, boolean init, 
+            AvroUiGridResources gridResources, SimplePager.Resources pagerResources) {
         super(unit);
         this.enableActions = enableActions;
         this.embedded = embedded;
+        this.gridResources = gridResources;
+        this.pagerResources = pagerResources;
         if (init) {
             init();
         }
@@ -98,7 +109,7 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
                 return item != null ? getObjectId(item) : null;
             }
         };
-        table = new AvroUiDataGrid<T>(20, keyProvider, embedded);
+        table = new AvroUiDataGrid<T>(20, keyProvider, gridResources);
         table.setAutoHeaderRefreshDisabled(true);
         Label emptyTableLabel = new Label(Utils.constants.dataGridEmpty());
         if (embedded) {
@@ -122,9 +133,7 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         prefferredWidth = initColumns(table);
         table.setMinimumTableWidth(prefferredWidth, Unit.PX);
 
-        SimplePager.Resources localPagerResources = embedded ? pagerResourcesSmall : pagerResources;
-
-        SimplePager pager = new SimplePager(TextLocation.CENTER, localPagerResources, false, 0, true) {
+        SimplePager pager = new SimplePager(TextLocation.CENTER, pagerResources, false, 0, true) {
             @Override
             protected String createText() {
                 HasRows display = getDisplay();

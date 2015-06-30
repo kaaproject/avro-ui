@@ -18,13 +18,14 @@ package org.kaaproject.avro.ui.gwt.client.widget.grid;
 
 import com.google.gwt.user.cellview.client.DataGrid;
 
-interface AvroUiGridResourcesSmall extends DataGrid.Resources {
+public interface AvroUiGridResourcesSmall extends AvroUiGridResources {
 
     @Override
     @Source({ DataGrid.Style.DEFAULT_CSS,
             "AvroUiDataGrid.css",
             "AvroUiDataGridSmall.css"})
     AvroUiGridSmallStyle dataGridStyle();
+    
+    public interface AvroUiGridSmallStyle extends AvroUiGridResources.AvroUiGridStyle {}
 }
 
-interface AvroUiGridSmallStyle extends AvroUiGridStyle {}

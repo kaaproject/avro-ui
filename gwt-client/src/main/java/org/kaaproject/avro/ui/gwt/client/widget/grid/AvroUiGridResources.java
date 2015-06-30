@@ -18,18 +18,20 @@ package org.kaaproject.avro.ui.gwt.client.widget.grid;
 
 import com.google.gwt.user.cellview.client.DataGrid;
 
-interface AvroUiGridResources extends DataGrid.Resources {
+public interface AvroUiGridResources extends DataGrid.Resources {
 
     @Override
     @Source({ DataGrid.Style.DEFAULT_CSS,
             "AvroUiDataGrid.css" })
     AvroUiGridStyle dataGridStyle();
+    
+    public interface AvroUiGridStyle extends DataGrid.Style {
+        
+        String dataGridColumnInvisible();
+        
+    }
 }
 
-interface AvroUiGridStyle extends DataGrid.Style {
- 
-    String dataGridColumnInvisible();
-    
-}
+
 
 

@@ -18,11 +18,13 @@ package org.kaaproject.avro.ui.gwt.client.widget.grid;
 
 import com.google.gwt.user.cellview.client.SimplePager;
 
-interface AvroUiPagerResourcesSmall extends SimplePager.Resources {
+public interface AvroUiPagerResourcesSmall extends SimplePager.Resources {
 
     @Override
     @Source("AvroUiPagerSmall.css")
     AvroUiPagerSmallStyle simplePagerStyle();
+    
+    public interface AvroUiPagerSmallStyle extends SimplePager.Style {}
+    
 }
 
-interface AvroUiPagerSmallStyle extends SimplePager.Style {}

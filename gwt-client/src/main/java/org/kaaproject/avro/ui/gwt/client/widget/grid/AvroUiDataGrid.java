@@ -24,15 +24,21 @@ import com.google.gwt.view.client.ProvidesKey;
 
 public class AvroUiDataGrid<T> extends DataGrid<T>{
 
-    private static AvroUiGridResources gridResources = GWT.create(AvroUiGridResources.class);
-    private static AvroUiGridResourcesSmall gridResourcesSmall = GWT.create(AvroUiGridResourcesSmall.class);
+    public static AvroUiGridResources gridResources = GWT.create(AvroUiGridResources.class);
+    public static AvroUiGridResourcesSmall gridResourcesSmall = GWT.create(AvroUiGridResourcesSmall.class);
 
-    private final AvroUiGridStyle style;
+    private final AvroUiGridResources.AvroUiGridStyle style;
+    
+    public AvroUiDataGrid(int pageSize, ProvidesKey<T> keyProvider, AvroUiGridResources resources) {
+        super(pageSize, resources, keyProvider);
+        style = resources.dataGridStyle();
+    }
     
     public AvroUiDataGrid(int pageSize, ProvidesKey<T> keyProvider,  boolean embedded) {
         super(pageSize, embedded ? gridResourcesSmall : gridResources, keyProvider);
         style = embedded ? gridResourcesSmall.dataGridStyle() : gridResources.dataGridStyle();
     }
+    
     @Override
     public void removeColumn(int index) {
         super.removeColumn(index);

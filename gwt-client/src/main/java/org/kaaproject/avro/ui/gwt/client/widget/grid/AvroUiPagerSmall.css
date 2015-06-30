@@ -1,4 +1,6 @@
-.pageDetails {
+@external .gwt-HTML;
+
+.pageDetails, .pageDetails .gwt-HTML {
   padding: 4px 8px;
   text-align: center;
   font-size: 12px;
