@@ -382,11 +382,11 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             }
             init();
             showShadow(false);
-            this.dataProvider.addDataDisplay(getDisplay());
+            this.dataProvider.addDataDisplay(getDataGrid());
         }
         
         public void reload() {
-            this.dataProvider.reload(getDisplay());
+            this.dataProvider.reload(getDataGrid());
         }
         
         public ArrayDataProvider getDataProvider() {
