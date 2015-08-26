@@ -113,9 +113,9 @@ public class NamesValidator {
      * @param namespace the namespace
      */
     public static void validateNamespaceOrThrowException(String namespace) {
-        if (namespace == null) {
-            throw new IllegalArgumentException("Namespace field is mandatory. Please, add \"namespace\" field into your schema." +
-            " For more information see <a href=\"http://avro.apache.org/docs/current/gettingstartedjava.html#Defining+a+schema\">here</a>.");
+        if (namespace == null || namespace.isEmpty()) {
+            throw new IllegalArgumentException("Namespace field is mandatory. Please, add \"namespace\" field with non" +
+            " empty value into your schema.");
         }
         if (!validateNamespace(namespace)) {
             throw new IllegalArgumentException("Namespace is not valid. '" + namespace + "' is not a valid identifier.");
