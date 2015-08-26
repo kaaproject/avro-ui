@@ -16,6 +16,12 @@
 
 package org.kaaproject.avro.ui.gwt.client.widget.grid;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
 import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog;
 import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog.ConfirmListener;
@@ -37,6 +43,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
@@ -46,7 +53,6 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
-import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
@@ -57,10 +63,14 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     
     protected static final int ACTION_COLUMN_WIDTH = 40;
 
+    private static final int DEFAULT_PAGE_SIZE = 20;
+
     private static SimplePager.Resources pagerResourcesDefault = GWT.create(SimplePager.Resources.class);
     private static AvroUiPagerResourcesSmall pagerResourcesSmall = GWT.create(AvroUiPagerResourcesSmall.class);
 
     protected DataGrid<T> table;
+    
+    private int pageSize;
     private MultiSelectionModel<T> selectionModel;
 
     private float prefferredWidth = 0f;
@@ -72,29 +82,48 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
 
     protected Column<T,T> deleteColumn;
     
+    private final Map<Column<?, ?>, Comparator<T>> comparators = new HashMap<Column<?, ?>, Comparator<T>>();
+    
     public AbstractGrid(Style.Unit unit) {
         this(unit, true);
+    }
+    
+    public AbstractGrid(Style.Unit unit, int pageSize) {
+        this(unit, true, pageSize);
     }
 
     public AbstractGrid(Style.Unit unit, boolean enableActions) {
         this(unit, enableActions, false);
+    }
+    
+    public AbstractGrid(Style.Unit unit, boolean enableActions, int pageSize) {
+        this(unit, enableActions, false, pageSize);
     }
 
     public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded) {
         this(unit, enableActions, embedded, true);
     }
     
+    public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, int pageSize) {
+        this(unit, enableActions, embedded, pageSize, true);
+    }
+    
     public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, boolean init) {
-        this(unit, enableActions, embedded, init, 
+        this(unit, enableActions, embedded, DEFAULT_PAGE_SIZE, init);
+    }
+    
+    public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, int pageSize, boolean init) {
+        this(unit, enableActions, embedded, pageSize, init, 
                 embedded ? AvroUiDataGrid.gridResourcesSmall : AvroUiDataGrid.gridResources,
                         embedded ? pagerResourcesSmall : pagerResourcesDefault);
     }
 
-    public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, boolean init, 
+    public AbstractGrid(Style.Unit unit, boolean enableActions, boolean embedded, int pageSize, boolean init, 
             AvroUiGridResources gridResources, SimplePager.Resources pagerResources) {
         super(unit);
         this.enableActions = enableActions;
         this.embedded = embedded;
+        this.pageSize = pageSize;
         this.gridResources = gridResources;
         this.pagerResources = pagerResources;
         if (init) {
@@ -109,7 +138,7 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
                 return item != null ? getObjectId(item) : null;
             }
         };
-        table = new AvroUiDataGrid<T>(20, keyProvider, gridResources);
+        table = new AvroUiDataGrid<T>(this.pageSize, keyProvider, gridResources);
         table.setAutoHeaderRefreshDisabled(true);
         Label emptyTableLabel = new Label(Utils.constants.dataGridEmpty());
         if (embedded) {
@@ -144,6 +173,19 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
                     total = 1;
                 }
                 return Utils.messages.pagerText(String.valueOf(currentPage), String.valueOf(total));
+            }
+            
+            @Override
+            public void setPageStart(int index) {
+                if (getDisplay() != null) {
+                  Range range = getDisplay().getVisibleRange();
+                  int pageSize = range.getLength();
+                  
+                  index = Math.max(0, index);
+                  if (index != range.getStart()) {
+                      getDisplay().setVisibleRange(index, pageSize);
+                  }
+                }
             }
         };
         pager.setDisplay(table);
@@ -185,10 +227,26 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         return selectionModel;
     }
 
-    public HasData<T> getDisplay() {
+    public DataGrid<T> getDataGrid() {
         return table;
     }
 
+    public void sort(List<T> data, Column<?, ?> column, boolean isSortAscending) {
+        final Comparator<T> comparator = comparators.get(column);
+        if (comparator == null) {
+            return;
+        }
+        if (isSortAscending) {
+            Collections.sort(data, comparator);
+        } else {
+            Collections.sort(data, new Comparator<T>() {
+                public int compare(T o1, T o2) {
+                    return -comparator.compare(o1, o2);
+                }
+            });
+        }
+    }
+    
     protected void onRowClicked(K id) {
         RowActionEvent<K> rowClickEvent = new RowActionEvent<>(id, RowActionEvent.CLICK);
         fireEvent(rowClickEvent);
@@ -210,9 +268,15 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         prefWidth += constructActions(table, prefWidth);
         return prefWidth;
     }
-
+    
     protected float constructStringColumn(DataGrid<T> table, String title,
             final StringValueProvider<T> valueProvider, float prefWidth) {
+        return constructStringColumn(table, title, valueProvider, null, null, prefWidth);
+    }
+
+    protected float constructStringColumn(DataGrid<T> table, String title,
+            final StringValueProvider<T> valueProvider, 
+            Comparator<T> comparator, Boolean isSortAscending, float prefWidth) {
         Header<SafeHtml> header = new SafeHtmlHeader(
                 SafeHtmlUtils.fromSafeConstant(title));
         Column<T, String> column = new Column<T, String>(new LinkCell()) {
@@ -229,11 +293,18 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         });
         table.addColumn(column, header);
         table.setColumnWidth(column, prefWidth, Unit.PX);
+        processColumnSort(table, column, comparator, isSortAscending);
         return prefWidth;
     }
 
     protected float constructBooleanColumn(DataGrid<T> table, String title,
             final BooleanValueProvider<T> valueProvider, float prefWidth) {
+        return constructBooleanColumn(table, title, valueProvider, null, null, prefWidth);
+    }
+    
+    protected float constructBooleanColumn(DataGrid<T> table, String title,
+            final BooleanValueProvider<T> valueProvider, 
+            Comparator<T> comparator, Boolean isSortAscending, float prefWidth) {
         Header<SafeHtml> header = new SafeHtmlHeader(
                 SafeHtmlUtils.fromSafeConstant(title));
         Column<T, Boolean> column = new Column<T, Boolean>(new UneditableCheckboxCell()) {
@@ -250,7 +321,21 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         });
         table.addColumn(column, header);
         table.setColumnWidth(column, prefWidth, Unit.PX);
+        processColumnSort(table, column, comparator, isSortAscending);
         return prefWidth;
+    }
+    
+    private void processColumnSort(DataGrid<T> table, Column<?,?> column, 
+            Comparator<T> comparator, Boolean isSortAscending) {
+        if (comparator != null) {
+            comparators.put(column, comparator);
+            column.setSortable(true);
+            if (isSortAscending != null) {
+                ColumnSortList.ColumnSortInfo sortInfo = new ColumnSortList.ColumnSortInfo(column, isSortAscending.booleanValue());
+                ColumnSortList sortList = table.getColumnSortList();
+                sortList.insert(sortList.size(), sortInfo);
+            }
+        }
     }
 
     protected float constructActions(DataGrid<T> table, float prefWidth) {
