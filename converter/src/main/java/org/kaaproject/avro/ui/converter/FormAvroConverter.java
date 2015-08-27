@@ -350,17 +350,15 @@ public class FormAvroConverter implements ConverterConstants {
                     if (maxLengthVal != null && maxLengthVal.isInt()) {
                         stringField.setMaxLength(maxLengthVal.asInt());
                     }
-                    if (fieldType == FieldType.STRING) {
-                        String defaultValue = convertJsonValue(fieldType, defaultValueVal);
-                        stringField.setDefaultValue(defaultValue);
-                        if (!formField.isOverride()) {
-                            stringField.setValue(defaultValue);
-                        }
-                        JsonNode inputTypeNode = field.getJsonProp(INPUT_TYPE);
-                        if (inputTypeNode != null && inputTypeNode.isTextual()) {
-                            InputType inputType = InputType.valueOf(inputTypeNode.asText().toUpperCase());
-                            stringField.setInputType(inputType);
-                        }
+                    String defaultValue = convertJsonValue(fieldType, defaultValueVal);
+                    stringField.setDefaultValue(defaultValue);
+                    if (!formField.isOverride()) {
+                        stringField.setValue(defaultValue);
+                    }
+                    JsonNode inputTypeNode = field.getJsonProp(INPUT_TYPE);
+                    if (inputTypeNode != null && inputTypeNode.isTextual()) {
+                        InputType inputType = InputType.valueOf(inputTypeNode.asText().toUpperCase());
+                        stringField.setInputType(inputType);
                     }
                 } else if (fieldType == FieldType.INT) {
                     Integer defaultValue = convertJsonValue(fieldType, defaultValueVal);
