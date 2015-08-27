@@ -17,7 +17,7 @@
 package org.kaaproject.avro.ui.shared;
 
 
-public class DoubleField extends SizedField {
+public class DoubleField extends FormField {
 
     private static final long serialVersionUID = -5046250549233854347L;
 

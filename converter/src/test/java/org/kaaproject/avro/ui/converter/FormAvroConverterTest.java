@@ -66,7 +66,6 @@ public class FormAvroConverterTest {
         
         formField = field.getValue().get(fieldNum++);
         Assert.assertTrue(formField instanceof IntegerField);
-        Assert.assertEquals(1000, ((IntegerField)formField).getMaxLength());
         Assert.assertEquals("testInteger", formField.getFieldName());
         Assert.assertEquals("Test integer field", formField.getDisplayName());
         Assert.assertEquals(20, ((IntegerField)formField).getDefaultValue().intValue());
@@ -75,7 +74,6 @@ public class FormAvroConverterTest {
         
         formField = field.getValue().get(fieldNum++);
         Assert.assertTrue(formField instanceof LongField);
-        Assert.assertEquals(1000, ((LongField)formField).getMaxLength());
         Assert.assertEquals("testLong", formField.getFieldName());
         Assert.assertEquals("Test long field", formField.getDisplayName());
         Assert.assertEquals(30, ((LongField)formField).getDefaultValue().longValue());
