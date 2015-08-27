@@ -62,7 +62,6 @@
                                                 "displayName": "Integer",
                                                 "fields": 
                                                     [
-                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
                                                         {"name": "defaultValue", "displayName": "Default value", "type": ["int", "null"], "displayPrompt": "Enter default integer field value"}
                                                     ]
                                             },       
@@ -73,7 +72,6 @@
                                                 "displayName": "Long",
                                                 "fields": 
                                                     [
-                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
                                                         {"name": "defaultValue", "displayName": "Default value", "type": ["long", "null"], "displayPrompt": "Enter default long field value"}
                                                     ]
                                             },       
@@ -84,7 +82,6 @@
                                                 "displayName": "Float",
                                                 "fields": 
                                                     [
-                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
                                                         {"name": "defaultValue", "displayName": "Default value", "type": ["float", "null"], "displayPrompt": "Enter default float field value"}
                                                     ]
                                             },       
@@ -95,7 +92,6 @@
                                                 "displayName": "Double",
                                                 "fields": 
                                                     [
-                                                        {"name": "maxLength", "displayName": "Max length", "type": ["int", "null"], "displayPrompt": "Enter max number of input digits"},
                                                         {"name": "defaultValue", "displayName": "Default value", "type": ["double", "null"], "displayPrompt": "Enter default double field value"}
                                                     ]
                                             },       
