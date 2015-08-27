@@ -202,9 +202,21 @@ public class FormAvroConverter implements ConverterConstants {
             } else if (fieldType == FieldType.BOOLEAN) {
                 BooleanField booleanField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
                 formField = booleanField;
-            } else {
-                SizedField sizedField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = sizedField;
+            } else if (fieldType == FieldType.STRING){
+                StringField stringField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+                formField = stringField;
+            } else if (fieldType == FieldType.INT) {
+                IntegerField integerField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+                formField = integerField;
+            } else if (fieldType == FieldType.LONG) {
+                LongField longField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+                formField = longField;
+            } else if (fieldType == FieldType.FLOAT) {
+                FloatField floatField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+                formField = floatField;
+            } else if (fieldType == FieldType.DOUBLE) {
+                DoubleField doubleField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+                formField = doubleField;
             }
         }
         return formField;
@@ -332,47 +344,45 @@ public class FormAvroConverter implements ConverterConstants {
                     if (!formField.isOverride()) {
                         booleanField.setValue(defaultValue);
                     }
-                } else if (formField instanceof SizedField) {
-                    SizedField sizedField = (SizedField)formField;
+                } else if (fieldType == FieldType.STRING) {
+                    StringField stringField = (StringField) formField;
                     JsonNode maxLengthVal = field.getJsonProp(MAX_LENGTH);
                     if (maxLengthVal != null && maxLengthVal.isInt()) {
-                        sizedField.setMaxLength(maxLengthVal.asInt());
+                        stringField.setMaxLength(maxLengthVal.asInt());
                     }
-                    if (fieldType == FieldType.STRING) {
-                        String defaultValue = convertJsonValue(fieldType, defaultValueVal);
-                        ((StringField)sizedField).setDefaultValue(defaultValue);
-                        if (!formField.isOverride()) {
-                            ((StringField)sizedField).setValue(defaultValue);
-                        }
-                        JsonNode inputTypeNode = field.getJsonProp(INPUT_TYPE);
-                        if (inputTypeNode != null && inputTypeNode.isTextual()) {
-                            InputType inputType = InputType.valueOf(inputTypeNode.asText().toUpperCase());
-                            ((StringField)sizedField).setInputType(inputType);
-                        }
-                    } else if (fieldType == FieldType.INT) {
-                        Integer defaultValue = convertJsonValue(fieldType, defaultValueVal);
-                        ((IntegerField)sizedField).setDefaultValue(defaultValue);
-                        if (!formField.isOverride()) {
-                            ((IntegerField)sizedField).setValue(defaultValue);
-                        }
-                    } else if (fieldType == FieldType.LONG) {
-                        Long defaultValue = convertJsonValue(fieldType, defaultValueVal);
-                        ((LongField)sizedField).setDefaultValue(defaultValue);
-                        if (!formField.isOverride()) {
-                            ((LongField)sizedField).setValue(defaultValue);
-                        }
-                    } else if (fieldType == FieldType.FLOAT) {
-                        Float defaultValue = convertJsonValue(fieldType, defaultValueVal);
-                        ((FloatField)sizedField).setDefaultValue(defaultValue);
-                        if (!formField.isOverride()) {
-                            ((FloatField)sizedField).setValue(defaultValue);
-                        }
-                    } else if (fieldType == FieldType.DOUBLE) {
-                        Double defaultValue = convertJsonValue(fieldType, defaultValueVal);
-                        ((DoubleField)sizedField).setDefaultValue(defaultValue);
-                        if (!formField.isOverride()) {
-                            ((DoubleField)sizedField).setValue(defaultValue);
-                        }
+                    String defaultValue = convertJsonValue(fieldType, defaultValueVal);
+                    stringField.setDefaultValue(defaultValue);
+                    if (!formField.isOverride()) {
+                        stringField.setValue(defaultValue);
+                    }
+                    JsonNode inputTypeNode = field.getJsonProp(INPUT_TYPE);
+                    if (inputTypeNode != null && inputTypeNode.isTextual()) {
+                        InputType inputType = InputType.valueOf(inputTypeNode.asText().toUpperCase());
+                        stringField.setInputType(inputType);
+                    }
+                } else if (fieldType == FieldType.INT) {
+                    Integer defaultValue = convertJsonValue(fieldType, defaultValueVal);
+                    ((IntegerField) formField).setDefaultValue(defaultValue);
+                    if (!formField.isOverride()) {
+                        ((IntegerField) formField).setValue(defaultValue);
+                    }
+                } else if (fieldType == FieldType.LONG) {
+                    Long defaultValue = convertJsonValue(fieldType, defaultValueVal);
+                    ((LongField) formField).setDefaultValue(defaultValue);
+                    if (!formField.isOverride()) {
+                        ((LongField) formField).setValue(defaultValue);
+                    }
+                } else if (fieldType == FieldType.FLOAT) {
+                    Float defaultValue = convertJsonValue(fieldType, defaultValueVal);
+                    ((FloatField) formField).setDefaultValue(defaultValue);
+                    if (!formField.isOverride()) {
+                        ((FloatField) formField).setValue(defaultValue);
+                    }
+                } else if (fieldType == FieldType.DOUBLE) {
+                    Double defaultValue = convertJsonValue(fieldType, defaultValueVal);
+                    ((DoubleField) formField).setDefaultValue(defaultValue);
+                    if (!formField.isOverride()) {
+                        ((DoubleField) formField).setValue(defaultValue);
                     }
                 }
             }
