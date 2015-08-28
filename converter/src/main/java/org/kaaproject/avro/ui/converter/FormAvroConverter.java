@@ -232,7 +232,15 @@ public class FormAvroConverter implements ConverterConstants {
      */
     private static void parseFields(RecordField rootRecord, RecordField formData, Schema schema) throws IOException {
         List<Field> schemaFields = schema.getFields();
+        java.util.Set<String> schemaFieldNames = new java.util.HashSet<>();
+
         for (Field field : schemaFields) {
+            String schemaFieldName = field.name().toLowerCase();
+            if (!schemaFieldNames.contains(schemaFieldName)) {
+                schemaFieldNames.add(schemaFieldName);
+            } else {
+                throw new RuntimeException("Field names are not unique!");
+            }
 
             FieldType fieldType = toFieldType(field.schema());
             FormField formField = createFieldFromSchema(rootRecord, field.schema());

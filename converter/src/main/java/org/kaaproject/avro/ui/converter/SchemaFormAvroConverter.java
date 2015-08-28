@@ -455,8 +455,16 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                         GenericData.Array<Object> fieldsArrayData = new GenericData.Array<>(fields.size(), fieldsField.schema());
                         
                         Schema fieldSchema = fieldsField.schema().getElementType();
+                        java.util.Set<String> fieldNames = new java.util.HashSet<>();
                         
                         for (Field field : fields) {
+                            String fieldName = field.name().toLowerCase();
+                            if (!fieldNames.contains(fieldName)) {
+                                fieldNames.add(fieldName);
+                            } else {
+                                throw new RuntimeException("Field names are not unique!");
+                            }
+
                             fieldsArrayData.add(createFormFieldFromSchemaField(fieldSchema, field, namedFqns));
                         }
                         record.put(FIELDS, fieldsArrayData);
