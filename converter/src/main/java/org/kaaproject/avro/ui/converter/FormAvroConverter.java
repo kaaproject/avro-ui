@@ -69,7 +69,7 @@ public class FormAvroConverter implements ConverterConstants {
         if (formField instanceof RecordField) {
             return (RecordField)formField;
         } else {
-            throw new IllegalArgumentException("Schema " + schema.getFullName() + " is not record schema!");
+            throw new IllegalArgumentException("Schema " + schema.getFullName() + " is not a record schema!");
         }
     }
     
