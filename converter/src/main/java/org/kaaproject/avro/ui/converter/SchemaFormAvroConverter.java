@@ -573,16 +573,6 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                             new GenericData.EnumSymbol(inputTypeSchema, inputTypeNode.asText().toUpperCase()));
                 }
             }
-        } else if (fieldTypeName.equals(INTEGER_FIELD_TYPE) ||
-                fieldTypeName.equals(LONG_FIELD_TYPE) ||
-                fieldTypeName.equals(FLOAT_FIELD_TYPE) ||
-                fieldTypeName.equals(DOUBLE_FIELD_TYPE)) {
-            if (fieldType.getSchema().getField(MAX_LENGTH) != null) {
-                JsonNode maxLengthNode = field.getJsonProp(MAX_LENGTH);
-                if (maxLengthNode != null && maxLengthNode.isInt()) {
-                    fieldType.put(MAX_LENGTH, maxLengthNode.asInt());
-                }
-            }
         } else if (fieldTypeName.equals(ENUM_FIELD_TYPE)) {
             JsonNode displayNamesNode = field.getJsonProp(DISPLAY_NAMES);
             
