@@ -913,6 +913,10 @@ public class FormAvroConverter implements ConverterConstants {
         case DOUBLE:
             return ((DoubleField)formField).getValue();
         case BOOLEAN:
+            // Explicitly set if the field is left untouched by the user
+            if (((BooleanField) formField).getValue() == null && !formField.isOptional()) {
+                ((BooleanField) formField).setValue(Boolean.FALSE);
+            }
             return ((BooleanField)formField).getValue();
         case BYTES:
             BytesField bytesField = (BytesField)formField;
