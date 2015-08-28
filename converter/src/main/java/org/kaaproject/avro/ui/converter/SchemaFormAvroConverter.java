@@ -462,7 +462,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                             if (!fieldNames.contains(fieldName)) {
                                 fieldNames.add(fieldName);
                             } else {
-                                throw new RuntimeException("Field names are not unique!");
+                                throw new IllegalArgumentException("Dublicate field name: " + fieldName);
                             }
 
                             fieldsArrayData.add(createFormFieldFromSchemaField(fieldSchema, field, namedFqns));
