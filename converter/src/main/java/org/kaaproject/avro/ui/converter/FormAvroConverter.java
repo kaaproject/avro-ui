@@ -239,7 +239,7 @@ public class FormAvroConverter implements ConverterConstants {
             if (!schemaFieldNames.contains(schemaFieldName)) {
                 schemaFieldNames.add(schemaFieldName);
             } else {
-                throw new IllegalArgumentException("Dublicate field name: " + schemaFieldName);
+                throw new IllegalArgumentException("Duplicate field name: " + schemaFieldName);
             }
 
             FieldType fieldType = toFieldType(field.schema());
