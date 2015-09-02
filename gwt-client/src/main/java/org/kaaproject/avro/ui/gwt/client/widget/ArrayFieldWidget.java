@@ -43,10 +43,12 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -297,13 +299,18 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             constructAndPlaceWidget(table, field, row, 0, handlerRegistrations);
         }
 
-        final Button delButton = new Button(Utils.constants.remove());
-        delButton.addStyleName(style.buttonSmall());
+        final Button delButton = new Button("");
+        Image img = new Image(Utils.resources.remove());
+        img.getElement().getStyle().setVerticalAlign(Style.VerticalAlign.MIDDLE);
+        delButton.getElement().appendChild(img.getElement());
+        delButton.addStyleName(style.cellButton());
+        delButton.addStyleName(style.cellButtonSmall());
+        delButton.getElement().getStyle().setMarginLeft(15, Unit.PX);
         HandlerRegistration handlerRegistration = delButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
                 int tableRow = table.getCellForEvent(event).getRowIndex();
-                FormField toDelete = value.getValue().get(tableRow -1);
+                FormField toDelete = value.getValue().get(tableRow - 1);
                 List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
                 if (registrations != null) {
                     for (HandlerRegistration registration : registrations) {
