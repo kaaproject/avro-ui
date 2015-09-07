@@ -55,10 +55,13 @@ import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 
 public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
-    
+
     private ArrayGrid arrayGrid;
     private ScrollPanel tableScroll; 
     private FieldWidgetPanel fieldWidgetPanel;
+
+    private int gridRowCount;
+    private int tableRowCount;
 
     public ArrayFieldWidget(AvroWidgetsConfig config, NavigationContainer container, boolean readOnly) {
         super(config, container, readOnly);
@@ -94,8 +97,10 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         
         if (isGridNeeded(value)) {
             fieldWidgetPanel.setContent(constructGrid());
+            if (gridRowCount == 0) fieldWidgetPanel.setOpen(false, false);
         } else {
             fieldWidgetPanel.setContent(constructTable());
+            if (tableRowCount == 1) fieldWidgetPanel.setOpen(false, false);
         }
         return fieldWidgetPanel;
     }
@@ -156,7 +161,9 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
 
         arrayGrid = new ArrayGrid(value, !readOnly && !value.isReadOnly());
         arrayGrid.setHeight(config.getGridHeight());
-        
+
+        gridRowCount = arrayGrid.getDataGrid().getRowCount();
+
         verticalPanel.add(arrayGrid);
         
         HorizontalPanel buttonsPanel = new HorizontalPanel();
@@ -251,6 +258,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         tableScroll.setWidth(FULL_WIDTH);
         tableScroll.setHeight(config.getTableHeight());
         tableScroll.add(table);
+
+        tableRowCount = table.getRowCount();
 
         verticalPanel.setWidth(FULL_WIDTH);
         verticalPanel.add(tableScroll);
