@@ -62,7 +62,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
 
     private static final int NAVIGATION_HEADER_HEIGHT = 55; 
     private static final int FRAGMENT_SWITCH_ANIMATION_DURATION = 500;
-    
+    private static final double PANEL_MIN_HEIGHT = 450;
+
     private ResizePanel resizePanel;
     private LayoutPanel rootPanel;
     private NavigationPanel navPanel;
@@ -450,6 +451,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             } else {
                 navPanel.setVisible(false);
             }
+            fragmentPanel.getElement().getStyle().setProperty("minHeight", PANEL_MIN_HEIGHT, Unit.PX);
             form = resizePanel;
         } else {
             clearNavigation();
