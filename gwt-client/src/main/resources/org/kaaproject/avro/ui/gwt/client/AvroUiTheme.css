@@ -354,9 +354,9 @@
      right: 10px;
 } 
  
- .fieldSet .content {
-    margin: 10px 6px 6px;
-}
+  .fieldSet .content { 
+/*     margin: 10px 6px 6px; */
+ } 
 
 .breadcrumb {
   padding: 8px 15px;

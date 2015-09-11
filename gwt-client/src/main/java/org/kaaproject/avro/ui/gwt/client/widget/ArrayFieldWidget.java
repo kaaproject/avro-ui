@@ -61,7 +61,6 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     private FieldWidgetPanel fieldWidgetPanel;
 
     private static final String PX = "px";
-    private static final double WIDTH_INDEX = 0.98;
 
     public ArrayFieldWidget(AvroWidgetsConfig config, NavigationContainer container, boolean readOnly) {
         super(config, container, readOnly);
@@ -114,7 +113,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         }
         if (tableScroll != null) {
             tableScroll.setHeight(config.getTableHeight());
-            tableScroll.setWidth(getScrollTablePreferredWidth(config.getArrayPanelWidth()));
+            tableScroll.setWidth(getScrollTablePreferredWidth(config.getArrayPanelWidthPx()));
+            tableScroll.getElement().getStyle().setMargin(AbstractGrid.DEFAULT_GRID_MARGIN, Unit.PX);
         }
     }
 
@@ -252,7 +252,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             rowHandlerRegistrationMap.put(record, rowHandlerRegistrations);
         }
 
-        tableScroll.setWidth(getScrollTablePreferredWidth(config.getArrayPanelWidth()));
+        tableScroll.setWidth(getScrollTablePreferredWidth(config.getArrayPanelWidthPx()));
+        tableScroll.getElement().getStyle().setMargin(AbstractGrid.DEFAULT_GRID_MARGIN, Unit.PX);
         tableScroll.setHeight(config.getTableHeight());
         tableScroll.add(table);
 
@@ -325,8 +326,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         } 
     }
 
-    private String getScrollTablePreferredWidth(String configWidth) {
-        return Double.valueOf(configWidth.substring(0, configWidth.indexOf(PX))) * WIDTH_INDEX + PX;
+    private String getScrollTablePreferredWidth(int configWidth) {
+        return (configWidth - AbstractGrid.DEFAULT_GRID_MARGIN*2) + PX;
     }
     
     private static class ArrayGrid extends AbstractGrid<FormField, Integer> {
