@@ -43,10 +43,12 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -210,7 +212,6 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         table.setCellPadding(5);
         
         List<FormField> records = value.getValue();
-        final int minRowCount = value.getMinRowCount();
         final FormField elementMetadata = value.getElementMetadata();
         
         final int startRow;
@@ -224,7 +225,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                 FormField metaField = metaFields.get(column);
                 totalWeight += metaField.getWeight();
             }
-            
+
             for (int column=0;column<metaFields.size();column++) {
                 FormField metaField = metaFields.get(column);
                 float weight = metaField.getWeight();
@@ -232,6 +233,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                 table.getColumnFormatter().setWidth(column, width);
                 table.setWidget(0, column, new Label(metaField.getDisplayName()));
             }
+
+            table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.delete()));
             startRow = 1;
         } else {
             startRow = 0;
@@ -243,7 +246,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         for (int row=0;row<records.size();row++) {
             FormField record = records.get(row);
             List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
-            setRow(table, record, row+startRow, rowHandlerRegistrations);
+            setRow(table, record, row+startRow, rowHandlerRegistrations, rowHandlerRegistrationMap);
             registrations.addAll(rowHandlerRegistrations);
             rowHandlerRegistrationMap.put(record, rowHandlerRegistrations);
         }
@@ -258,56 +261,31 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         if (!readOnly && !value.isReadOnly()) {
             Button addRow = new Button(Utils.constants.add());
             addRow.addStyleName(style.buttonSmall());
-            final Button removeRow = new Button(Utils.constants.remove());
-            removeRow.addStyleName(style.buttonSmall());
-            removeRow.setEnabled(value.getValue().size()>minRowCount);
-            
+
             addRow.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
                     FormField newField = value.createRow();
                     value.addArrayData(newField);
                     List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
-                    setRow(table, newField, value.getValue().size() - 1 + startRow, rowHandlerRegistrations);
+                    setRow(table, newField, value.getValue().size() - 1 + startRow, rowHandlerRegistrations, rowHandlerRegistrationMap);
                     rowHandlerRegistrationMap.put(newField, rowHandlerRegistrations);
-                    removeRow.setEnabled(value.getValue().size()>minRowCount);
                     fireChanged();
                 }
             });
-           
-            removeRow.addClickHandler(new ClickHandler() {
-                @Override
-                public void onClick(ClickEvent event) {
-                    if (value.getValue().size()>0) {
-                        int row = value.getValue().size()-1;
-                        FormField toDelete = value.getValue().get(row);
-                        List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
-                        if (registrations != null) {
-                            for (HandlerRegistration registration : registrations) {
-                                registration.removeHandler();
-                            }
-                            registrations.clear();
-                        }
-                        table.removeRow(row + startRow);
-                        value.getValue().remove(row);
-                        removeRow.setEnabled(value.getValue().size()>minRowCount);
-                        fireChanged();
-                    }
-                }
-            });
-    
+
             HorizontalPanel buttonsPanel = new HorizontalPanel();
             buttonsPanel.addStyleName(style.buttonsPanel());
             buttonsPanel.add(addRow);
-            buttonsPanel.add(removeRow);
-            
+
             verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
             verticalPanel.add(buttonsPanel);
         }
         return verticalPanel;
     }
     
-    private void setRow(FlexTable table, FormField field, int row, List<HandlerRegistration> handlerRegistrations) {
+    private void setRow(final FlexTable table, FormField field, final int row, List<HandlerRegistration> handlerRegistrations,
+                        final Map<FormField, List<HandlerRegistration>> rowHandlerRegistrationMap) {
         if (field.getFieldType() == FieldType.RECORD) {
             RecordField record = (RecordField)field;
             List<FormField> recordFields = record.getFieldsWithAccess(FieldAccess.EDITABLE,
@@ -318,9 +296,36 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             }
         } else {
             constructAndPlaceWidget(table, field, row, 0, handlerRegistrations);
-        } 
+        }
+
+        final Button delButton = new Button("");
+        Image img = new Image(Utils.resources.remove());
+        img.getElement().getStyle().setVerticalAlign(Style.VerticalAlign.MIDDLE);
+        delButton.getElement().appendChild(img.getElement());
+        delButton.addStyleName(style.cellButton());
+        delButton.addStyleName(style.cellButtonSmall());
+        delButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
+        HandlerRegistration handlerRegistration = delButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                int tableRow = table.getCellForEvent(event).getRowIndex();
+                FormField toDelete = value.getValue().get(tableRow - 1);
+                List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
+                if (registrations != null) {
+                    for (HandlerRegistration registration : registrations) {
+                        registration.removeHandler();
+                    }
+                    registrations.clear();
+                }
+                table.removeRow(tableRow);
+                value.getValue().remove(tableRow - 1);
+                fireChanged();
+            }
+        });
+        handlerRegistrations.add(handlerRegistration);
+        table.setWidget(row, table.getCellCount(row), delButton);
     }
-    
+
     private static class ArrayGrid extends AbstractGrid<FormField, Integer> {
         
         private static final int MAX_CELL_STRING_LENGTH = 100;
