@@ -354,9 +354,25 @@
      right: 10px;
 } 
  
-  .fieldSet .content { 
+.fieldSet .content { 
 /*     margin: 10px 6px 6px; */
- } 
+}
+
+.fieldSet .content div > .gwt-Label { 
+	margin-left: 10px; 
+}
+
+.fieldSet .content .arrayTable td {
+	padding: 1px 6px;
+}
+
+.fieldSet .content .arrayTable td td {
+    padding: 0px;
+}
+
+.fieldSet .content .arrayTable td td > input {
+    margin-bottom: 0px;
+}
 
 .breadcrumb {
   padding: 8px 15px;
