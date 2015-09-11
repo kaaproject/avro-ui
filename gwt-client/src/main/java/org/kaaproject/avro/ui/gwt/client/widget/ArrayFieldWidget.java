@@ -36,14 +36,18 @@ import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -329,6 +333,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     private static class ArrayGrid extends AbstractGrid<FormField, Integer> {
         
         private static final int MAX_CELL_STRING_LENGTH = 100;
+        
+        protected static final int DELETE_COLUMN_WIDTH = 70;
 
         private List<FormField> metadata;
         private ArrayDataProvider dataProvider;
@@ -467,6 +473,27 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                 }
             }
             return prefWidth;
+        }
+        
+        @Override
+        protected float constructActions(DataGrid<FormField> table, float prefWidth) {
+            if (enableActions) {
+                if (deleteColumn == null || table.getColumnIndex(deleteColumn) == -1) {
+                    Header<SafeHtml> deleteHeader = new SafeHtmlHeader(
+                            SafeHtmlUtils.fromSafeConstant(Utils.constants.delete()));
+
+                    deleteColumn = constructDeleteColumn("");
+                    table.addColumn(deleteColumn, deleteHeader);
+                    table.setColumnWidth(deleteColumn, DELETE_COLUMN_WIDTH, Unit.PX);
+                    return DELETE_COLUMN_WIDTH;
+                }
+                else {
+                    return 0;
+                }
+            }
+            else {
+                return 0;
+            }
         }
         
         protected Integer getObjectId(FormField value) {
