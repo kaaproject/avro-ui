@@ -61,7 +61,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 
 public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasRowActionEventHandlers<K> {
     
-    protected static final int ACTION_COLUMN_WIDTH = 70;
+    protected static final int ACTION_COLUMN_WIDTH = 40;
 
     private static final int DEFAULT_PAGE_SIZE = 20;
 
