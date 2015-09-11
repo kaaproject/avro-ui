@@ -66,6 +66,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     private ScrollPanel tableScroll; 
     private FieldWidgetPanel fieldWidgetPanel;
 
+    private static final String PX = "px";
+
     public ArrayFieldWidget(AvroWidgetsConfig config, NavigationContainer container, boolean readOnly) {
         super(config, container, readOnly);
     }
@@ -117,6 +119,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         }
         if (tableScroll != null) {
             tableScroll.setHeight(config.getTableHeight());
+            tableScroll.setWidth(getScrollTablePreferredWidth(config.getArrayPanelWidthPx()));
+            tableScroll.getElement().getStyle().setMargin(AbstractGrid.DEFAULT_GRID_MARGIN, Unit.PX);
         }
     }
 
@@ -213,12 +217,14 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         tableScroll = new ScrollPanel();
         final FlexTable table = new FlexTable();
         table.setWidth("95%");
-        table.setCellPadding(5);
+        table.setCellPadding(0);
+        table.setCellSpacing(0);
+        table.addStyleName(style.arrayTable());
         
         List<FormField> records = value.getValue();
         final FormField elementMetadata = value.getElementMetadata();
         
-        final int startRow;
+        final boolean hasHeader;
         
         if (elementMetadata.getFieldType() == FieldType.RECORD) {
             RecordField recordElementData = (RecordField)elementMetadata;
@@ -239,9 +245,9 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             }
 
             table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.delete()));
-            startRow = 1;
+            hasHeader = true;
         } else {
-            startRow = 0;
+            hasHeader = false;
         }
 
         final Map<FormField, List<HandlerRegistration>> rowHandlerRegistrationMap = 
@@ -250,12 +256,13 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         for (int row=0;row<records.size();row++) {
             FormField record = records.get(row);
             List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
-            setRow(table, record, row+startRow, rowHandlerRegistrations, rowHandlerRegistrationMap);
+            setRow(table, record, row, rowHandlerRegistrations, rowHandlerRegistrationMap, hasHeader);
             registrations.addAll(rowHandlerRegistrations);
             rowHandlerRegistrationMap.put(record, rowHandlerRegistrations);
         }
 
-        tableScroll.setWidth(FULL_WIDTH);
+        tableScroll.setWidth(getScrollTablePreferredWidth(config.getArrayPanelWidthPx()));
+        tableScroll.getElement().getStyle().setMargin(AbstractGrid.DEFAULT_GRID_MARGIN, Unit.PX);
         tableScroll.setHeight(config.getTableHeight());
         tableScroll.add(table);
 
@@ -272,7 +279,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                     FormField newField = value.createRow();
                     value.addArrayData(newField);
                     List<HandlerRegistration> rowHandlerRegistrations = new ArrayList<>();
-                    setRow(table, newField, value.getValue().size() - 1 + startRow, rowHandlerRegistrations, rowHandlerRegistrationMap);
+                    setRow(table, newField, value.getValue().size() - 1, rowHandlerRegistrations, rowHandlerRegistrationMap, hasHeader);
                     rowHandlerRegistrationMap.put(newField, rowHandlerRegistrations);
                     fireChanged();
                 }
@@ -288,8 +295,11 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         return verticalPanel;
     }
     
-    private void setRow(final FlexTable table, FormField field, final int row, List<HandlerRegistration> handlerRegistrations,
-                        final Map<FormField, List<HandlerRegistration>> rowHandlerRegistrationMap) {
+    private void setRow(final FlexTable table, FormField field, int row, List<HandlerRegistration> handlerRegistrations,
+                        final Map<FormField, List<HandlerRegistration>> rowHandlerRegistrationMap, final boolean hasHeader) {
+        if (hasHeader) {
+            row++;
+        }
         if (field.getFieldType() == FieldType.RECORD) {
             RecordField record = (RecordField)field;
             List<FormField> recordFields = record.getFieldsWithAccess(FieldAccess.EDITABLE,
@@ -313,7 +323,8 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             @Override
             public void onClick(ClickEvent event) {
                 int tableRow = table.getCellForEvent(event).getRowIndex();
-                FormField toDelete = value.getValue().get(tableRow - 1);
+                int rowIndex = hasHeader ? tableRow - 1 : tableRow;
+                FormField toDelete = value.getValue().get(rowIndex);
                 List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
                 if (registrations != null) {
                     for (HandlerRegistration registration : registrations) {
@@ -322,7 +333,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                     registrations.clear();
                 }
                 table.removeRow(tableRow);
-                value.getValue().remove(tableRow - 1);
+                value.getValue().remove(rowIndex);
                 fireChanged();
             }
         });
@@ -330,6 +341,10 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         table.setWidget(row, table.getCellCount(row), delButton);
     }
 
+    private String getScrollTablePreferredWidth(int configWidth) {
+        return (configWidth - AbstractGrid.DEFAULT_GRID_MARGIN*2) + PX;
+    }
+    
     private static class ArrayGrid extends AbstractGrid<FormField, Integer> {
         
         private static final int MAX_CELL_STRING_LENGTH = 100;

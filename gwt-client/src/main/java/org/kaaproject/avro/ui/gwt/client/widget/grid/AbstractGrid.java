@@ -61,6 +61,8 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 
 public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasRowActionEventHandlers<K> {
     
+    public static final int DEFAULT_GRID_MARGIN = 10;
+    
     protected static final int ACTION_COLUMN_WIDTH = 40;
 
     private static final int DEFAULT_PAGE_SIZE = 20;
@@ -215,11 +217,11 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         if (show) {
             getElement().getStyle().clearMargin();
             getElement().getStyle().setProperty("boxShadow", "0px 0px 8px rgba(0,0,0,0.5)");
-            table.getElement().getStyle().setMargin(10, Unit.PX);
+            table.getElement().getStyle().setMargin(DEFAULT_GRID_MARGIN, Unit.PX);
         } else {
             getElement().getStyle().clearProperty("boxShadow");
             table.getElement().getStyle().clearMargin();
-            getElement().getStyle().setMargin(10, Unit.PX);
+            getElement().getStyle().setMargin(DEFAULT_GRID_MARGIN, Unit.PX);
         }
     }
 
