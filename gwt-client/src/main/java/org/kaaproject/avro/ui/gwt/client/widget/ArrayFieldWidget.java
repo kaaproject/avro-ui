@@ -212,7 +212,6 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         table.setCellPadding(5);
         
         List<FormField> records = value.getValue();
-        final int minRowCount = value.getMinRowCount();
         final FormField elementMetadata = value.getElementMetadata();
         
         final int startRow;
@@ -235,7 +234,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                 table.setWidget(0, column, new Label(metaField.getDisplayName()));
             }
 
-            table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.remove()));
+            table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.delete()));
             startRow = 1;
         } else {
             startRow = 0;
@@ -305,7 +304,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         delButton.getElement().appendChild(img.getElement());
         delButton.addStyleName(style.cellButton());
         delButton.addStyleName(style.cellButtonSmall());
-        delButton.getElement().getStyle().setMarginLeft(15, Unit.PX);
+        delButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
         HandlerRegistration handlerRegistration = delButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
