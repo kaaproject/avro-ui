@@ -114,8 +114,8 @@ public class MainViewImpl extends Composite implements MainView {
             public void onValueChange(ValueChangeEvent<RecordField> event) {
                 fireChanged();
             }
-        });        
-        
+        });
+
         CaptionPanel recordConstructorPanel = new CaptionPanel(Utils.constants.recordConstructor());
         recordConstructorPanel.add(recordConstructorView);
         

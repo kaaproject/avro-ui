@@ -21,8 +21,6 @@ import com.google.gwt.user.client.ui.IsWidget;
 
 public interface MainView extends IsWidget {
 
-    void setTitle(String title);
-
     void clearMessages();
 
     void setErrorMessage(String message);
