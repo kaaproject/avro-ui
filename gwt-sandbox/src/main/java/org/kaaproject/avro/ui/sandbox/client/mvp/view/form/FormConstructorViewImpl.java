@@ -75,7 +75,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         showDisplayStringButton.getElement().getStyle().setMarginLeft(10, Unit.PX);
         showDisplayStringButton.addStyleName(Utils.avroUiStyle.buttonSmall());
         showDisplayStringButton.addClickHandler(new ClickHandler() {
-            
+
             @Override
             public void onClick(ClickEvent event) {
                 RecordField field = form.getValue();
@@ -91,7 +91,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         form.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
             @Override
             public void onValueChange(ValueChangeEvent<RecordField> event) {
-                 fireChanged();
+                fireChanged();
             }
         });
         
@@ -122,7 +122,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         setWidget(row++, 0, buttonsPanel);
         
         getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
-        buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(15, Unit.PX);
+        buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(0, Unit.PX);
 
         formJsonArea = new SizedTextArea(-1);
         formJsonArea.setWidth(FULL_WIDTH);
@@ -145,12 +145,12 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         uploadButton = new Button(Utils.constants.upload());
         uploadButton.setEnabled(false);
         uploadButton.setVisible(false);
-        
+
         buttonsPanel = new HorizontalPanel();
         buttonsPanel.setSpacing(15);
         buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
         buttonsPanel.add(uploadButton);
-        
+
         setWidget(row++, 0, buttonsPanel);
         getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
     }
