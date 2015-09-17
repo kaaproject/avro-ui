@@ -55,6 +55,16 @@
             <url-pattern>/avroUiSandbox/springGwtServices/*</url-pattern>
         </servlet-mapping>
 
+        <servlet>
+            <servlet-name>fileUploadServlet</servlet-name>
+            <servlet-class>org.kaaproject.avro.ui.sandbox.services.FileUploadServlet</servlet-class>
+        </servlet>
+
+        <servlet-mapping>
+            <servlet-name>fileUploadServlet</servlet-name>
+            <url-pattern>/avroUiSandbox/servlet/fileUploadServlet</url-pattern>
+        </servlet-mapping>
+
          <!-- Default page to serve -->
         <welcome-file-list>
             <welcome-file>AvroUiSandbox.html</welcome-file>

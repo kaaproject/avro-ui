@@ -35,6 +35,7 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 //import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 
 public class MainActivity extends AbstractActivity  {
@@ -81,6 +82,13 @@ public class MainActivity extends AbstractActivity  {
                 uploadSchemaFromJson();
             }
         }));
+
+        registrations.add(schemaConstructor.getUploadFileForm().addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+            @Override
+            public void onSubmitComplete(FormPanel.SubmitCompleteEvent submitCompleteEvent) {
+                uploadSchemaFromFile(submitCompleteEvent.getResults());
+            }
+        }));
         
         FormConstructorView recordConstructor = view.getRecordConstructorView();
         registrations.add(recordConstructor.getShowFormJsonButton().addClickHandler(new ClickHandler() {
@@ -92,7 +100,15 @@ public class MainActivity extends AbstractActivity  {
             public void onClick(ClickEvent event) {
                 uploadRecordFromJson();
             }
-        }));        
+        }));
+
+        registrations.add(recordConstructor.getUploadFileForm().addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+            @Override
+            public void onSubmitComplete(FormPanel.SubmitCompleteEvent submitCompleteEvent) {
+                uploadRecordFromFile(submitCompleteEvent.getResults());
+            }
+        }));
+
         registrations.add(view.getResetButton().addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -108,42 +124,43 @@ public class MainActivity extends AbstractActivity  {
   
     private void doGenerateRecordForm() {
         RecordField schemaForm = view.getSchemaConstructorView().getValue();
-        AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromSchemaForm(schemaForm, 
+        AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromSchemaForm(schemaForm,
                 new AsyncCallback<String>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
+            @Override
+            public void onFailure(Throwable caught) {
                         view.setErrorMessage(Utils.getErrorMessage(caught));
                     }
 
+            @Override
+            public void onSuccess(String result) {
+                view.clearMessages();
+                AvroUiSandbox.getAvroUiSandboxService().generateFormFromSchema(result,
+                        new BusyAsyncCallback<RecordField>() {
                     @Override
-                    public void onSuccess(String result) {
+                    public void onSuccessImpl(RecordField result) {
                         view.clearMessages();
-                        AvroUiSandbox.getAvroUiSandboxService().generateFormFromSchema(result, 
-                                new BusyAsyncCallback<RecordField>() {
-                                    @Override
-                                    public void onSuccessImpl(RecordField result) {
-                                        view.clearMessages();
-                                        view.getRecordConstructorView().setValue(result, true);
-                                    }
-                                    
-                                    @Override
-                                    public void onFailureImpl(Throwable caught) {
-                                        view.setErrorMessage(Utils.getErrorMessage(caught));
-                                    }
-                                });
+                        view.getRecordConstructorView().setValue(result, true);
                     }
+
+                    @Override
+                    public void onFailureImpl(Throwable caught) {
+                        view.setErrorMessage(Utils.getErrorMessage(caught));
+                    }
+                });
+            }
         });
     }
     
     private void showRecordJson() {
         RecordField recordField = view.getRecordConstructorView().getValue();
-        AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromRecord(recordField, 
+        AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromRecord(recordField,
                 new BusyAsyncCallback<String>() {
             @Override
             public void onSuccessImpl(String result) {
                 view.clearMessages();
                 view.getRecordConstructorView().setFormJson(result);
             }
+
             @Override
             public void onFailureImpl(Throwable caught) {
                 view.setErrorMessage(Utils.getErrorMessage(caught));
@@ -153,31 +170,60 @@ public class MainActivity extends AbstractActivity  {
     
     private void uploadRecordFromJson() {
         RecordField schemaForm = view.getSchemaConstructorView().getValue();
-        AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromSchemaForm(schemaForm, 
+        AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromSchemaForm(schemaForm,
                 new AsyncCallback<String>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                view.setErrorMessage(Utils.getErrorMessage(caught));
+            }
+
+            @Override
+            public void onSuccess(String avroSchema) {
+                view.clearMessages();
+                String json = view.getRecordConstructorView().getFormJson().getValue();
+                        
+                AvroUiSandbox.getAvroUiSandboxService().generateFormDataFromJson(avroSchema,
+                        json, new BusyAsyncCallback<RecordField>() {
                     @Override
-                    public void onFailure(Throwable caught) {
+                    public void onSuccessImpl(RecordField result) {
+                        view.clearMessages();
+                        view.getRecordConstructorView().setValue(result, true);
+                    }
+                    @Override
+                    public void onFailureImpl(Throwable caught) {
                         view.setErrorMessage(Utils.getErrorMessage(caught));
                     }
+                });
+            }
+        });
+    }
 
+    private void uploadRecordFromFile(final String json) {
+        RecordField schemaForm = view.getSchemaConstructorView().getValue();
+        AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromSchemaForm(schemaForm,
+                new AsyncCallback<String>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                view.setErrorMessage(Utils.getErrorMessage(caught));
+            }
+
+            @Override
+            public void onSuccess(String avroSchema) {
+                view.clearMessages();
+
+                AvroUiSandbox.getAvroUiSandboxService().generateFormDataFromJson(avroSchema,
+                        json, new BusyAsyncCallback<RecordField>() {
                     @Override
-                    public void onSuccess(String avroSchema) {
+                    public void onSuccessImpl(RecordField result) {
                         view.clearMessages();
-                        String json = view.getRecordConstructorView().getFormJson().getValue();
-                        
-                        AvroUiSandbox.getAvroUiSandboxService().generateFormDataFromJson(avroSchema, 
-                                json, new BusyAsyncCallback<RecordField>() {
-                            @Override
-                            public void onSuccessImpl(RecordField result) {
-                                view.clearMessages();
-                                view.getRecordConstructorView().setValue(result, true);
-                            }
-                            @Override
-                            public void onFailureImpl(Throwable caught) {
-                                view.setErrorMessage(Utils.getErrorMessage(caught));
-                            }
-                        });
+                        view.getRecordConstructorView().setValue(result, true);
                     }
+                    @Override
+                    public void onFailureImpl(Throwable caught) {
+                        view.setErrorMessage(Utils.getErrorMessage(caught));
+                    }
+                });
+            }
         });
     }
     
@@ -199,6 +245,21 @@ public class MainActivity extends AbstractActivity  {
     
     private void uploadSchemaFromJson() {
         String avroSchema = view.getSchemaConstructorView().getFormJson().getValue();
+        AvroUiSandbox.getAvroUiSandboxService().generateSchemaFormFromSchema(avroSchema,
+                new BusyAsyncCallback<RecordField>() {
+            @Override
+            public void onSuccessImpl(RecordField result) {
+                view.clearMessages();
+                view.getSchemaConstructorView().setValue(result, true);
+            }
+            @Override
+            public void onFailureImpl(Throwable caught) {
+                view.setErrorMessage(Utils.getErrorMessage(caught));
+            }
+        });
+    }
+
+    private void uploadSchemaFromFile(String avroSchema) {
         AvroUiSandbox.getAvroUiSandboxService().generateSchemaFormFromSchema(avroSchema,
                 new BusyAsyncCallback<RecordField>() {
             @Override
