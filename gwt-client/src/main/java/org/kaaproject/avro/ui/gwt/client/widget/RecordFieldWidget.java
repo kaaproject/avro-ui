@@ -62,7 +62,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
 
     private static final int NAVIGATION_HEADER_HEIGHT = 55; 
     private static final int FRAGMENT_SWITCH_ANIMATION_DURATION = 500;
-    
+    private static final int MAX_HEIGHT = 550;
+
     private ResizePanel resizePanel;
     private LayoutPanel rootPanel;
     private NavigationPanel navPanel;
@@ -258,22 +259,26 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     popup.addButton(close);
                     
                     popup.addCloseHandler(new CloseHandler<PopupPanel>() {
-                                @Override
-                                public void onClose(CloseEvent<PopupPanel> event) {
-                                    enableZoom(true);
-                                    setWidget(getAnchorWidget());
-                                    updateConfig(prevConfig);
-                                    setPreferredWidthPx(prevPreferredWidthPx);
-                                    setPreferredHeightPx(prevPreferredHeightPx);
-                                    if (prevWidth != null) {
-                                        setWidth(prevWidth);
-                                    }
-                                    if (prevHeight != null) {
-                                        setHeight(prevHeight);
-                                    }
-                                }
-                            });
-                    
+                        @Override
+                        public void onClose(CloseEvent<PopupPanel> event) {
+                            enableZoom(true);
+                            setWidget(getAnchorWidget());
+                            updateConfig(prevConfig);
+                            setPreferredWidthPx(prevPreferredWidthPx);
+                            setPreferredHeightPx(prevPreferredHeightPx);
+                            if (prevWidth != null) {
+                                setWidth(prevWidth);
+                            }
+                            if (prevHeight != null) {
+                                setHeight(prevHeight);
+                            }
+                            resizePanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
+                            rootPanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
+                        }
+                    });
+
+                    resizePanel.getElement().getStyle().setPropertyPx("maxHeight", 1000);
+                    rootPanel.getElement().getStyle().setPropertyPx("maxHeight", 1000);
                     popup.center();
                     popup.show();
                 }
@@ -294,11 +299,16 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             resizePanel.addPanelResizedListener(new PanelResizeListener() {
                 @Override
                 public void onResized(int width, int height) {
-                    setWidth(width+"px");
-                    setHeight(height+"px");
+                    setWidth(width + "px");
+                    setHeight(height + "px");
                 }
             });
             navElements = new ArrayList<>();
+
+            resizePanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
+            rootPanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
+            resizePanel.getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT);
+            rootPanel.getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT);
         }
     }
     
@@ -466,8 +476,10 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 }
                 fieldWidgetPanel.setContent(table);
                 form = fieldWidgetPanel;
+//                getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT + 15);
             } else {
                 form = table;
+//                getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT + 15);
             }
         }
         return form;
