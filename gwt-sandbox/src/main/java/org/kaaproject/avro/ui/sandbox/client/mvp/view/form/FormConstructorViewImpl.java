@@ -18,7 +18,6 @@ package org.kaaproject.avro.ui.sandbox.client.mvp.view.form;
 
 import static org.kaaproject.avro.ui.sandbox.client.util.Utils.isNotBlank;
 
-
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.widget.AvroWidgetsConfig;
@@ -56,6 +55,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
     private static final String FULL_WIDTH = "100%";
     private static final String JSON_PANEL_WIDTH = "600px";
     private static final String UPLOAD_SERVLET_PATH = "servlet/fileUploadServlet";
+    private static final int MIN_PANEL_HEIGHT = 565;
 
     private RecordFieldWidget form;
     
@@ -110,7 +110,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         });
         
         CaptionPanel formPanel = new CaptionPanel(Utils.constants.form());
-        form.getElement().getStyle().setPropertyPx("minHeight", 565);
+        form.getElement().getStyle().setPropertyPx("minHeight", MIN_PANEL_HEIGHT);
         formPanel.add(form);
         
         setWidget(row++, 0, formPanel);
@@ -139,7 +139,6 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
 
         final FileUpload fileUpload = new FileUpload();
         fileUpload.setName(Utils.constants.uploadFromFile());
-
 
         horizontalPanel.add(fileUpload);
 
@@ -175,12 +174,9 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
         buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(0, Unit.PX);
 
-        FlexTable jsonUploadPanel = new FlexTable();
-        jsonUploadPanel.setWidth(JSON_PANEL_WIDTH);
-        row = 0;
-
         formJsonArea = new SizedTextArea(-1);
         formJsonArea.setWidth(FULL_WIDTH);
+        formJsonArea.setWidth(JSON_PANEL_WIDTH);
         formJsonArea.getTextArea().getElement().getStyle().setPropertyPx("minHeight", 300);
         formJsonArea.getTextArea().setReadOnly(true);
         formJsonArea.addInputHandler(new InputEventHandler() {
@@ -192,9 +188,9 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         });
         
         formJsonPanel = new CaptionPanel(Utils.constants.generatedJson());
+        formJsonPanel.getElement().getStyle().setMargin(5, Unit.PX);
         formJsonPanel.add(formJsonArea);
 
-        jsonUploadPanel.setWidget(row++, 0, formJsonPanel);
         formJsonPanel.setVisible(false);
         
         uploadButton = new Button(Utils.constants.upload());
@@ -207,16 +203,9 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
                 jsonUploadPopup.hide();
             }
         });
+        jsonUploadPopup.addButton(uploadButton);
 
-        buttonsPanel = new HorizontalPanel();
-        buttonsPanel.setSpacing(15);
-        buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        buttonsPanel.add(uploadButton);
-
-        jsonUploadPanel.setWidget(row, 0, buttonsPanel);
-        jsonUploadPanel.getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_RIGHT);
-
-        jsonUploadPopup.add(jsonUploadPanel);
+        jsonUploadPopup.add(formJsonPanel);
 
         Button close = new Button(Utils.constants.close(), new ClickHandler() {
             @Override

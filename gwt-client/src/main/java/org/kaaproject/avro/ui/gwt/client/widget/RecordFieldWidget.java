@@ -62,7 +62,7 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
 
     private static final int NAVIGATION_HEADER_HEIGHT = 55; 
     private static final int FRAGMENT_SWITCH_ANIMATION_DURATION = 500;
-    private static final int MAX_HEIGHT = 550;
+    private static final String MAX_HEIGHT = "550px";
 
     private ResizePanel resizePanel;
     private LayoutPanel rootPanel;
@@ -272,13 +272,9 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                             if (prevHeight != null) {
                                 setHeight(prevHeight);
                             }
-                            resizePanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
-                            rootPanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
                         }
                     });
 
-                    resizePanel.getElement().getStyle().setPropertyPx("maxHeight", 1000);
-                    rootPanel.getElement().getStyle().setPropertyPx("maxHeight", 1000);
                     popup.center();
                     popup.show();
                 }
@@ -304,11 +300,6 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 }
             });
             navElements = new ArrayList<>();
-
-            resizePanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
-            rootPanel.getElement().getStyle().setPropertyPx("maxHeight", MAX_HEIGHT);
-            resizePanel.getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT);
-            rootPanel.getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT);
         }
     }
     
@@ -347,18 +338,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     element.getStyle().setOverflow(Overflow.AUTO);
                 }
             } else if (!navigationDisabled) {
-                int height = 0;
-                setHeight("0px");
-                if (element.getParentElement() != null) {
-                    Element parentElement = element.getParentElement();
-                    height = maxHeight(parentElement);
-                }
-                if (height <= 0) {
-                    height = maxHeight(element);
-                } 
-                height += NAVIGATION_HEADER_HEIGHT;
-                setHeight(height+"px");
-            } 
+                setHeight(MAX_HEIGHT);
+            }
         }
     }
     
