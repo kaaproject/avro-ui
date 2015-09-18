@@ -476,10 +476,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                 }
                 fieldWidgetPanel.setContent(table);
                 form = fieldWidgetPanel;
-//                getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT + 15);
             } else {
                 form = table;
-//                getElement().getStyle().setPropertyPx("minHeight", MAX_HEIGHT + 15);
             }
         }
         return form;

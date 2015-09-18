@@ -110,6 +110,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         });
         
         CaptionPanel formPanel = new CaptionPanel(Utils.constants.form());
+        form.getElement().getStyle().setPropertyPx("minHeight", 565);
         formPanel.add(form);
         
         setWidget(row++, 0, formPanel);
