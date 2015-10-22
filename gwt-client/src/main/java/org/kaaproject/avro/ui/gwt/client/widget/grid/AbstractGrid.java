@@ -16,25 +16,6 @@
 
 package org.kaaproject.avro.ui.gwt.client.widget.grid;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.kaaproject.avro.ui.gwt.client.util.Utils;
-import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog;
-import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog.ConfirmListener;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell.ActionListener;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell.ActionValidator;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionsButtonCell;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.LinkCell;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.UneditableCheckboxCell;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.event.HasRowActionEventHandlers;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
-import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
-
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
@@ -58,6 +39,24 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionChangeEvent;
+import org.kaaproject.avro.ui.gwt.client.util.Utils;
+import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog;
+import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog.ConfirmListener;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell.ActionListener;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell.ActionValidator;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionsButtonCell;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.LinkCell;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.UneditableCheckboxCell;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.event.HasRowActionEventHandlers;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasRowActionEventHandlers<K> {
     
@@ -164,32 +163,7 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         prefferredWidth = initColumns(table);
         table.setMinimumTableWidth(prefferredWidth, Unit.PX);
 
-        SimplePager pager = new SimplePager(TextLocation.CENTER, pagerResources, false, 0, true) {
-            @Override
-            protected String createText() {
-                HasRows display = getDisplay();
-                Range range = display.getVisibleRange();
-                int currentPage = range.getStart() / (range.getLength() != 0 ? range.getLength() : 1) + 1;
-                int total = ((int)Math.ceil((float)display.getRowCount()/(float)range.getLength()));
-                if (total == 0) {
-                    total = 1;
-                }
-                return Utils.messages.pagerText(String.valueOf(currentPage), String.valueOf(total));
-            }
-            
-            @Override
-            public void setPageStart(int index) {
-                if (getDisplay() != null) {
-                  Range range = getDisplay().getVisibleRange();
-                  int pageSize = range.getLength();
-                  
-                  index = Math.max(0, index);
-                  if (index != range.getStart()) {
-                      getDisplay().setVisibleRange(index, pageSize);
-                  }
-                }
-            }
-        };
+        SimplePager pager = getPager();
         pager.setDisplay(table);
 
         String pagerId = "pager_"+pager.hashCode();
@@ -455,4 +429,36 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         Boolean getValue(T item);
     }
 
+    protected SimplePager getPager() {
+        return new SimplePager(TextLocation.CENTER, pagerResources, false, 0, true) {
+            @Override
+            protected String createText() {
+                HasRows display = getDisplay();
+                Range range = display.getVisibleRange();
+                int currentPage = range.getStart() / (range.getLength() != 0 ? range.getLength() : 1) + 1;
+                int total = ((int)Math.ceil((float)display.getRowCount()/(float)range.getLength()));
+                if (total == 0) {
+                    total = 1;
+                }
+                return Utils.messages.pagerText(String.valueOf(currentPage), String.valueOf(total));
+            }
+
+            @Override
+            public void setPageStart(int index) {
+                if (getDisplay() != null) {
+                    Range range = getDisplay().getVisibleRange();
+                    int pageSize = range.getLength();
+
+                    index = Math.max(0, index);
+                    if (index != range.getStart()) {
+                        getDisplay().setVisibleRange(index, pageSize);
+                    }
+                }
+            }
+        };
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
 }
