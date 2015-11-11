@@ -143,6 +143,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         horizontalPanel.add(fileUpload);
 
         uploadFileButton.setEnabled(false);
+        uploadFileButton.getElement().getStyle().setMarginLeft(8, Unit.PX);
         uploadFileButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent clickEvent) {
