@@ -62,7 +62,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
 
     private static final int NAVIGATION_HEADER_HEIGHT = 55; 
     private static final int FRAGMENT_SWITCH_ANIMATION_DURATION = 500;
-    
+    private static final String MAX_HEIGHT = "550px";
+
     private ResizePanel resizePanel;
     private LayoutPanel rootPanel;
     private NavigationPanel navPanel;
@@ -258,22 +259,22 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     popup.addButton(close);
                     
                     popup.addCloseHandler(new CloseHandler<PopupPanel>() {
-                                @Override
-                                public void onClose(CloseEvent<PopupPanel> event) {
-                                    enableZoom(true);
-                                    setWidget(getAnchorWidget());
-                                    updateConfig(prevConfig);
-                                    setPreferredWidthPx(prevPreferredWidthPx);
-                                    setPreferredHeightPx(prevPreferredHeightPx);
-                                    if (prevWidth != null) {
-                                        setWidth(prevWidth);
-                                    }
-                                    if (prevHeight != null) {
-                                        setHeight(prevHeight);
-                                    }
-                                }
-                            });
-                    
+                        @Override
+                        public void onClose(CloseEvent<PopupPanel> event) {
+                            enableZoom(true);
+                            setWidget(getAnchorWidget());
+                            updateConfig(prevConfig);
+                            setPreferredWidthPx(prevPreferredWidthPx);
+                            setPreferredHeightPx(prevPreferredHeightPx);
+                            if (prevWidth != null) {
+                                setWidth(prevWidth);
+                            }
+                            if (prevHeight != null) {
+                                setHeight(prevHeight);
+                            }
+                        }
+                    });
+
                     popup.center();
                     popup.show();
                 }
@@ -294,8 +295,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             resizePanel.addPanelResizedListener(new PanelResizeListener() {
                 @Override
                 public void onResized(int width, int height) {
-                    setWidth(width+"px");
-                    setHeight(height+"px");
+                    setWidth(width + "px");
+                    setHeight(height + "px");
                 }
             });
             navElements = new ArrayList<>();
@@ -337,18 +338,8 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     element.getStyle().setOverflow(Overflow.AUTO);
                 }
             } else if (!navigationDisabled) {
-                int height = 0;
-                setHeight("0px");
-                if (element.getParentElement() != null) {
-                    Element parentElement = element.getParentElement();
-                    height = maxHeight(parentElement);
-                }
-                if (height <= 0) {
-                    height = maxHeight(element);
-                } 
-                height += NAVIGATION_HEADER_HEIGHT;
-                setHeight(height+"px");
-            } 
+                setHeight(MAX_HEIGHT);
+            }
         }
     }
     

@@ -21,32 +21,42 @@ import static org.kaaproject.avro.ui.sandbox.client.util.Utils.isNotBlank;
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.widget.AvroWidgetsConfig;
+import org.kaaproject.avro.ui.gwt.client.widget.FormPopup;
 import org.kaaproject.avro.ui.gwt.client.widget.RecordFieldWidget;
 import org.kaaproject.avro.ui.gwt.client.widget.SizedTextArea;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.FormConstructorView;
 import org.kaaproject.avro.ui.sandbox.client.util.Utils;
 import org.kaaproject.avro.ui.shared.RecordField;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.Window;
 
 public class FormConstructorViewImpl extends FlexTable implements FormConstructorView {
 
     private static final String FULL_WIDTH = "100%";
-    
+    private static final String JSON_PANEL_WIDTH = "600px";
+    private static final String UPLOAD_SERVLET_PATH = "servlet/fileUploadServlet";
+    private static final int MIN_PANEL_HEIGHT = 565;
+
     private RecordFieldWidget form;
     
     private CaptionPanel formJsonPanel;
@@ -55,7 +65,12 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
     private Button showFormJsonButton;
     private Button uploadFormFromJsonButton;
     private Button uploadButton;
-    
+    final Button uploadFileButton = new Button(Utils.constants.upload());
+
+    private final FormPopup jsonUploadPopup = new FormPopup();
+    private final FormPanel fileUploadForm = new FormPanel();
+    private final FileUpload fileUpload = new FileUpload();
+
     public FormConstructorViewImpl() {
         setWidth(FULL_WIDTH);
         
@@ -75,7 +90,7 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         showDisplayStringButton.getElement().getStyle().setMarginLeft(10, Unit.PX);
         showDisplayStringButton.addStyleName(Utils.avroUiStyle.buttonSmall());
         showDisplayStringButton.addClickHandler(new ClickHandler() {
-            
+
             @Override
             public void onClick(ClickEvent event) {
                 RecordField field = form.getValue();
@@ -87,15 +102,16 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         setWidget(row++, 0, toolbarPanel);
         
         form = new RecordFieldWidget(new AvroWidgetsConfig.Builder().createConfig());
-        
+
         form.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
             @Override
             public void onValueChange(ValueChangeEvent<RecordField> event) {
-                 fireChanged();
+                fireChanged();
             }
         });
         
         CaptionPanel formPanel = new CaptionPanel(Utils.constants.form());
+        form.getElement().getStyle().setPropertyPx("minHeight", MIN_PANEL_HEIGHT);
         formPanel.add(form);
         
         setWidget(row++, 0, formPanel);
@@ -112,51 +128,98 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
                 showUploadJson();
             }
         });
-        
+
+        fileUploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
+        fileUploadForm.setMethod(FormPanel.METHOD_POST);
+        fileUploadForm.setAction(GWT.getModuleBaseURL() + UPLOAD_SERVLET_PATH);
+
+        HorizontalPanel horizontalPanel = new HorizontalPanel();
+        horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+
+        fileUploadForm.setWidget(horizontalPanel);
+
+        fileUpload.setName(Utils.constants.uploadFromFile());
+
+        horizontalPanel.add(fileUpload);
+
+        uploadFileButton.setEnabled(false);
+        uploadFileButton.getElement().getStyle().setMarginLeft(8, Unit.PX);
+        uploadFileButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                if (!"".equals(fileUpload.getFilename())) {
+                    fileUploadForm.submit();
+                }
+            }
+        });
+
+        fileUpload.addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent changeEvent) {
+                if (!"".equals(fileUpload.getFilename())) uploadFileButton.setEnabled(form.getValue() != null);
+                else uploadFileButton.setEnabled(false);
+            }
+        });
+
+        horizontalPanel.add(uploadFileButton);
+
         HorizontalPanel buttonsPanel = new HorizontalPanel();
         buttonsPanel.setSpacing(15);
         buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
         buttonsPanel.add(showFormJsonButton);
         buttonsPanel.add(uploadFormFromJsonButton);
-        
+        buttonsPanel.add(fileUploadForm);
+
         setWidget(row++, 0, buttonsPanel);
         
         getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
-        buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(15, Unit.PX);
+        buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(0, Unit.PX);
 
         formJsonArea = new SizedTextArea(-1);
         formJsonArea.setWidth(FULL_WIDTH);
+        formJsonArea.setWidth(JSON_PANEL_WIDTH);
         formJsonArea.getTextArea().getElement().getStyle().setPropertyPx("minHeight", 300);
         formJsonArea.getTextArea().setReadOnly(true);
         formJsonArea.addInputHandler(new InputEventHandler() {
             @Override
             public void onInputChanged(InputEvent event) {
-               boolean enableUpload = isNotBlank(formJsonArea.getValue());
-               uploadButton.setEnabled(enableUpload);
+                boolean enableUpload = isNotBlank(formJsonArea.getValue());
+                uploadButton.setEnabled(enableUpload);
             }
         });
         
         formJsonPanel = new CaptionPanel(Utils.constants.generatedJson());
+        formJsonPanel.getElement().getStyle().setMargin(5, Unit.PX);
         formJsonPanel.add(formJsonArea);
-        
-        setWidget(row++, 0, formJsonPanel);
+
         formJsonPanel.setVisible(false);
         
         uploadButton = new Button(Utils.constants.upload());
         uploadButton.setEnabled(false);
         uploadButton.setVisible(false);
-        
-        buttonsPanel = new HorizontalPanel();
-        buttonsPanel.setSpacing(15);
-        buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        buttonsPanel.add(uploadButton);
-        
-        setWidget(row++, 0, buttonsPanel);
-        getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
+
+        uploadButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                jsonUploadPopup.hide();
+            }
+        });
+        jsonUploadPopup.addButton(uploadButton);
+
+        jsonUploadPopup.add(formJsonPanel);
+
+        Button close = new Button(Utils.constants.close(), new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                jsonUploadPopup.hide();
+            }
+        });
+        jsonUploadPopup.addButton(close);
     }
-    
+
     private void fireChanged() {
         uploadFormFromJsonButton.setEnabled(form.getValue() != null);
+        uploadFileButton.setEnabled(form.getValue() != null && !"".equals(fileUpload.getFilename()));
         boolean schemaFormValid = form.validate();
         showFormJsonButton.setEnabled(schemaFormValid);
     }
@@ -167,6 +230,9 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         formJsonPanel.setCaptionText(Utils.constants.jsonToUpload());
         formJsonArea.getTextArea().setReadOnly(false);
         uploadButton.setVisible(true);
+
+        jsonUploadPopup.center();
+        jsonUploadPopup.show();
     }
     
     @Override
@@ -175,9 +241,11 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         formJsonArea.setValue("");
         showFormJsonButton.setEnabled(false);
         uploadFormFromJsonButton.setEnabled(false);
+        uploadFileButton.setEnabled(false);
         uploadButton.setEnabled(false);
         uploadButton.setVisible(false);
         formJsonPanel.setVisible(false);
+        fileUploadForm.reset();
     }
     
     @Override
@@ -213,6 +281,9 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         formJsonPanel.setCaptionText(Utils.constants.generatedJson());
         formJsonArea.getTextArea().setReadOnly(true);
         uploadButton.setVisible(false);
+
+        jsonUploadPopup.center();
+        jsonUploadPopup.show();
     }
 
     @Override
@@ -225,4 +296,8 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         return uploadButton;
     }
 
+    @Override
+    public FormPanel getUploadFileForm() {
+        return fileUploadForm;
+    }
 }

@@ -255,6 +255,7 @@ public class FormPopup extends PopupPanel implements MouseListener {
     public void addButton(com.google.gwt.user.client.ui.Button button) {
         if (buttonsPanel == null)
             initButtonsPanel();
+        button.getElement().getStyle().setMarginLeft(20, Unit.PX);
         buttonsPanel.add(button);
     }
 

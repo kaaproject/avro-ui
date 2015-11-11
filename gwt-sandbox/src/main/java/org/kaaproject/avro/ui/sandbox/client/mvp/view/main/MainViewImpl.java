@@ -42,7 +42,6 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class MainViewImpl extends Composite implements MainView {
@@ -50,7 +49,6 @@ public class MainViewImpl extends Composite implements MainView {
     interface MainViewImplUiBinder extends UiBinder<Widget, MainViewImpl> { }
     private static MainViewImplUiBinder uiBinder = GWT.create(MainViewImplUiBinder.class);
 
-    @UiField public Label titleLabel;
     @UiField public FlexTable detailsTable;
     @UiField (provided=true) public final AlertPanel errorPanel;
     @UiField (provided=true) public final AlertPanel infoPanel;
@@ -70,10 +68,9 @@ public class MainViewImpl extends Composite implements MainView {
         
         initWidget(uiBinder.createAndBindUi(this));
 
-        titleLabel.setText(Utils.constants.mainConsole());
-        
         detailsTable.setWidth("95%");
-        detailsTable.setCellPadding(6);
+        detailsTable.getElement().getStyle().setPaddingTop(0, Unit.PX);
+        detailsTable.setCellPadding(0);
 
         detailsTable.getColumnFormatter().setWidth(0, "50%");
         detailsTable.getColumnFormatter().setWidth(1, "50%");
@@ -88,7 +85,7 @@ public class MainViewImpl extends Composite implements MainView {
         buttonsPanel.add(resetButton);
 
         detailsTable.setWidget(0, 0, buttonsPanel);
-        buttonsPanel.getElement().getParentElement().getStyle().setPaddingBottom(15, Unit.PX);
+        buttonsPanel.getElement().getParentElement().getStyle().setPaddingBottom(0, Unit.PX);
         detailsTable.getFlexCellFormatter().setColSpan(0, 0, 2);
         
         generateFormButton.addClickHandler(new ClickHandler() {
@@ -117,8 +114,8 @@ public class MainViewImpl extends Composite implements MainView {
             public void onValueChange(ValueChangeEvent<RecordField> event) {
                 fireChanged();
             }
-        });        
-        
+        });
+
         CaptionPanel recordConstructorPanel = new CaptionPanel(Utils.constants.recordConstructor());
         recordConstructorPanel.add(recordConstructorView);
         
@@ -133,11 +130,6 @@ public class MainViewImpl extends Composite implements MainView {
         resetButton.setEnabled(false);
         schemaConstructorView.reset();
         recordConstructorView.reset();
-    }
-
-    @Override
-    public void setTitle(String title) {
-        titleLabel.setText(title);
     }
 
     @Override

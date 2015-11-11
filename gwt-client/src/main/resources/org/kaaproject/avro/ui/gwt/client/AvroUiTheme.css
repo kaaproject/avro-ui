@@ -201,7 +201,7 @@
 .fieldWidget input, .fieldWidget textarea, .fieldWidget select {
   display: inline-block;
   padding: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 0px;
   font-size: 13px;
   line-height: 18px;
   color: #000000;

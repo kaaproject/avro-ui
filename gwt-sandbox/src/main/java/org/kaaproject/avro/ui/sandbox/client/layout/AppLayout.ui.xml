@@ -22,7 +22,7 @@
         <ui:with field='avroUiStyle' type='org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle'/>  
     
         <gwt:DockLayoutPanel unit="PX">
-                <gwt:north size="60">
+                <gwt:north size="50">
                 		<gwt:SimplePanel ui:field="appHeader" />
                 </gwt:north>    
                 <gwt:center>
