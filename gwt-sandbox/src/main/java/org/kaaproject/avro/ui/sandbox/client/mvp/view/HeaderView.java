@@ -16,8 +16,9 @@
 
 package org.kaaproject.avro.ui.sandbox.client.mvp.view;
 
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.IsWidget;
 
 public interface HeaderView extends IsWidget {
-
+    Button getResetButton();
 }

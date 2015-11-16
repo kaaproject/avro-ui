@@ -16,7 +16,6 @@
 
 package org.kaaproject.avro.ui.sandbox.client.mvp.view;
 
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.IsWidget;
 
 public interface MainView extends IsWidget {
@@ -24,17 +23,13 @@ public interface MainView extends IsWidget {
     void clearMessages();
 
     void setErrorMessage(String message);
-    
+
     void setInfoMessage(String message);
-    
-    HasClickHandlers getGenerateFormButton();
-    
-    HasClickHandlers getResetButton();
-    
+
     FormConstructorView getSchemaConstructorView();
-    
+
     FormConstructorView getRecordConstructorView();
-    
+
     void reset();
 
 }

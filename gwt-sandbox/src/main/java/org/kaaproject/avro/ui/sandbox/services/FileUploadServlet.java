@@ -27,11 +27,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public class FileUploadServlet extends HttpServlet {
+
+    private static final int BYTES_DOWNLOAD = 1024;
+    private static final String FILE_NAME = "AvroUiJSON.txt";
+    private static final String FILE_PARAM = "jsonArea";
 
     /** The Constant logger. */
     private static final Logger logger = LoggerFactory.getLogger(FileUploadServlet.class);
@@ -69,6 +75,35 @@ public class FileUploadServlet extends HttpServlet {
         catch(Exception e){
             logger.error("Unexpected error in FileUploadServlet.doPost: ", e);
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String jsonArea = request.getParameter(FILE_PARAM);
+
+        if (jsonArea != null) {
+            try (   InputStream is = new ByteArrayInputStream(jsonArea.getBytes("UTF8"));
+                    OutputStream os = response.getOutputStream()
+            ) {
+
+                response.setContentType("text/plain");
+                response.setHeader("Content-Disposition", "attachment;filename=" + FILE_NAME);
+
+                int read = 0;
+                byte[] bytes = new byte[BYTES_DOWNLOAD];
+                while ((read = is.read(bytes)) != -1) {
+                    os.write(bytes, 0, read);
+                }
+                logger.debug("Returning text file with name '{}'", FILE_NAME);
+            } catch (IOException e) {
+                logger.error("Unexpected error in FileUploadServlet.doGet: ", e);
+                throw new RuntimeException(e);
+            }
+        } else {
+            logger.error("Empty parameter with file content in get file request!");
+            throw new RuntimeException("Empty parameter with file content in get file request!");
         }
     }
 }

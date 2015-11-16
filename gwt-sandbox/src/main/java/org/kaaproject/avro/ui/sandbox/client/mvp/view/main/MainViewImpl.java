@@ -24,24 +24,15 @@ import org.kaaproject.avro.ui.sandbox.client.mvp.view.FormConstructorView;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.MainView;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.form.FormConstructorViewImpl;
 import org.kaaproject.avro.ui.sandbox.client.util.Utils;
-import org.kaaproject.avro.ui.shared.RecordField;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class MainViewImpl extends Composite implements MainView {
@@ -55,9 +46,6 @@ public class MainViewImpl extends Composite implements MainView {
     @UiField (provided=true) public final AvroUiSandboxStyle avroUiSandboxStyle;
     @UiField public FlowPanel footer;
 
-    private Button generateFormButton;
-    private Button resetButton;
-    
     private FormConstructorView schemaConstructorView;
     private FormConstructorView recordConstructorView;
 
@@ -75,47 +63,15 @@ public class MainViewImpl extends Composite implements MainView {
         detailsTable.getColumnFormatter().setWidth(0, "50%");
         detailsTable.getColumnFormatter().setWidth(1, "50%");
         
-        generateFormButton = new Button(Utils.constants.generateRecordForm());
-        resetButton = new Button(Utils.constants.reset());
-        
-        HorizontalPanel buttonsPanel = new HorizontalPanel();
-        buttonsPanel.setSpacing(15);
-        buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        buttonsPanel.add(generateFormButton);
-        buttonsPanel.add(resetButton);
-
-        detailsTable.setWidget(0, 0, buttonsPanel);
-        buttonsPanel.getElement().getParentElement().getStyle().setPaddingBottom(0, Unit.PX);
         detailsTable.getFlexCellFormatter().setColSpan(0, 0, 2);
         
-        generateFormButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                generateFormButton.setEnabled(false);
-            }
-        });
- 
         schemaConstructorView = new FormConstructorViewImpl();
-        schemaConstructorView.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
-            @Override
-            public void onValueChange(ValueChangeEvent<RecordField> event) {
-                fireChanged();
-            }
-        });
-        
         CaptionPanel schemaConstructorPanel = new CaptionPanel(Utils.constants.schemaConstructor());
         schemaConstructorPanel.add(schemaConstructorView);
-        
-        detailsTable.setWidget(1, 0, schemaConstructorPanel);
-        
-        recordConstructorView = new FormConstructorViewImpl();
-        recordConstructorView.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
-            @Override
-            public void onValueChange(ValueChangeEvent<RecordField> event) {
-                fireChanged();
-            }
-        });
 
+        detailsTable.setWidget(1, 0, schemaConstructorPanel);
+
+        recordConstructorView = new FormConstructorViewImpl();
         CaptionPanel recordConstructorPanel = new CaptionPanel(Utils.constants.recordConstructor());
         recordConstructorPanel.add(recordConstructorView);
         
@@ -126,8 +82,6 @@ public class MainViewImpl extends Composite implements MainView {
     @Override
     public void reset() {
         clearMessages();
-        generateFormButton.setEnabled(false);
-        resetButton.setEnabled(false);
         schemaConstructorView.reset();
         recordConstructorView.reset();
     }
@@ -152,23 +106,6 @@ public class MainViewImpl extends Composite implements MainView {
         infoPanel.setVisible(true);
     }
 
-    private void fireChanged() {
-        generateFormButton.setEnabled(schemaConstructorView.getValue() != null
-                && schemaConstructorView.getValue().isValid());
-        resetButton.setEnabled(schemaConstructorView.getValue() != null ||
-                recordConstructorView.getValue() != null);
-    }
-
-    @Override
-    public HasClickHandlers getGenerateFormButton() {
-        return generateFormButton;
-    }
-    
-    @Override
-    public HasClickHandlers getResetButton() {
-        return resetButton;
-    }
-
     @Override
     public FormConstructorView getSchemaConstructorView() {
         return schemaConstructorView;
@@ -178,5 +115,4 @@ public class MainViewImpl extends Composite implements MainView {
     public FormConstructorView getRecordConstructorView() {
         return recordConstructorView;
     }
-
 }

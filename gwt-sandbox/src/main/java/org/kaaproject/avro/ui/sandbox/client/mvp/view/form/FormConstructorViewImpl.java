@@ -16,12 +16,10 @@
 
 package org.kaaproject.avro.ui.sandbox.client.mvp.view.form;
 
-import static org.kaaproject.avro.ui.sandbox.client.util.Utils.isNotBlank;
-
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.widget.AvroWidgetsConfig;
-import org.kaaproject.avro.ui.gwt.client.widget.FormPopup;
 import org.kaaproject.avro.ui.gwt.client.widget.RecordFieldWidget;
 import org.kaaproject.avro.ui.gwt.client.widget.SizedTextArea;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.FormConstructorView;
@@ -55,21 +53,24 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
     private static final String FULL_WIDTH = "100%";
     private static final String JSON_PANEL_WIDTH = "600px";
     private static final String UPLOAD_SERVLET_PATH = "servlet/fileUploadServlet";
+    private static final String JSON_AREA_NAME = "jsonArea";
     private static final int MIN_PANEL_HEIGHT = 565;
 
     private RecordFieldWidget form;
     
+    private SizedTextArea jsonArea;
     private CaptionPanel formJsonPanel;
-    private SizedTextArea formJsonArea;
-    
-    private Button showFormJsonButton;
-    private Button uploadFormFromJsonButton;
-    private Button uploadButton;
-    final Button uploadFileButton = new Button(Utils.constants.upload());
 
-    private final FormPopup jsonUploadPopup = new FormPopup();
-    private final FormPanel fileUploadForm = new FormPanel();
+    private Button showJsonButton;
+    private Button loadJsonButton;
+    final Button uploadButton = new Button(Utils.constants.upload());
+    final Button downloadButton = new Button(Utils.constants.saveFile());
+
+    private final FormPanel uploadForm = new FormPanel();
+    private final FormPanel saveForm = new FormPanel();
     private final FileUpload fileUpload = new FileUpload();
+
+    private Button generateRecordButton;
 
     public FormConstructorViewImpl() {
         setWidth(FULL_WIDTH);
@@ -106,49 +107,109 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         form.addValueChangeHandler(new ValueChangeHandler<RecordField>() {
             @Override
             public void onValueChange(ValueChangeEvent<RecordField> event) {
-                fireChanged();
+                fireFormChanged();
             }
         });
         
-        CaptionPanel formPanel = new CaptionPanel(Utils.constants.form());
+        CaptionPanel formPanel = new CaptionPanel(Utils.constants.avroUiView());
         form.getElement().getStyle().setPropertyPx("minHeight", MIN_PANEL_HEIGHT);
         formPanel.add(form);
         
         setWidget(row++, 0, formPanel);
         
-        showFormJsonButton = new Button(Utils.constants.showJson());
-        showFormJsonButton.setEnabled(false);
-        
-        uploadFormFromJsonButton = new Button(Utils.constants.uploadFromJson());
-        uploadFormFromJsonButton.setEnabled(false);
-        
-        uploadFormFromJsonButton.addClickHandler(new ClickHandler() {
+        showJsonButton = new Button(Utils.constants.showJson());
+        showJsonButton.setEnabled(true);
+
+        loadJsonButton = new Button(Utils.constants.loadJson());
+        loadJsonButton.setEnabled(false);
+
+        generateRecordButton = new Button(Utils.constants.generateRecordForm());
+        generateRecordButton.getElement().getStyle().setProperty("float", "right");
+
+        generateRecordButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                showUploadJson();
+                generateRecordButton.setEnabled(false);
             }
         });
 
-        fileUploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
-        fileUploadForm.setMethod(FormPanel.METHOD_POST);
-        fileUploadForm.setAction(GWT.getModuleBaseURL() + UPLOAD_SERVLET_PATH);
+        FlexTable buttonTable = new FlexTable();
+        buttonTable.setWidth(FULL_WIDTH);
 
-        HorizontalPanel horizontalPanel = new HorizontalPanel();
-        horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        HorizontalPanel buttonsPanel1 = new HorizontalPanel();
+        buttonsPanel1.setSpacing(15);
+        buttonsPanel1.add(showJsonButton);
+        buttonsPanel1.add(loadJsonButton);
+        HorizontalPanel buttonsPanel2 = new HorizontalPanel();
+        buttonsPanel2.setSpacing(15);
+        buttonsPanel2.add(generateRecordButton);
 
-        fileUploadForm.setWidget(horizontalPanel);
+        buttonTable.setWidget(0, 0, buttonsPanel1);
+        buttonTable.setWidget(0, 1, buttonsPanel2);
+        setWidget(row++, 0, buttonTable);
 
+        buttonTable.getFlexCellFormatter().setHorizontalAlignment(0, 1, HasHorizontalAlignment.ALIGN_RIGHT);
+        buttonTable.getElement().getParentElement().getStyle().setPaddingTop(0, Unit.PX);
+
+        jsonArea = new SizedTextArea(-1);
+        jsonArea.getTextArea().setName(JSON_AREA_NAME);
+        jsonArea.getTextArea().setWidth(JSON_PANEL_WIDTH);
+        jsonArea.getTextArea().getElement().getStyle().setPropertyPx("minHeight", 300);
+        jsonArea.setVisible(false);
+        jsonArea.addInputHandler(new InputEventHandler() {
+            @Override
+            public void onInputChanged(InputEvent event) {
+                fireChanged();
+            }
+        });
+
+        formJsonPanel = new CaptionPanel(Utils.constants.jsonView());
+        formJsonPanel.getElement().getStyle().setMargin(5, Unit.PX);
+        VerticalPanel jsonAreaPanel = new VerticalPanel();
+
+        jsonAreaPanel.add(jsonArea);
+        jsonAreaPanel.add(uploadForm);
+        formJsonPanel.add(jsonAreaPanel);
+
+        formJsonPanel.setVisible(false);
+
+        saveForm.setEncoding(FormPanel.ENCODING_URLENCODED);
+        saveForm.setMethod(FormPanel.METHOD_GET);
+        saveForm.setAction(GWT.getModuleBaseURL() + UPLOAD_SERVLET_PATH);
+        saveForm.add(formJsonPanel);
+        setWidget(row, 0, saveForm);
+
+        downloadButton.setEnabled(false);
+        downloadButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                if (!"".equals(jsonArea.getValue())) {
+                    saveForm.submit();
+                }
+            }
+        });
+
+        uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
+        uploadForm.setMethod(FormPanel.METHOD_POST);
+        uploadForm.setAction(GWT.getModuleBaseURL() + UPLOAD_SERVLET_PATH);
+
+        FlexTable fileOpsTable = new FlexTable();
+        fileOpsTable.setWidth(JSON_PANEL_WIDTH);
+        fileOpsTable.setCellSpacing(8);
+
+        int column = 0;
+        uploadForm.setWidget(fileOpsTable);
         fileUpload.setName(Utils.constants.uploadFromFile());
+        fileOpsTable.setWidget(0, column++, uploadButton);
+        fileOpsTable.setWidget(0, column, fileUpload);
+        fileOpsTable.getFlexCellFormatter().setVerticalAlignment(0, column++, HasVerticalAlignment.ALIGN_MIDDLE);
 
-        horizontalPanel.add(fileUpload);
-
-        uploadFileButton.setEnabled(false);
-        uploadFileButton.getElement().getStyle().setMarginLeft(8, Unit.PX);
-        uploadFileButton.addClickHandler(new ClickHandler() {
+        uploadButton.setEnabled(false);
+        uploadButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent clickEvent) {
                 if (!"".equals(fileUpload.getFilename())) {
-                    fileUploadForm.submit();
+                    uploadForm.submit();
                 }
             }
         });
@@ -156,96 +217,47 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         fileUpload.addChangeHandler(new ChangeHandler() {
             @Override
             public void onChange(ChangeEvent changeEvent) {
-                if (!"".equals(fileUpload.getFilename())) uploadFileButton.setEnabled(form.getValue() != null);
-                else uploadFileButton.setEnabled(false);
+                if (!"".equals(fileUpload.getFilename())) {
+                    uploadButton.setEnabled(true);
+                } else {
+                    uploadButton.setEnabled(false);
+                }
             }
         });
 
-        horizontalPanel.add(uploadFileButton);
-
-        HorizontalPanel buttonsPanel = new HorizontalPanel();
-        buttonsPanel.setSpacing(15);
-        buttonsPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-        buttonsPanel.add(showFormJsonButton);
-        buttonsPanel.add(uploadFormFromJsonButton);
-        buttonsPanel.add(fileUploadForm);
-
-        setWidget(row++, 0, buttonsPanel);
-        
-        getFlexCellFormatter().setHorizontalAlignment(row, 0, HasHorizontalAlignment.ALIGN_LEFT);
-        buttonsPanel.getElement().getParentElement().getStyle().setPaddingTop(0, Unit.PX);
-
-        formJsonArea = new SizedTextArea(-1);
-        formJsonArea.setWidth(FULL_WIDTH);
-        formJsonArea.setWidth(JSON_PANEL_WIDTH);
-        formJsonArea.getTextArea().getElement().getStyle().setPropertyPx("minHeight", 300);
-        formJsonArea.getTextArea().setReadOnly(true);
-        formJsonArea.addInputHandler(new InputEventHandler() {
-            @Override
-            public void onInputChanged(InputEvent event) {
-                boolean enableUpload = isNotBlank(formJsonArea.getValue());
-                uploadButton.setEnabled(enableUpload);
-            }
-        });
-        
-        formJsonPanel = new CaptionPanel(Utils.constants.generatedJson());
-        formJsonPanel.getElement().getStyle().setMargin(5, Unit.PX);
-        formJsonPanel.add(formJsonArea);
-
-        formJsonPanel.setVisible(false);
-        
-        uploadButton = new Button(Utils.constants.upload());
-        uploadButton.setEnabled(false);
-        uploadButton.setVisible(false);
-
-        uploadButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent clickEvent) {
-                jsonUploadPopup.hide();
-            }
-        });
-        jsonUploadPopup.addButton(uploadButton);
-
-        jsonUploadPopup.add(formJsonPanel);
-
-        Button close = new Button(Utils.constants.close(), new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                jsonUploadPopup.hide();
-            }
-        });
-        jsonUploadPopup.addButton(close);
+        fileOpsTable.setWidget(0, column, downloadButton);
+        fileOpsTable.getFlexCellFormatter().setHorizontalAlignment(0, column, HasHorizontalAlignment.ALIGN_RIGHT);
     }
 
-    private void fireChanged() {
-        uploadFormFromJsonButton.setEnabled(form.getValue() != null);
-        uploadFileButton.setEnabled(form.getValue() != null && !"".equals(fileUpload.getFilename()));
-        boolean schemaFormValid = form.validate();
-        showFormJsonButton.setEnabled(schemaFormValid);
+    private void fireFormChanged() {
+        generateRecordButton.setEnabled(form.getValue() != null
+                && form.getValue().isValid());
+        loadJsonButton.setEnabled(form.getValue() != null
+                && jsonArea.getValue() != null && !jsonArea.getValue().isEmpty());
     }
-    
-    private void showUploadJson() {
-        formJsonArea.setValue("");
-        formJsonPanel.setVisible(true);
-        formJsonPanel.setCaptionText(Utils.constants.jsonToUpload());
-        formJsonArea.getTextArea().setReadOnly(false);
-        uploadButton.setVisible(true);
 
-        jsonUploadPopup.center();
-        jsonUploadPopup.show();
+    @Override
+    public void fireChanged() {
+        showJsonButton.setEnabled(true);
+        boolean isNotEmpty = jsonArea.getValue() != null && !jsonArea.getValue().isEmpty();
+        loadJsonButton.setEnabled(form.getValue() != null && isNotEmpty);
+        downloadButton.setEnabled(isNotEmpty);
+        uploadButton.setEnabled(fileUpload.getFilename() != null && !fileUpload.getFilename().isEmpty());
     }
     
     @Override
     public void reset() {
         form.setValue(null);
-        formJsonArea.setValue("");
-        showFormJsonButton.setEnabled(false);
-        uploadFormFromJsonButton.setEnabled(false);
-        uploadFileButton.setEnabled(false);
+        jsonArea.setValue("");
+        showJsonButton.setEnabled(true);
+        loadJsonButton.setEnabled(false);
         uploadButton.setEnabled(false);
-        uploadButton.setVisible(false);
+        downloadButton.setEnabled(false);
         formJsonPanel.setVisible(false);
-        fileUploadForm.reset();
+        uploadForm.reset();
+        saveForm.reset();
+
+        generateRecordButton.setEnabled(false);
     }
     
     @Override
@@ -271,33 +283,37 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
     
     @Override
     public HasValue<String> getFormJson() {
-        return formJsonArea;
+        return jsonArea;
     }
 
     @Override
     public void setFormJson(String json) {
-        formJsonArea.setValue(json);
+        jsonArea.setValue(json);
+        jsonArea.setVisible(true);
+        jsonArea.getTextArea().setReadOnly(false);
         formJsonPanel.setVisible(true);
-        formJsonPanel.setCaptionText(Utils.constants.generatedJson());
-        formJsonArea.getTextArea().setReadOnly(true);
-        uploadButton.setVisible(false);
-
-        jsonUploadPopup.center();
-        jsonUploadPopup.show();
+        boolean isNotEmpty = json != null && !json.isEmpty();
+        loadJsonButton.setEnabled(form.getValue() != null && isNotEmpty);
+        downloadButton.setEnabled(isNotEmpty);
     }
 
     @Override
-    public HasClickHandlers getShowFormJsonButton() {
-        return showFormJsonButton;
-    }
-
-    @Override
-    public HasClickHandlers getUploadButton() {
-        return uploadButton;
+    public HasClickHandlers getShowJsonButton() {
+        return showJsonButton;
     }
 
     @Override
     public FormPanel getUploadFileForm() {
-        return fileUploadForm;
+        return uploadForm;
+    }
+
+    @Override
+    public Button getGenerateRecordButton() {
+        return generateRecordButton;
+    }
+
+    @Override
+    public HasClickHandlers getUploadJSONButton() {
+        return loadJsonButton;
     }
 }
