@@ -16,27 +16,17 @@
 
 package org.kaaproject.avro.ui.shared;
 
+public class VersionField extends FormField {
 
-public class StringField extends SizedField {
+    private static final long serialVersionUID = 863727275754175198L;
 
-    private static final long serialVersionUID = -5046250549233854347L;
+    private Integer value;
     
-    public static enum InputType {
-        PLAIN,
-        PASSWORD
-    }
-
-    private String defaultValue;
-
-    private String value;
-    
-    private InputType inputType = InputType.PLAIN;
-    
-    public StringField() {
+    public VersionField() {
         super();
     }
-    
-    public StringField(FormContext context,
+
+    public VersionField(FormContext context,
             String fieldName, 
             String displayName, 
             String schema,
@@ -44,77 +34,55 @@ public class StringField extends SizedField {
         super(context, fieldName, displayName, schema, optional);
     }
 
-    public String getDefaultValue() {
-        return defaultValue;
-    }
-
-    public void setDefaultValue(String defaultValue) {
-        this.defaultValue = defaultValue;
-    }
-
-    public String getValue() {
+    public Integer getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Integer value) {
         if ((this.value == null && value != null) || 
-            (this.value != null && !this.value.equals(value))) {
-                this.value = value;
-                fireValueChanged(this.value);
+                (this.value != null && !this.value.equals(value))) {
+                    this.value = value;
+                    fireValueChanged(this.value);
         }
         fireChanged();
     }
     
-    public void setInputType(InputType inputType) {
-        this.inputType = inputType;
-    }
-    
-    public InputType getInputType() {
-        return inputType;
-    }
-
     @Override
     public String getDisplayString() {
-        return super.getDisplayString() + ": \"" + valueToDisplayString(value) + "\"";
+        return super.getDisplayString() + ": " + valueToDisplayString(value);
     }
 
     @Override
     public FieldType getFieldType() {
-        return FieldType.STRING;
+        return FieldType.VERSION;
     }
     
     @Override
     public boolean isNull() {
         return value == null;
     }
-    
+
     @Override
     protected FormField createInstance() {
-        return new StringField();
+        return new VersionField();
     }
     
     @Override
     protected void copyFields(FormField cloned, boolean deepCopy) {
         super.copyFields(cloned, deepCopy);
-        StringField clonedStringField = (StringField)cloned;
-        clonedStringField.defaultValue = defaultValue;
-        clonedStringField.value = value;
-        clonedStringField.inputType = inputType;
+        VersionField clonedIntegerField = (VersionField)cloned;
+        clonedIntegerField.value = value;
     }
 
     @Override
     protected boolean valid() {
-        return !strIsEmpty(value);
+        return value != null;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result
-                + ((defaultValue == null) ? 0 : defaultValue.hashCode());
-        result = prime * result
-                + ((inputType == null) ? 0 : inputType.hashCode());
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
@@ -127,14 +95,7 @@ public class StringField extends SizedField {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        StringField other = (StringField) obj;
-        if (defaultValue == null) {
-            if (other.defaultValue != null)
-                return false;
-        } else if (!defaultValue.equals(other.defaultValue))
-            return false;
-        if (inputType != other.inputType)
-            return false;
+        VersionField other = (VersionField) obj;
         if (value == null) {
             if (other.value != null)
                 return false;
@@ -142,7 +103,5 @@ public class StringField extends SizedField {
             return false;
         return true;
     }
-
-
 
 }

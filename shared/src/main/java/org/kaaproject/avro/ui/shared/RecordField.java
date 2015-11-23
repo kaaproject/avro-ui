@@ -19,64 +19,52 @@ package org.kaaproject.avro.ui.shared;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class RecordField extends FqnField {
 
     private static final long serialVersionUID = -2006331166074707248L;
+
+    private static final String FQN_FIELD = "fqn";
+    private static final String RECORD_NAMESPACE_FIELD = "recordNamespace";
+    private static final String RECORD_NAME_FIELD = "recordName";
+    private static final String VERSION_FIELD = "version";
     
     private List<FormField> value;
-    
-    private RecordField rootRecord;
-    
-    private Map<String, RecordField> recordsMetadata;
-    
     private boolean isNull = true;
+    private boolean isTypeHolder = false;
+    private boolean isTypeConsumer = false;
+    
+    private FqnValueChangeListener fqnValueChangeListener;
+    private VersionValueChangeListener versionValueChangeListener;
+    private ConsumedFqnValueChangeListener consumedFqnValueChangeListener;
     
     public RecordField() {
         super();
+        this.value = new ArrayList<>();
     }
     
-    public RecordField(RecordField rootRecord) {
-        super();
-        init(rootRecord);
-    }
-    
-    public RecordField(RecordField rootRecord, 
+    public RecordField(FormContext context,
             String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
-        init(rootRecord);
+        super(context, fieldName, displayName, schema, optional);
+        this.value = new ArrayList<>();
     }
     
-    private void init(RecordField rootRecord) {
-        value = new ArrayList<>();
-        this.rootRecord = rootRecord;
-        if (rootRecord == null) {
-            recordsMetadata = new HashMap<>();
-            this.rootRecord = this;
-            isNull = false;
-        } 
+    public boolean isRoot() {
+        if (context != null && context.getRootRecord() != null) {
+            return this.id == context.getRootRecord().getId();
+        }
+        return false;
     }
     
-    public RecordField getRootRecord() {
-        return rootRecord;
-    }
-    
-    public void putRecordMetadata(String fqn, RecordField field) {
-        recordsMetadata.put(fqn, field);
-    }
-    
-    public boolean containsRecordMetadata(String fqn) {
-        return recordsMetadata.containsKey(fqn);
-    }
-    
-    public RecordField getRecordMetadata(String fqn) {
-        return recordsMetadata.get(fqn);
+    public void orderSchemaTypes() {
+        if (context != null) {
+            context.orderSchemaTypes();
+        }
     }
     
     public List<FormField> getValue() {
@@ -115,10 +103,84 @@ public class RecordField extends FqnField {
         return result;
     }
     
+    public void setIsTypeHolder(boolean isTypeHolder) {
+        this.isTypeHolder = isTypeHolder;
+    }
+    
+    public boolean isTypeHolder() {
+        return isTypeHolder;
+    }
+    
+    public void setIsTypeConsumer(boolean isTypeConsumer) {
+        this.isTypeConsumer = isTypeConsumer;
+    }
+    
+    public boolean isTypeConsumer() {
+        return isTypeConsumer;
+    }
+    
+    public Fqn getDeclaredFqn() {
+        FormField nameField = getFieldByName(RECORD_NAME_FIELD);
+        FormField namespaceField = getFieldByName(RECORD_NAMESPACE_FIELD);
+        if (nameField != null && namespaceField != null) {
+            String name = ((StringField)nameField).getValue();
+            String namespace = ((StringField)namespaceField).getValue();
+            if (!strIsEmpty(name) && !strIsEmpty(namespace)) {
+                return new Fqn(namespace, name);
+            }
+        }
+        return null;
+    }
+    
+    public FqnKey getConsumedFqnKey() {
+        FormField fqnField = getFieldByName(FQN_FIELD);
+        if (fqnField != null) {
+            return ((FqnReferenceField)fqnField).getValue();
+        }
+        return null;
+    }
+    
+    public void updateConsumedFqnKey(FqnKey key) {
+        FormField fqnField = getFieldByName(FQN_FIELD);
+        if (fqnField != null) {
+            ((FqnReferenceField)fqnField).setValue(key);
+        }
+    }
+    
+    public Integer getVersion() {
+        if (isRoot() && context.isCtlSchema()) {
+            FormField versionField = getFieldByName(VERSION_FIELD);
+            if (versionField != null) {
+                return ((VersionField)versionField).getValue();
+            }
+        }
+        return null;
+    }
+    
+    public void updateVersion(Integer version) {
+        if (isRoot() && context.isCtlSchema()) {
+            FormField versionField = getFieldByName(VERSION_FIELD);
+            if (versionField != null) {
+                ((VersionField)versionField).setValue(version);
+            }
+        }
+    }
+    
     public FormField getFieldByName(String name) {
         if (!isNull) {
             for (int i=0;i<value.size();i++) {
                 if (value.get(i).getFieldName().equals(name)) {
+                    return value.get(i);
+                }
+            }
+        }
+        return null;
+    }
+    
+    public FormField getFieldByType(FieldType type) {
+        if (!isNull) {
+            for (int i=0;i<value.size();i++) {
+                if (value.get(i).getFieldType() == type) {
                     return value.get(i);
                 }
             }
@@ -139,12 +201,14 @@ public class RecordField extends FqnField {
 
     public void addField(FormField field) {
         value.add(field);
+        field.setParentField(this);
         isNull = false;
     }
     
     public void insertFieldAtIndex(FormField field, int index) {
         if (!isNull && index > -1 && index <= value.size()) {
             value.add(index, field);
+            field.setParentField(this);
         }
     }
     
@@ -152,7 +216,10 @@ public class RecordField extends FqnField {
         if (!isNull) {
             int index = getFieldIndex(name);
             if (index > -1) {
-                value.remove(index);
+                FormField field = value.remove(index);
+                if (field != null) {
+                    field.dispose();
+                }
                 return true;
             }
         }
@@ -220,32 +287,198 @@ public class RecordField extends FqnField {
 
 	@Override
     protected FormField createInstance() {
-        return new RecordField(rootRecord);
+        return new RecordField();
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
+        RecordField clonedRecordField = (RecordField)cloned;
+        clonedRecordField.isTypeHolder = isTypeHolder;
+        clonedRecordField.isTypeConsumer = isTypeConsumer;
+        if (deepCopy) {
+            for (FormField field : value) {
+                FormField clonedField = field.clone();
+                clonedField.setParentField(clonedRecordField);
+                clonedRecordField.value.add(clonedField);
+            }
+            clonedRecordField.isNull = false;
+            clonedRecordField.registerListeners();
+        }
     }
     
     public void create() {
         if (isNull) {
-            RecordField recordField = rootRecord.getRecordMetadata(getTypeFullname());
+            RecordField recordField = context.getRecordMetadata(getFqn());
             for (FormField field : recordField.getValue()) {
-                value.add(field.clone());
+                FormField newField = field.clone();
+                newField.setParentField(this);
+                value.add(newField);
             }
             if (isOverrideDisabled()) {
             	disableOverride();
             }
             isNull = false;
             fireChanged();
+            registerListeners();
         }
     }
     
-    public void setNull() {
-    	value.clear();
-    	isNull = true;
-    	fireChanged();
+    protected void registerListeners() {
+        if (isTypeHolder) {
+            fqnValueChangeListener = new FqnValueChangeListener(this);
+            FormField nameField = getFieldByName(RECORD_NAME_FIELD);
+            FormField namespaceField = getFieldByName(RECORD_NAMESPACE_FIELD);
+            if (nameField != null && namespaceField != null) {
+                nameField.addValueChangeListener(fqnValueChangeListener);
+                namespaceField.addValueChangeListener(fqnValueChangeListener);
+            }
+            if (isRoot() && context.isCtlSchema()) {
+                versionValueChangeListener = new VersionValueChangeListener(this);
+                FormField versionField = getFieldByName(VERSION_FIELD);
+                if (versionField != null) {
+                    versionField.addValueChangeListener(versionValueChangeListener);
+                }
+            }
+        } else if (isTypeConsumer) {
+            context.registerTypeConsumer(this);
+            if (context.isCtlSchema()) {
+                consumedFqnValueChangeListener = new ConsumedFqnValueChangeListener(this);
+                FormField fqnField = getFieldByName(FQN_FIELD);
+                if (fqnField != null) {
+                    fqnField.addValueChangeListener(consumedFqnValueChangeListener);
+                }
+            }
+        }
+    }
+    
+    private void showAlert(String alert) {
+        FormField alertField = getFieldByType(FieldType.ALERT);
+        if (alertField != null) {
+            ((AlertField)alertField).setValue(alert);
+        }
+    }
+    
+    private void clearAlert() {
+        showAlert(null);
+    }
+    
+    public static class FqnValueChangeListener extends ValueChangeListener {
+        
+        private static final long serialVersionUID = -7766362467689033532L;
+        
+        private RecordField recordField;
+        
+        public FqnValueChangeListener() {
+        }
+        
+        public FqnValueChangeListener(RecordField recordField) {
+            this.recordField = recordField;
+        }
+
+        @Override
+        public void onValueChanged(Object value) {
+            if (validateFqnAndVersion(recordField, true)) {
+                recordField.clearAlert();
+                recordField.context.updateTypeHolder(recordField);
+            }
+        }
+    }
+    
+    public static class VersionValueChangeListener extends ValueChangeListener {
+        
+        private static final long serialVersionUID = -7766362467689033532L;
+        
+        private RecordField recordField;
+        
+        public VersionValueChangeListener() {
+        }
+        
+        public VersionValueChangeListener(RecordField recordField) {
+            this.recordField = recordField;
+        }
+
+        @Override
+        public void onValueChanged(Object value) {
+            if (validateFqnAndVersion(recordField, false)) {
+                recordField.clearAlert();
+                recordField.context.updateTypeHolder(recordField);
+            }
+        }
+    }
+    
+    public static class ConsumedFqnValueChangeListener extends ValueChangeListener {
+
+        private static final long serialVersionUID = -3906282204505179394L;
+        
+        private RecordField recordField;
+        
+        public ConsumedFqnValueChangeListener() {
+        }
+        
+        public ConsumedFqnValueChangeListener(RecordField recordField) {
+            this.recordField = recordField;
+        }
+
+        @Override
+        public void onValueChanged(Object value) {
+            recordField.context.updateCtlDependencies();
+        }
+    }
+    
+    private static boolean validateFqnAndVersion(RecordField recordField, boolean checkVersion) {
+        Fqn fqn = recordField.getDeclaredFqn();
+        if (recordField.isRoot() && recordField.context.isCtlSchema()) {
+            Integer version = recordField.getVersion();
+            if (recordField.context.isFqnAlreadyDeclared(recordField.id, fqn, true)) {
+                recordField.showAlert("FQN '" + fqn.getFqnString() + "' is already declared!");
+                return false;
+            } else if (!recordField.context.checkIsVersionAvailable(fqn, version)) {
+                recordField.showAlert("FQN '" + fqn.getFqnString() + "' with version " + version.intValue() + " is already declared!");
+                return false;
+            }
+            if (checkVersion && version == null && fqn != null) {
+                version = recordField.context.getMaxVersion(fqn);
+                if (version != null) {
+                    recordField.updateVersion(version.intValue()+1);
+                }
+            }
+        } else if (recordField.context.isFqnAlreadyDeclared(recordField.id, fqn, false)) {
+            recordField.showAlert("FQN '" + fqn.getFqnString() + "' is already declared!");
+            return false;
+        }
+        return true;
+    }
+    
+    public boolean setNull() {
+        if (!isNull) {
+            if (context != null) {
+                if (isTypeHolder) {
+                    if (!context.removeTypeHolder(this)) {
+                        return false;
+                    }
+                    fqnValueChangeListener = null;
+                    versionValueChangeListener = null;
+                } else if (isTypeConsumer) {
+                    context.unregisterTypeConsumer(id);
+                    consumedFqnValueChangeListener = null;
+                }
+            }
+            for (FormField field : value) {
+                field.dispose();
+            }
+        	value.clear();
+        	isNull = true;
+        	fireChanged();
+        }
+    	return true;
+    }
+    
+    @Override
+    public void dispose() {
+        if (setNull()) {
+            super.dispose();
+        }
     }
     
     @Override
@@ -266,10 +499,22 @@ public class RecordField extends FqnField {
     @Override
     protected boolean valid() {
         boolean valid = true;
+        if (isTypeHolder) {
+            if (!validateFqnAndVersion(this, false)) {
+                valid = false;
+            } else {
+                clearAlert();
+            }
+        }
         for (FormField field : value) {
             valid &= field.isValid();
         }
         return valid;
+    }
+    
+    @Override
+    public Iterator<FormField> iterator() {
+        return FormFieldIterator.concatItemWithCollection(this, value).iterator();
     }
 
     @Override

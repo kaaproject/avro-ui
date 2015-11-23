@@ -3,8 +3,10 @@
     "type": "record",
     "name": "RecordFieldType",
     "displayName": "Record",
+    "isTypeHolder": true,
     "fields": 
     [
+         {"name": "alert", "displayName": "Alert", "alert": true, "type": ["string", "null"]},
          {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter record name"},
          {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter record namespace"},
          {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter record display name"},
@@ -120,8 +122,10 @@
                                                 "namespace": "org.kaaproject.avro.ui.gen",      
                                                 "name": "FixedFieldType",
                                                 "displayName": "Fixed",
+                                                "isTypeHolder": true,
                                                 "fields": 
                                                     [
+                                                         {"name": "alert", "displayName": "Alert", "alert": true, "type": ["string", "null"]},
                                                          {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter fixed type name"},
                                                          {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter fixed type namespace"},
                                                          {"name": "fixedSize", "displayName": "Size", "type": "int", "displayPrompt": "Enter fixed size"},                                                    
@@ -133,8 +137,10 @@
                                                 "namespace": "org.kaaproject.avro.ui.gen",      
                                                 "name": "EnumFieldType",
                                                 "displayName": "Enumeration",
+                                                "isTypeHolder": true,
                                                 "fields": 
                                                     [
+                                                         {"name": "alert", "displayName": "Alert", "alert": true, "type": ["string", "null"]},
                                                          {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter enum type name"},
                                                          {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter enum type namespace"},                                                                                                   
                                                          {"name": "defaultValue", "displayName": "Default symbol", "type": ["string", "null"], "displayPrompt": "Enter enum default symbol"},
@@ -163,9 +169,10 @@
                                                 "namespace": "org.kaaproject.avro.ui.gen",      
                                                 "name": "NamedReferenceFieldType",
                                                 "displayName": "FQN reference",
+                                                "isTypeConsumer": true,
                                                 "fields":
                                                     [
-                                                        {"name": "fqn", "displayName": "Type FQN", "type": "string", "displayPrompt": "Enter fully qualified name of existing type"}
+                                                        {"name": "fqn", "displayName": "Type FQN", "typeReference": true, "type": "string", "displayPrompt": "Select fully qualified name of existing type"}
                                                     ]
                                             },
                                             {

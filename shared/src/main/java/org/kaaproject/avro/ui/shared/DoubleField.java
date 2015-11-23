@@ -29,11 +29,12 @@ public class DoubleField extends FormField {
         super();
     }
 
-    public DoubleField(String fieldName, 
+    public DoubleField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public Double getDefaultValue() {
@@ -74,8 +75,8 @@ public class DoubleField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         DoubleField clonedDoubleField = (DoubleField)cloned;
         clonedDoubleField.defaultValue = defaultValue;
         clonedDoubleField.value = value;

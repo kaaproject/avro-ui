@@ -17,7 +17,7 @@
 .dataGridCell {
   padding: 2px 15px;
   overflow: hidden;
-  height: 20px;
+  height: 26px;
   font-size: 12px;
   vertical-align: inherit !important;
 }

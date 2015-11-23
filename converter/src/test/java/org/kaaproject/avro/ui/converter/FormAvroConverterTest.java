@@ -41,8 +41,9 @@ public class FormAvroConverterTest {
     @Test
     public void testSingleFieldsRecord() throws IOException {
         int fieldNum = 0;
-        Schema schema = TestAvroSchemas.getSingleFieldsSchema();
+        Schema schema = TestAvroSchemas.getSchema(TestAvroSchemas.SINGLE_FIELDS);
         RecordField field = FormAvroConverter.createRecordFieldFromSchema(schema);
+        
         Assert.assertNotNull(field);
         Assert.assertNotNull(field.getValue());
         Assert.assertEquals(6, field.getValue().size());
@@ -138,8 +139,9 @@ public class FormAvroConverterTest {
 
     @Test
     public void testArrayRecord() throws IOException {
-        Schema schema = TestAvroSchemas.getArraySchema();
+        Schema schema = TestAvroSchemas.getSchema(TestAvroSchemas.ARRAY);
         RecordField field = FormAvroConverter.createRecordFieldFromSchema(schema);
+        
         Assert.assertNotNull(field);
         Assert.assertNotNull(field.getValue());
         Assert.assertEquals(1, field.getValue().size());
@@ -148,6 +150,7 @@ public class FormAvroConverterTest {
         Assert.assertTrue(formField instanceof ArrayField);
         ArrayField arrayField = (ArrayField)formField;
         arrayField.finalizeMetadata();
+        
         Assert.assertNotNull(arrayField.getValue());
         Assert.assertEquals(1, arrayField.getMinRowCount());
         Assert.assertEquals(1, arrayField.getValue().size());
@@ -191,8 +194,9 @@ public class FormAvroConverterTest {
 
     @Test
     public void testUnionRecord() throws IOException {
-        Schema schema = TestAvroSchemas.getUnionSchema();
+        Schema schema = TestAvroSchemas.getSchema(TestAvroSchemas.UNION);
         RecordField field = FormAvroConverter.createRecordFieldFromSchema(schema);
+        
         Assert.assertNotNull(field);
         Assert.assertNotNull(field.getValue());
         Assert.assertEquals(1, field.getValue().size());
@@ -245,7 +249,7 @@ public class FormAvroConverterTest {
     
     @Test
     public void testOverrideSchema() throws IOException {
-        Schema schema = TestAvroSchemas.getOverrideSchema();
+        Schema schema = TestAvroSchemas.getSchema(TestAvroSchemas.OVERRIDE_SCHEMA);
         RecordField field = FormAvroConverter.createRecordFieldFromSchema(schema);
         Assert.assertNotNull(field);
         Assert.assertNotNull(field.getValue());

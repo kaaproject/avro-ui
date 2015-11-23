@@ -1,0 +1,60 @@
+
+.chzn-container {
+  font-size: 12px;
+  position: relative;
+  display: inline-block;
+  zoom: 1;
+  white-space: pre;
+  /* *display: inline;*/
+}
+
+.chzn-container-multi .chzn-choices {
+  padding : 2px;
+  line-height : 18px;
+  background-color : #fff;
+  border : 1px solid #ccc;
+  -webkit-border-radius : 3px;
+  -moz-border-radius : 3px;
+  border-radius : 3px;
+  -webkit-box-shadow : inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  -moz-box-shadow : inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  box-shadow : inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  -webkit-transition : border linear 0.2s, box-shadow linear 0.2s;
+  -moz-transition : border linear 0.2s, box-shadow linear 0.2s;
+  -ms-transition : border linear 0.2s, box-shadow linear 0.2s;
+  -o-transition : border linear 0.2s, box-shadow linear 0.2s;
+  transition : border linear 0.2s, box-shadow linear 0.2s;
+}
+
+.chzn-container-active .chzn-choices {
+    border-color: rgba(82, 168, 236, 0.8);
+    outline: 0;
+    outline: thin dotted \9;
+    /* IE6-9 */
+
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+       -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+
+}
+
+.chzn-container-multi .chzn-choices .search-field input {
+  width: 100%;
+  color: #666;
+  background: transparent !important;
+  border: 0 !important;
+  font-family: sans-serif;
+  font-size: 100%;
+  height: 15px;
+  padding: 5px;
+  margin: 1px 0;
+  outline: 0;
+  -webkit-box-shadow: none;
+  -moz-box-shadow   : none;
+  -o-box-shadow     : none;
+  box-shadow        : none;
+}
+
+.chzn-container-multi .chzn-choices .search-field .default input {
+  width: 100%;
+}

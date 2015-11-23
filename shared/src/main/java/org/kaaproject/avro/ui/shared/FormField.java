@@ -18,9 +18,10 @@ package org.kaaproject.avro.ui.shared;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public abstract class FormField implements Serializable, Cloneable {
+public abstract class FormField implements Serializable, Cloneable, Iterable<FormField> {
 
     private static final long serialVersionUID = 6978997793895098628L;
     
@@ -30,6 +31,7 @@ public abstract class FormField implements Serializable, Cloneable {
         HIDDEN
     }
     
+    protected int id;
     private String fieldName;
     private String displayName;
     private String displayPrompt;
@@ -45,19 +47,46 @@ public abstract class FormField implements Serializable, Cloneable {
     
     private boolean changed = false;
     
+    protected FormContext context;
+    
     private transient List<ChangeListener> changeListeners = new ArrayList<>();
+    
+    private transient List<ValueChangeListener> transientValueChangeListeners = new ArrayList<>();
+    
+    private List<ValueChangeListener> valueChangeListeners = new ArrayList<>();
+    
+    private FormField parentField;
     
     public FormField() {
     }
     
-    public FormField(String fieldName, 
+    public FormField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
+        this.id = context.nextFieldId();
+        this.context = context;
         this.fieldName = fieldName;
         this.displayName = displayName;
         this.schema = schema;
         this.optional = optional;
+    }
+    
+    public FormContext getContext() {
+        return context;
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public FormField getParentField() {
+        return parentField;
+    }
+    
+    public void setParentField(FormField parentField) {
+        this.parentField = parentField;
     }
     
     public String getFieldName() {
@@ -152,6 +181,15 @@ public abstract class FormField implements Serializable, Cloneable {
         return changed;
     }
     
+    public boolean isRootChild() {
+        if (parentField != null && context != null 
+                && context.getRootRecord() != null) {
+            return context.getRootRecord().getId() == parentField.getId();
+        } else {
+            return false;
+        }
+    }
+    
     protected void fireChanged() {
         setChanged(true, true);
     }
@@ -171,10 +209,35 @@ public abstract class FormField implements Serializable, Cloneable {
         }
     }
     
+    protected void fireValueChanged(Object value) {
+        for (ValueChangeListener listener : transientValueChangeListeners) {
+            listener.onValueChanged(value);
+        }
+        for (ValueChangeListener listener : valueChangeListeners) {
+            listener.onValueChanged(value);
+        }
+    }
+    
     public void addChangeListener(ChangeListener listener) {
         changeListeners.add(listener);
     }
-    
+
+    public void addTransientValueChangeListener(ValueChangeListener listener) {
+        transientValueChangeListeners.add(listener);
+    }
+
+    public void removeTransientValueChangeListener(ValueChangeListener listener) {
+        transientValueChangeListeners.remove(listener);
+    }
+
+    public void addValueChangeListener(ValueChangeListener listener) {
+        valueChangeListeners.add(listener);
+    }
+
+    public void removeValueChangeListener(ValueChangeListener listener) {
+        valueChangeListeners.remove(listener);
+    }
+
     public String getTypeFullname() {
     	return getFieldType().getName();
     }
@@ -214,14 +277,20 @@ public abstract class FormField implements Serializable, Cloneable {
     }
 
     public FormField clone() {
+        return clone(false);
+    }
+    
+    public FormField clone(boolean deepCopy) {
         FormField cloned = createInstance();
-        copyFields(cloned);
+        cloned.id = context.nextFieldId();
+        copyFields(cloned, deepCopy);
         return cloned;
     }
-
+    
     protected abstract FormField createInstance();
 
-    protected void copyFields (FormField cloned) {
+    protected void copyFields (FormField cloned, boolean deepCopy) {
+        cloned.context = context;
         cloned.fieldName = fieldName;
         cloned.displayName = displayName;
         cloned.displayPrompt = displayPrompt;
@@ -230,9 +299,23 @@ public abstract class FormField implements Serializable, Cloneable {
         cloned.fieldAccess = fieldAccess;
         cloned.weight = weight;
         cloned.keyIndex = keyIndex;
+        cloned.rowIndex = rowIndex;
         cloned.isOverride = isOverride;
         cloned.isOverrideDisabled = isOverrideDisabled;
         cloned.changed = changed;
+    }
+    
+    protected void dispose() {
+        context = null;
+        parentField = null;
+        changeListeners.clear();
+        transientValueChangeListeners.clear();
+        valueChangeListeners.clear();
+    }
+    
+    @Override
+    public Iterator<FormField> iterator() {
+        return FormFieldIterator.singletonIterator(this);
     }
 
     @Override
@@ -317,7 +400,17 @@ public abstract class FormField implements Serializable, Cloneable {
 
     public static interface ChangeListener {
         
-        void onChanged (boolean changed); 
+        public void onChanged (boolean changed); 
+        
+    }
+    
+    public static abstract class ValueChangeListener implements Serializable {
+
+        private static final long serialVersionUID = -3772014837874641680L;
+        
+        public ValueChangeListener() {}
+        
+        public abstract void onValueChanged (Object value); 
         
     }
 

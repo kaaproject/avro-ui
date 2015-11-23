@@ -29,11 +29,12 @@ public class BooleanField extends FormField {
         super();
     }
 
-    public BooleanField(String fieldName, 
+    public BooleanField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public Boolean getDefaultValue() {
@@ -74,8 +75,8 @@ public class BooleanField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         BooleanField clonedBoolenField = (BooleanField)cloned;
         clonedBoolenField.defaultValue = defaultValue;
         clonedBoolenField.value = value;

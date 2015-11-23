@@ -17,6 +17,7 @@
 package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class UnionField extends FormField {
@@ -34,11 +35,12 @@ public class UnionField extends FormField {
         acceptableValues = new ArrayList<>();
     }
     
-    public UnionField(String fieldName, 
+    public UnionField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
         acceptableValues = new ArrayList<>();
     }
     
@@ -57,8 +59,23 @@ public class UnionField extends FormField {
     public void setValue(FormField value) {
     	setValue(value, true);
     }
-
+    
     public void setValue(FormField value, boolean fireChange) {
+        setValue(value, fireChange, true);
+    }
+
+    public void setValue(FormField value, boolean fireChange, boolean disposeOld) {
+        
+        boolean valueChanged = ((this.value == null || value == null) && (this.value != value)) || 
+                               (this.value != null && value != null && 
+                                this.value.getId() != value.getId());
+        
+        if (this.value != null && disposeOld) {
+            this.value.setParentField(null);
+            FormField oldValue = this.value;
+            this.value = null;
+            oldValue.dispose();
+        }
         if (value != null) {
             int index = -1;
             for (int i=0;i<acceptableValues.size();i++) {
@@ -69,19 +86,23 @@ public class UnionField extends FormField {
             }
             if (index > -1) {
                 this.value = value;
-                this.acceptableValues.set(index, value);
+                this.value.setParentField(this);
                 if (fireChange) {
                 	fireChanged();
+                	if (valueChanged) {
+                	    fireValueChanged(this.value);
+                	}
                 }
-            }
-            else {
+            } else {
                 throw new IllegalArgumentException("Value type not in list of union types!");
             }
-        }
-        else {
+        } else {
             this.value = null;
             if (fireChange) {
             	fireChanged();
+                if (valueChanged) {
+                    fireValueChanged(this.value);
+                }
             }
         }
     }
@@ -108,12 +129,23 @@ public class UnionField extends FormField {
     public boolean isNull() {
         return value == null;
     }
+    
+    @Override
+    public void dispose() {
+        if (value != null) {
+            value.dispose();
+        }
+        for (FormField acceptableValue : acceptableValues) {
+            acceptableValue.dispose();
+        }
+        super.dispose();
+    }
 
     @Override
     protected boolean valid() {
         return value != null && value.isValid();
     }
-
+    
     @Override
     public void finalizeMetadata() {
     	for (FormField acceptableValue : acceptableValues) {
@@ -135,14 +167,19 @@ public class UnionField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         UnionField clonedUnionField = (UnionField)cloned;
         for (FormField acceptableValue : acceptableValues) {
             clonedUnionField.acceptableValues.add(acceptableValue.clone());
         }
         clonedUnionField.defaultValue = defaultValue;
         clonedUnionField.setValue(value != null ? value.clone() : null, false);
+    }
+    
+    @Override
+    public Iterator<FormField> iterator() {
+        return FormFieldIterator.concatItemWithIterable(this, value).iterator();
     }
 
     @Override
