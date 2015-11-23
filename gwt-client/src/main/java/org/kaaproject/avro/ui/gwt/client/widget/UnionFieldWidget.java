@@ -23,6 +23,7 @@ import java.util.List;
 import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
 import org.kaaproject.avro.ui.shared.FormField;
+import org.kaaproject.avro.ui.shared.FormField.ValueChangeListener;
 import org.kaaproject.avro.ui.shared.UnionField;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -53,12 +54,12 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
         
         fieldWidgetPanel = new FieldWidgetPanel(style, value, readOnly, value.getValue() != null);
         if (value.isOverride() && !readOnly && !value.isReadOnly()) {
-            fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            registrations.add(fieldWidgetPanel.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
                 @Override
                 public void onValueChange(ValueChangeEvent<Boolean> event) {
                     fireChanged();
                 }
-            });
+            }));
         }
         
         recordTable = new FlexTable();
@@ -85,6 +86,31 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
         } else {
             formValuesBox.setValue(value.getValue());
         }
+        
+        final ValueChangeListener listener = new ValueChangeListener() {
+            
+            private static final long serialVersionUID = 1L;
+            
+            @Override
+            public void onValueChanged (Object value) {
+                FormField field = null;
+                if (value != null) {
+                    field = (FormField)value;
+                }
+                formValuesBox.setValue(field);
+                updateForm();
+            }; 
+        };
+        
+        value.addTransientValueChangeListener(listener);
+        
+        registrations.add(new HandlerRegistration() {
+            @Override
+            public void removeHandler() {
+                value.removeTransientValueChangeListener(listener);
+            }
+        });
+        
         recordTable.getColumnFormatter().setWidth(0, config.getLabelsColumnWidth());
         recordTable.getColumnFormatter().setWidth(1, config.getFieldsColumnWidth());
         constructFormData(recordTable, value.getValue(), recordTableRegistrations);
@@ -113,22 +139,41 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
     
     @Override
     public void onValueChange(ValueChangeEvent<FormField> event) {
+        
+        FormField formField = event.getValue();
+        if (formField != null) {
+            formField = formField.clone();
+            formField.finalizeMetadata();
+        }
+        value.setValue(formField);
+        
+        updateForm();
+    }
+    
+    private void updateForm() {
+        clearRecordTableRegistrations();
+
+        if (value.getValue() == null) {
+            recordTable.clear();
+        }
+        else {
+            constructFormData(recordTable, value.getValue(), recordTableRegistrations);
+        }
+        fieldWidgetPanel.setValue(true, false, true);
+        fireChanged();
+    }
+
+    @Override
+    protected void onUnload() {
+        clearRecordTableRegistrations();
+        super.onUnload();
+    }
+
+    private void clearRecordTableRegistrations() {
         for (HandlerRegistration registration : recordTableRegistrations) {
             registration.removeHandler();
         }
         recordTableRegistrations.clear();
-        
-        FormField formField = event.getValue();
-        value.setValue(formField);
-        
-        if (formField == null) {
-            recordTable.clear();
-        }
-        else {
-            constructFormData(recordTable, formField, recordTableRegistrations);
-        }
-        fieldWidgetPanel.setValue(true, false, true);
-        fireChanged();
     }
     
     static class FormValuesListBox extends ExtendedValueListBox<FormField> {

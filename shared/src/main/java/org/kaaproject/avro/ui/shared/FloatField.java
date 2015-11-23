@@ -29,11 +29,12 @@ public class FloatField extends FormField {
         super();
     }
 
-    public FloatField(String fieldName, 
+    public FloatField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public Float getDefaultValue() {
@@ -74,8 +75,8 @@ public class FloatField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         FloatField clonedFloatField = (FloatField)cloned;
         clonedFloatField.defaultValue = defaultValue;
         clonedFloatField.value = value;

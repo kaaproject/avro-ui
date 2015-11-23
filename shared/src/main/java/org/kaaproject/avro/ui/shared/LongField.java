@@ -29,11 +29,12 @@ public class LongField extends FormField {
         super();
     }
     
-    public LongField(String fieldName, 
+    public LongField(FormContext context,
+            String fieldName, 
             String displayName,
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public Long getDefaultValue() {
@@ -74,8 +75,8 @@ public class LongField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         LongField clonedLongField = (LongField)cloned;
         clonedLongField.defaultValue = defaultValue;
         clonedLongField.value = value;

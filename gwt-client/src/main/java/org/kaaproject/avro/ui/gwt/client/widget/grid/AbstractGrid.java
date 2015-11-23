@@ -459,6 +459,10 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     }
 
     public int getPageSize() {
-        return pageSize;
+        return table.getPageSize();
+    }
+    
+    public void setPageSize(int pageSize) {
+        table.setPageSize(pageSize);
     }
 }

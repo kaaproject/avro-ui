@@ -16,54 +16,66 @@
 
 package org.kaaproject.avro.ui.shared;
 
+import java.util.List;
 
-public abstract class SizedField extends FormField {
+public class DependenciesField extends FormField {
 
-    private static final long serialVersionUID = 6539576598668221454L;
-    
-    public static final int DEFAULT_MAX_LENGTH = -1;
-    
-    private Integer maxLength;
-    
-    public SizedField() {
+    private static final long serialVersionUID = 863727275754175198L;
+
+    public DependenciesField() {
         super();
     }
-    
-    public SizedField(FormContext context,
+
+    public DependenciesField(FormContext context,
             String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
         super(context, fieldName, displayName, schema, optional);
     }
-    
-    public int getMaxLength() {
-        if (maxLength != null) {
-            return maxLength.intValue();
-        }
-        else {
-            return DEFAULT_MAX_LENGTH;
+
+    public List<FqnVersion> getValue() {
+        if (isRootChild()) {
+            return context.getCtlDependenciesList();
+        } else {
+            return null;
         }
     }
     
-    public void setMaxLength(int maxLength) {
-        this.maxLength = Integer.valueOf(maxLength);
+    public void setValue(List<FqnVersion> fqnVersions) {
+        if (isRootChild()) {
+            context.setCtlDependenciesList(fqnVersions);
+        }
+    }
+    
+    @Override
+    public String getDisplayString() {
+        return super.getDisplayString();
+    }
+
+    @Override
+    public FieldType getFieldType() {
+        return FieldType.DEPENDENCIES;
+    }
+    
+    @Override
+    public boolean isNull() {
+        return getValue() == null;
+    }
+
+    @Override
+    protected FormField createInstance() {
+        return new DependenciesField();
     }
     
     @Override
     protected void copyFields(FormField cloned, boolean deepCopy) {
         super.copyFields(cloned, deepCopy);
-        SizedField clonedSizedField = (SizedField)cloned;
-        clonedSizedField.maxLength = maxLength;
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result
-                + ((maxLength == null) ? 0 : maxLength.hashCode());
-        return result;
+    protected boolean valid() {
+        return getValue() != null;
     }
 
     @Override
@@ -74,15 +86,7 @@ public abstract class SizedField extends FormField {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SizedField other = (SizedField) obj;
-        if (maxLength == null) {
-            if (other.maxLength != null)
-                return false;
-        } else if (!maxLength.equals(other.maxLength))
-            return false;
         return true;
     }
-    
-    
 
 }

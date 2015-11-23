@@ -333,7 +333,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                     registrations.clear();
                 }
                 table.removeRow(tableRow);
-                value.getValue().remove(rowIndex);
+                value.removeRow(rowIndex);
                 fireChanged();
             }
         });
@@ -535,7 +535,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
         }
         
         public void removeRow(int index) {
-            arrayField.getValue().remove(index);
+            arrayField.removeRow(index);
             updateRowCount(arrayField.getValue().size(), true);
             int updateIndex = index;
             updateIndex = Math.min(updateIndex, arrayField.getValue().size()-1);

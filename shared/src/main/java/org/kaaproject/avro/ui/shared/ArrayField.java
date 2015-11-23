@@ -17,6 +17,7 @@
 package org.kaaproject.avro.ui.shared;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ArrayField extends FormField {
@@ -41,11 +42,12 @@ public class ArrayField extends FormField {
         value = new ArrayList<>();
     }
     
-    public ArrayField(String fieldName, 
+    public ArrayField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
         value = new ArrayList<>();
     }
     
@@ -78,6 +80,15 @@ public class ArrayField extends FormField {
     	return row;
     }
     
+    public void removeRow(int index) {
+        if (index > -1 && index < value.size()) {
+            FormField field = value.remove(index);
+            if (field != null) {
+                field.dispose();
+            }
+        }
+    }
+    
     public OverrideStrategy getOverrideStrategy() {
         return overrideStrategy;
     }
@@ -103,6 +114,7 @@ public class ArrayField extends FormField {
     
     public void addArrayData(FormField data) {
         data.setRowIndex(value.size());
+        data.setParentField(this);
         this.value.add(data);
     }
     
@@ -124,13 +136,15 @@ public class ArrayField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         ArrayField clonedArrayField = (ArrayField)cloned;
         clonedArrayField.minRowCount = minRowCount;
         clonedArrayField.elementMetadata = elementMetadata.clone();
         for (FormField field : value) {
-            clonedArrayField.value.add(field.clone());
+            FormField clonedField = field.clone();
+            clonedField.setParentField(clonedArrayField);
+            clonedArrayField.value.add(clonedField);
         }
         clonedArrayField.overrideStrategy = overrideStrategy;
     }
@@ -160,6 +174,22 @@ public class ArrayField extends FormField {
             return valid;
         }
         return false;
+    }
+    
+    @Override
+    public void dispose() {
+        if (elementMetadata != null) {
+            elementMetadata.dispose();
+        }
+        for (FormField field : value) {
+            field.dispose();
+        }
+        super.dispose();
+    }
+    
+    @Override
+    public Iterator<FormField> iterator() {
+        return FormFieldIterator.concatItemWithCollection(this, value).iterator();
     }
 
     @Override

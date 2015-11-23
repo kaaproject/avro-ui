@@ -1,0 +1,20 @@
+{
+  "type" : "record",
+  "name" : "test",
+  "namespace" : "test",
+  "fields" : [ {
+    "name" : "f1",
+    "type" : [ "org.kaaproject.ctl.TypeA", "null" ]
+  }, {
+    "name" : "f2",
+    "type" : [ "org.kaaproject.ctl.TypeB", "null" ]
+  } ],
+  "version" : 1,
+  "dependencies" : [ {
+    "fqn" : "org.kaaproject.ctl.TypeA",
+    "version" : 5
+  }, {
+    "fqn" : "org.kaaproject.ctl.TypeB",
+    "version" : 5
+  } ]
+}

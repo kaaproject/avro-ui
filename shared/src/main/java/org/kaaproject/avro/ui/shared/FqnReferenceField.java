@@ -16,105 +16,93 @@
 
 package org.kaaproject.avro.ui.shared;
 
+public class FqnReferenceField extends FormField {
 
-public class StringField extends SizedField {
-
-    private static final long serialVersionUID = -5046250549233854347L;
+    private static final long serialVersionUID = 5129865434220898861L;
     
-    public static enum InputType {
-        PLAIN,
-        PASSWORD
-    }
-
-    private String defaultValue;
-
-    private String value;
+    private FqnKey value;
     
-    private InputType inputType = InputType.PLAIN;
-    
-    public StringField() {
+    public FqnReferenceField() {
         super();
     }
     
-    public StringField(FormContext context,
+    public FqnReferenceField(FormContext context,
             String fieldName, 
-            String displayName, 
+            String displayName,
             String schema,
             boolean optional) {
         super(context, fieldName, displayName, schema, optional);
     }
 
-    public String getDefaultValue() {
-        return defaultValue;
-    }
-
-    public void setDefaultValue(String defaultValue) {
-        this.defaultValue = defaultValue;
-    }
-
-    public String getValue() {
+    public FqnKey getValue() {
         return value;
     }
 
-    public void setValue(String value) {
-        if ((this.value == null && value != null) || 
-            (this.value != null && !this.value.equals(value))) {
-                this.value = value;
-                fireValueChanged(this.value);
+    public void setValue(FqnKey value) {
+        boolean valueChanged = (this.value == null && value != null) || 
+                (this.value != null && value != null && this.value.getId() != value.getId());
+        this.value = value;
+        if (valueChanged) {
+            fireValueChanged(this.value);
+            context.orderSchemaTypes();
         }
         fireChanged();
     }
     
-    public void setInputType(InputType inputType) {
-        this.inputType = inputType;
+    public Fqn getFqnValue() {
+        if (value != null) {
+            return context.getDeclaredTypes().get(value);
+        }
+        return null;
     }
     
-    public InputType getInputType() {
-        return inputType;
+    public void setFqnValue(Fqn fqnValue) {
+        FqnKey fqnKey = null;
+        if (fqnValue != null) {
+            fqnKey = context.fqnToFqnKey(fqnValue);
+        }
+        setValue(fqnKey);
     }
-
+    
     @Override
     public String getDisplayString() {
-        return super.getDisplayString() + ": \"" + valueToDisplayString(value) + "\"";
+        return super.getDisplayString() + ": " + valueToDisplayString(value);
     }
 
     @Override
     public FieldType getFieldType() {
-        return FieldType.STRING;
+        return FieldType.TYPE_REFERENCE;
     }
-    
+
     @Override
     public boolean isNull() {
         return value == null;
     }
-    
+
     @Override
     protected FormField createInstance() {
-        return new StringField();
+        return new FqnReferenceField();
     }
     
     @Override
     protected void copyFields(FormField cloned, boolean deepCopy) {
         super.copyFields(cloned, deepCopy);
-        StringField clonedStringField = (StringField)cloned;
-        clonedStringField.defaultValue = defaultValue;
-        clonedStringField.value = value;
-        clonedStringField.inputType = inputType;
+        FqnReferenceField clonedLongField = (FqnReferenceField)cloned;
+        clonedLongField.value = value;
     }
 
     @Override
     protected boolean valid() {
-        return !strIsEmpty(value);
+        if (value != null && !context.containsDeclaredType(value)) {
+            setValue(null);
+        }
+        return value != null;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result
-                + ((defaultValue == null) ? 0 : defaultValue.hashCode());
-        result = prime * result
-                + ((inputType == null) ? 0 : inputType.hashCode());
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
@@ -127,14 +115,7 @@ public class StringField extends SizedField {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        StringField other = (StringField) obj;
-        if (defaultValue == null) {
-            if (other.defaultValue != null)
-                return false;
-        } else if (!defaultValue.equals(other.defaultValue))
-            return false;
-        if (inputType != other.inputType)
-            return false;
+        FqnReferenceField other = (FqnReferenceField) obj;
         if (value == null) {
             if (other.value != null)
                 return false;
@@ -142,7 +123,5 @@ public class StringField extends SizedField {
             return false;
         return true;
     }
-
-
 
 }

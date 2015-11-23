@@ -1,0 +1,23 @@
+{
+  "type" : "record",
+  "name" : "TypeA",
+  "namespace" : "org.kaaproject.avro.ui.test",
+  "fields" : [ {
+    "name" : "testReference3",
+    "type" : [ {
+      "type" : "record",
+      "name" : "TypeC",
+      "fields" : [ {
+        "name" : "testReference2",
+        "type" : [ {
+          "type" : "record",
+          "name" : "TypeB",
+          "fields" : [ {
+            "name" : "testRecord2",
+            "type" : [ "TypeC", "null" ]
+          } ]
+        }, "null" ]
+      } ]
+    }, "null" ]
+  } ]
+}

@@ -34,11 +34,12 @@ public class EnumField extends FqnField {
         enumValues = new ArrayList<>();
     }
     
-    public EnumField(String fieldName, 
+    public EnumField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public FormEnum getDefaultValue() {
@@ -109,8 +110,8 @@ public class EnumField extends FqnField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         EnumField clonedEnumField = (EnumField)cloned;
         clonedEnumField.enumValues.addAll(enumValues);
         clonedEnumField.defaultValue = defaultValue;

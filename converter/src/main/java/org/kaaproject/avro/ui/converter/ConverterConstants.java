@@ -31,6 +31,24 @@ public interface ConverterConstants {
     /** The Constant DISPLAY_PROMPT. */
     public static final String DISPLAY_PROMPT = "displayPrompt";
     
+    /** The Constant IS_FQN_HOLDER. */
+    public static final String IS_TYPE_HOLDER = "isTypeHolder";
+    
+    /** The Constant IS_FQN_CONSUMER. */
+    public static final String IS_TYPE_CONSUMER = "isTypeConsumer";
+    
+    /** The Constant FQN_REFERENCE. */
+    public static final String TYPE_REFERENCE = "typeReference";
+    
+    /** The Constant ALERT. */
+    public static final String ALERT = "alert";
+    
+    /** The Constant TYPE_VERSION. */
+    public static final String TYPE_VERSION = "typeVersion";
+    
+    /** The Constant TYPE_DEPENDENCIES. */
+    public static final String TYPE_DEPENDENCIES = "typeDependencies";
+    
     /** The Constant BY_DEFAULT. */
     public static final String BY_DEFAULT = "by_default";
     

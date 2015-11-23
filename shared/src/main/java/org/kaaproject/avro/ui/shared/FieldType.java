@@ -29,7 +29,11 @@ public enum FieldType {
     ENUM("Enumeration"),
     ARRAY("Array", true),
     UNION("Union", true),
-    FIXED("Fixed");
+    FIXED("Fixed"),
+    TYPE_REFERENCE("FqnReference"),
+    ALERT("Alert"),
+    VERSION("Version"),
+    DEPENDENCIES("Dependencies", true);
     
     private boolean isComplex;    
     private String name;
