@@ -375,7 +375,7 @@ public class FormContext implements Serializable {
         if (versions != null) {
             return Collections.max(versions);
         }
-        return Integer.valueOf(1);
+        return null;
     }
     
     public List<Integer> getAvailableVersions(Fqn fqn) {
