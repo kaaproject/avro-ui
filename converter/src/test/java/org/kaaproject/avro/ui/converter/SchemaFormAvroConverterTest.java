@@ -87,7 +87,8 @@ public class SchemaFormAvroConverterTest {
         RecordField schemaForm = converter.createSchemaFormFromSchema(typeCtlReferencesSchema);
         Assert.assertNotNull(schemaForm);
         Schema convertedSchema = converter.createSchemaFromSchemaForm(schemaForm);
-        Assert.assertEquals(typeCtlReferencesSchema, SchemaFormAvroConverter.createSchemaString(convertedSchema, true));
+        String convertedSchemaString = SchemaFormAvroConverter.createSchemaString(convertedSchema, true);
+        Assert.assertEquals(typeCtlReferencesSchema.replaceAll("\r\n", "\n"), convertedSchemaString.replaceAll("\r\n", "\n"));
     }
     
     @Test
