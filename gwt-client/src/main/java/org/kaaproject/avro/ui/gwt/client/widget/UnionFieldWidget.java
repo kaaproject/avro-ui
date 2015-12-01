@@ -165,7 +165,7 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
 
     @Override
     protected void onUnload() {
-        clearRecordTableRegistrations();
+        //clearRecordTableRegistrations();
         super.onUnload();
     }
 

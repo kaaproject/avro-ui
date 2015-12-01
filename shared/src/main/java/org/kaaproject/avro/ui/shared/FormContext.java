@@ -53,6 +53,9 @@ public class FormContext implements Serializable {
     
     public FormContext(Map<Fqn, List<Integer>> ctlTypes) {
         this.ctlTypes.putAll(ctlTypes);
+        for (List<Integer> versions : this.ctlTypes.values()) {
+            Collections.sort(versions);
+        }
         this.isCtlSchema = true;
         for (Fqn fqn : this.ctlTypes.keySet()) {
             FqnKey key = new FqnKey(fqn);
@@ -364,7 +367,13 @@ public class FormContext implements Serializable {
         ctlDependencies.clear();
         ctlDependenciesList.clear();
         for (FqnVersion fqnVersion : fqnVersions) {
-            ctlDependencies.put(fqnVersion.getFqn(), fqnVersion);
+            List<Integer> versions = getAvailableVersions(fqnVersion.getFqn());
+            if (versions != null) {
+                if (!versions.contains(fqnVersion.getVersion())) {
+                    fqnVersion.setVersion(getMaxVersion(fqnVersion.getFqn()));
+                }
+                ctlDependencies.put(fqnVersion.getFqn(), fqnVersion);
+            }
         }
         ctlDependenciesList.addAll(ctlDependencies.values());
         Collections.sort(ctlDependenciesList);
@@ -382,7 +391,7 @@ public class FormContext implements Serializable {
         return ctlTypes.get(fqn);
     }
     
-    protected FqnKey fqnToFqnKey(Fqn fqn) {
+    public FqnKey fqnToFqnKey(Fqn fqn) {
         return fqnToKeyMap.get(fqn);
     }
     
@@ -416,7 +425,7 @@ public class FormContext implements Serializable {
         }
     }
     
-    private void fireCtlDependenciesChanged() {
+    public void fireCtlDependenciesChanged() {
         for (CtlDependenciesListener listener : ctlDependenciesListeners) {
             listener.onCtlDependenciesUpdated(ctlDependenciesList);
         }

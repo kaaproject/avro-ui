@@ -34,6 +34,7 @@ import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -53,6 +54,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.UIObject;
@@ -272,11 +274,13 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                             if (prevHeight != null) {
                                 setHeight(prevHeight);
                             }
+                            traverseShown((HasWidgets)getAnchorWidget());
                         }
                     });
 
                     popup.center();
                     popup.show();
+                    traverseShown((HasWidgets)getAnchorWidget());
                 }
             });
             
@@ -510,7 +514,11 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
             fragmentPanel.setAnimationCallback(new AnimationCallback() {
                 
                 @Override
-                public void onLayout(Layer layer, double progress) {}
+                public void onLayout(Layer layer, double progress) {                    
+                    if (progress == 0 && navElement.getWidget().equals(layer.getUserObject())) {
+                        navElement.onShown();
+                    }
+                }
                 
                 @Override
                 public void onAnimationComplete() {
@@ -519,7 +527,6 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                         fragmentPanel.remove(oldNavElement.getWidget());
                     }
                     navElements = navElements.subList(0, index+1);
-                    navElement.onShown();
                     fragmentPanel.setAnimationCallback(null);
                     if (!readOnly) {
                         fireChanged();
@@ -601,7 +608,11 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
         isAnimating = true;
         fragmentPanel.setAnimationCallback(new AnimationCallback() {
             @Override
-            public void onLayout(Layer layer, double progress) {}
+            public void onLayout(Layer layer, double progress) {
+                if (progress == 0 && navElement.getWidget().equals(layer.getUserObject())) {
+                    navElement.onShown();
+                }
+            }
             
             @Override
             public void onAnimationComplete() {
@@ -613,7 +624,6 @@ public class RecordFieldWidget extends AbstractFieldWidget<RecordField> implemen
                     fragmentPanel.add(navElement.getWidget());
                     fragmentPanel.showWidget(navElement.getIndex());
                 } else {
-                    navElement.onShown();
                     fragmentPanel.setAnimationCallback(null);
                     isAnimating = false;
                 }

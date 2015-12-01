@@ -86,6 +86,12 @@ public class DependenciesField extends FormField {
             return false;
         if (getClass() != obj.getClass())
             return false;
+        DependenciesField other = (DependenciesField) obj;
+        if (getValue() == null) {
+            if (other.getValue() != null)
+                return false;
+        } else if (!getValue().equals(other.getValue()))
+            return false;        
         return true;
     }
 
