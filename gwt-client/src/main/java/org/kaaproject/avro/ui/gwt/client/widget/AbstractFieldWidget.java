@@ -84,7 +84,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class AbstractFieldWidget<T extends FormField> extends SimplePanel implements HasValue<T> {
+public abstract class AbstractFieldWidget<T extends FormField> extends SimplePanel implements HasValue<T>, ShowableWidget {
     
     private static final String DEFAULT_INTEGER_FORMAT = "#";
     private static final String DEFAULT_DECIMAL_FORMAT = "#.#############################";
@@ -166,6 +166,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         this.readOnly = readOnly;
     }
     
+    @Override
     public void onShown() {
         traverseShown(this);
     }
@@ -177,16 +178,16 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         registrations.clear();
     }
     
-    private void traverseShown(HasWidgets hasWidgets) {
+    protected void traverseShown(HasWidgets hasWidgets) {
         for (Widget childWidget : hasWidgets) {
-            if (childWidget instanceof AbstractFieldWidget) {
-                ((AbstractFieldWidget<?>)childWidget).onShown();
+            if (childWidget instanceof ShowableWidget) {
+                ((ShowableWidget)childWidget).onShown();
             } else if (childWidget instanceof HasWidgets) {
                 traverseShown((HasWidgets)childWidget);
             } else if (childWidget instanceof FieldWidgetPanel) {
                 Widget w = ((FieldWidgetPanel)childWidget).getContent();
-                if (w instanceof AbstractFieldWidget) {
-                    ((AbstractFieldWidget<?>)w).onShown();
+                if (w instanceof ShowableWidget) {
+                    ((ShowableWidget)w).onShown();
                 } else if (w instanceof HasWidgets) {
                     traverseShown((HasWidgets)w);
                 }
@@ -643,6 +644,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                 } else {
                     widget.setVisible(false);
                 }
+                fireChanged();
             }
         };
         

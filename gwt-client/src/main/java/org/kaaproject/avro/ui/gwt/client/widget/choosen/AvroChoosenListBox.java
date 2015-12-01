@@ -20,6 +20,7 @@ import static com.google.gwt.query.client.GQuery.$;
 import static com.watopi.chosen.client.Chosen.CHOSEN_DATA_KEY;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.query.client.GQuery;
 import com.watopi.chosen.client.ChosenImpl;
@@ -51,6 +52,36 @@ public class AvroChoosenListBox {
         }
     }
     
+    public static int getChoosenListBoxWidth(ChosenListBox box) {
+        int width = 0;
+        ChosenImpl impl = $(box.getElement()).data(CHOSEN_DATA_KEY,
+                ChosenImpl.class);
+        if (impl != null) {
+            GQuery searchchoice = impl.getContainer().find("li." + avroChoosenResources.css().searchChoice());
+            searchchoice.hide();
+            width = impl.getContainer().width();
+            searchchoice.show();
+        }
+        return width;
+    }
+   
+    public static void updateChoosenListBoxMaxTextWidth(ChosenListBox box, int width, TextWidthFunction function) {
+        ChosenImpl impl = $(box.getElement()).data(CHOSEN_DATA_KEY,
+                ChosenImpl.class);
+        if (impl != null) {
+            GQuery results = impl.getContainer().find("li." + avroChoosenResources.css().activeResult(),
+                    "li." + avroChoosenResources.css().resultSelected());
+            GQuery searchchoiceSpan = impl.getContainer().find("li." + avroChoosenResources.css().searchChoice()).find("span");
+            results = results.add(searchchoiceSpan);
+            results = results.add($(box.getElement()).find("option"));
+            for (int i=0;i<results.size();i++) {
+               Element e = results.get(i);
+               GQuery ge = $(e);
+               ge.text(function.updateTextWidth(ge.text(), width));
+            }
+        }
+    }
+    
     public static void setChoosenSearchFieldVisible(ChosenListBox box, boolean visible) {
         ChosenImpl impl = $(box.getElement()).data(CHOSEN_DATA_KEY,
              ChosenImpl.class);
@@ -75,6 +106,12 @@ public class AvroChoosenListBox {
                 searchFieldInput.width(width);
             }
         }
+    }
+    
+    public static interface TextWidthFunction {
+        
+        String updateTextWidth(String text, int width);
+        
     }
      
 }

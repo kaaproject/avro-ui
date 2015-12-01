@@ -35,7 +35,7 @@ import com.watopi.chosen.client.event.ChosenChangeEvent;
 import com.watopi.chosen.client.event.ChosenChangeEvent.ChosenChangeHandler;
 import com.watopi.chosen.client.gwt.ChosenListBox;
 
-public class FqnReferenceBox extends SimplePanel implements HasValue<FqnKey>, ChosenChangeHandler {
+public class FqnReferenceBox extends SimplePanel implements HasValue<FqnKey>, ChosenChangeHandler, ShowableWidget {
 
     private ChosenListBox fqnListBox;
     
@@ -44,6 +44,8 @@ public class FqnReferenceBox extends SimplePanel implements HasValue<FqnKey>, Ch
     private Map<String, FqnKey> hashToKeyMap = new LinkedHashMap<>();
     
     private TreeMap<FqnKey, Fqn> fqnsMap = new TreeMap<>();
+    
+    private int lastRenderedWidth = 0;
     
     public FqnReferenceBox(String displayPrompt) {
         fqnListBox = AvroChoosenListBox.createChoosenListBox(true);
@@ -142,41 +144,66 @@ public class FqnReferenceBox extends SimplePanel implements HasValue<FqnKey>, Ch
         fqnListBox.update();
     }
     
-    private static final int MAX_FQN_TEXT_ROW_LENGTH = 45;
-    
     private String fqnValueText(Fqn fqn) {
         if (fqn != null) {
-            String stringFqn = fqn.getFqnString();
-            if (stringFqn.length() > MAX_FQN_TEXT_ROW_LENGTH) {
-                String parts[] = stringFqn.split("\\.");
-                stringFqn = "";
-                int rowLength = 0;
-                for (int i=0;i<parts.length;i++) {
-                    if (i>0) {
-                        stringFqn += ".";
-                        rowLength++;
-                    }
-                    if (rowLength + parts[i].length() > MAX_FQN_TEXT_ROW_LENGTH) {
-                        stringFqn += "\n";
-                        rowLength = 0;
-                    }
-                    stringFqn += parts[i];
-                    rowLength += parts[i].length();
-                }
-            }
-            return stringFqn;
+            return updateFqnTextWidth(fqn.getFqnString(), lastRenderedWidth);
         } else {
             return Utils.constants.invalidFqn();
         }
+    }
+    
+    private String updateFqnTextWidth(String stringFqn, int width) {
+        stringFqn = stringFqn.replaceAll("\\s+","");
+        if (width == 0) {
+            return stringFqn;
+        }
+        int maxRowChars = (int) ((float)width / 7.5f);
+        if (stringFqn.length() > maxRowChars) {
+            String parts[] = stringFqn.split("\\.");
+            stringFqn = "";
+            int rowLength = 0;
+            for (int i = 0; i < parts.length; i++) {
+                if (i > 0) {
+                    stringFqn += ".";
+                    rowLength++;
+                }
+                if (rowLength + parts[i].length() > maxRowChars) {
+                    stringFqn += "\n";
+                    rowLength = 0;
+                }
+                stringFqn += parts[i];
+                rowLength += parts[i].length();
+            }
+        }
+        return stringFqn;
     }
 
     @Override
     protected void onAttach() {
         super.onAttach();
-        fqnListBox.update();
         fqnListBox.setWidth("100%");
         AvroChoosenListBox.setChoosenListBoxWidth(fqnListBox, "100%");
         AvroChoosenListBox.setChoosenSearchFieldVisible(fqnListBox, fqnListBox.getValues().length == 0);
+        updateTextWidth();
+        fqnListBox.update();
+    }
+    
+    @Override
+    public void onShown() {
+        updateTextWidth();
+    }
+    
+    private void updateTextWidth() {
+        int width = AvroChoosenListBox.getChoosenListBoxWidth(fqnListBox);
+        if (lastRenderedWidth != width) {
+            AvroChoosenListBox.updateChoosenListBoxMaxTextWidth(fqnListBox, width, new AvroChoosenListBox.TextWidthFunction() {
+                @Override
+                public String updateTextWidth(String text, int width) {
+                    return updateFqnTextWidth(text, width);
+                }
+            });
+            lastRenderedWidth = width;
+        }
     }
     
     class FqnComparator implements Comparator<FqnKey> {
@@ -201,5 +228,6 @@ public class FqnReferenceBox extends SimplePanel implements HasValue<FqnKey>, Ch
             }
         }
     }
+
 
 }

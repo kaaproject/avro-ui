@@ -48,6 +48,7 @@ import org.kaaproject.avro.ui.shared.FormEnum;
 import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
 import org.kaaproject.avro.ui.shared.Fqn;
+import org.kaaproject.avro.ui.shared.FqnKey;
 import org.kaaproject.avro.ui.shared.FqnReferenceField;
 import org.kaaproject.avro.ui.shared.FqnVersion;
 import org.kaaproject.avro.ui.shared.IntegerField;
@@ -897,12 +898,35 @@ public class FormAvroConverter implements ConverterConstants {
     	if (recordField.isNull()) {
     		recordField.finalizeMetadata();
     	}
+
         for (FormField field : recordField.getValue()) {
             Object value = record.get(field.getFieldName());
             setFormFieldValue(context, field, value);
         }
+        
+        if (context.isCtlSchema() && recordField.isRoot()) {
+            Object value = record.get(SchemaFormAvroConverter.DEPENDENCIES);
+            if (value != null) {
+                setDependenciesValue(context, value);
+            }
+        }
     }
     
+    @SuppressWarnings("unchecked")
+    private static void setDependenciesValue(FormContext context, Object value) throws IOException {
+        Iterable<Object> dependenciesData = (Iterable<Object>)value;
+        if (dependenciesData != null) {
+            List<FqnVersion> fqnVersions = new ArrayList<>();
+            for (Object arrayValue : dependenciesData) {
+                GenericRecord record = (GenericRecord)arrayValue;
+                String fqn = record.get(SchemaFormConstants.FQN).toString();
+                Integer version = (Integer)record.get(SchemaFormConstants.VERSION);
+                fqnVersions.add(new FqnVersion(fqn, version));
+            }
+            context.setCtlDependenciesList(fqnVersions);
+            context.updateCtlDependencies();
+        }
+    }
     /**
      * Sets the form field value.
      *
@@ -933,7 +957,12 @@ public class FormAvroConverter implements ConverterConstants {
                 FqnReferenceField fqnReferenceField = (FqnReferenceField)field;
                 if (value != null) {
                     String fqnString = value.toString();
-                    fqnReferenceField.setFqnValue(new Fqn(fqnString));
+                    Fqn fqn = new Fqn(fqnString);
+                    FqnKey fqnKey = context.fqnToFqnKey(fqn);
+                    if (fqnKey == null) {
+                        throw new IllegalArgumentException("Type with FQN '" + fqnString + "' is not defined.");
+                    }                    
+                    fqnReferenceField.setValue(fqnKey);
                 } else {
                     fqnReferenceField.setValue(null);
                 }
@@ -954,20 +983,6 @@ public class FormAvroConverter implements ConverterConstants {
                     versionField.setValue(null);
                 }
                 break;        
-            case DEPENDENCIES:
-                Iterable<Object> dependenciesData = (Iterable<Object>)value;
-                if (dependenciesData != null) {
-                    List<FqnVersion> fqnVersions = new ArrayList<>();
-                    for (Object arrayValue : dependenciesData) {
-                        GenericRecord record = (GenericRecord)arrayValue;
-                        String fqn = record.get(SchemaFormConstants.FQN).toString();
-                        Integer version = (Integer)record.get(SchemaFormConstants.VERSION);
-                        fqnVersions.add(new FqnVersion(fqn, version));
-                    }
-                    DependenciesField dependenciesField = (DependenciesField)field;
-                    dependenciesField.setValue(fqnVersions);
-                }
-                break;
             case UNION:
                 UnionField unionField = (UnionField)field;
                 if (value != null) {

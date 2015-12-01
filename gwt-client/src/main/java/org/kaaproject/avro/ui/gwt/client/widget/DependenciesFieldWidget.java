@@ -161,7 +161,7 @@ public class DependenciesFieldWidget extends AbstractFieldWidget<DependenciesFie
                     @Override
                     public void update(int index, FqnVersion object, Integer value) {
                         object.setVersion(value);
-                        dataProvider.refresh();
+                        dependenciesField.getContext().fireCtlDependenciesChanged();
                     }
                 });
                 table.setColumnWidth(versionColumn, 50, Unit.PX);

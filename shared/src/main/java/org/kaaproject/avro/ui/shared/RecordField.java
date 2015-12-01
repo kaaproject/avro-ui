@@ -443,7 +443,7 @@ public class RecordField extends FqnField {
                     recordField.updateVersion(version.intValue()+1);
                 }
             }
-        } else if (recordField.context.isFqnAlreadyDeclared(recordField.id, fqn, false)) {
+        } else if (recordField.context.isFqnAlreadyDeclared(recordField.id, fqn, true)) {
             recordField.showAlert("FQN '" + fqn.getFqnString() + "' is already declared!");
             return false;
         }

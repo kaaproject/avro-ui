@@ -33,6 +33,8 @@ import org.kaaproject.avro.ui.shared.BooleanField;
 import org.kaaproject.avro.ui.shared.FieldType;
 import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
+import org.kaaproject.avro.ui.shared.Fqn;
+import org.kaaproject.avro.ui.shared.FqnKey;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.kaaproject.avro.ui.shared.UnionField;
 
@@ -347,7 +349,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
     
     private static class ArrayGrid extends AbstractGrid<FormField, Integer> {
         
-        private static final int MAX_CELL_STRING_LENGTH = 100;
+        private static final int MAX_CELL_STRING_LENGTH = 200;
         
         protected static final int DELETE_COLUMN_WIDTH = 70;
 
@@ -474,7 +476,19 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                                 if (unionVal == null) {
                                     value += "null";
                                 } else {
-                                    value += unionVal.getDisplayName();
+                                    if (unionVal.getFieldType() == FieldType.RECORD && ((RecordField)unionVal).isTypeConsumer()) {
+                                        String fqnString = "Ivalid FQN reference";
+                                        FqnKey fqnKey = ((RecordField)unionVal).getConsumedFqnKey();
+                                        if (fqnKey != null) {
+                                            Fqn fqn = unionVal.getContext().getDeclaredTypes().get(fqnKey);
+                                            if (fqn != null) {
+                                                fqnString = fqn.getFqnString();
+                                            }
+                                        } 
+                                        value += fqnString;
+                                    } else {
+                                        value += unionVal.getDisplayName();
+                                    }
                                 }
                             } else {
                                 value += field.getFieldType().getDisplayName();

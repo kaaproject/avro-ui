@@ -22,7 +22,7 @@
                             "displayName": "Field", 
                             "fields": 
                                 [
-                                    {"name": "fieldName", "displayName": "Field name", "type": "string", "keyIndex": 1, "weight": 1.4, "displayPrompt": "Enter field name"},
+                                    {"name": "fieldName", "displayName": "Field name", "type": "string", "keyIndex": 1, "weight": 0.8, "displayPrompt": "Enter field name"},
                                     {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter field label text"},
                                     {"name": "displayPrompt", "displayName": "Display prompt", "type": ["string", "null"], "displayPrompt": "Enter field input prompt"},
                                     {"name": "optional", "displayName": "Is optional", "type": "boolean", "by_default": true, "keyIndex": 3, "weight": 0.5, "displayPrompt": "Select to make field optional"},
@@ -31,7 +31,7 @@
                                     {"name": "fieldType", 
                                      "displayName": "Field type", 
                                      "keyIndex": 2, 
-                                     "weight": 0.6,
+                                     "weight": 1.2,
                                      "displayPrompt": "Select field type", 
                                      "type":
                                         [
