@@ -203,12 +203,12 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
     public Schema createSchemaFromSchemaForm(RecordField field) throws IOException, ParseException {
         field.orderSchemaTypes();
         GenericRecord record = FormAvroConverter.createGenericRecordFromRecordField(field);
-        Map<String, Schema> namedSchemas = null;
+        Map<Fqn, Schema> namedSchemas = null;
         if (hasCtl) {
             namedSchemas = new HashMap<>();
             List<FqnVersion> dependencies = field.getContext().getCtlDependenciesList();
             for (FqnVersion fqnVersion : dependencies) {
-                String fqn = fqnVersion.getFqnString();
+                Fqn fqn = fqnVersion.getFqn();
                 Schema emptyRecordSchema = Schema.createRecord(fqnVersion.getName(), null, fqnVersion.getNamespace(), false);
                 emptyRecordSchema.setFields(Collections.<Field>emptyList());
                 namedSchemas.put(fqn, emptyRecordSchema);
@@ -647,8 +647,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                     record = new Record(namedReferenceTypeSchema);
                     record.put(FQN, fqn.getFqnString());           
                 } else {
-                    NamesValidator.validateNamespaceOrThrowException(fieldTypeSchema.getNamespace());
-                    NamesValidator.validateClassNameOrThrowException(fieldTypeSchema.getName());
+                    NamesValidator.validateFqnOrThrowException(fqn);
                     namedFqns.add(fqn);
                     if (type == Type.FIXED) {
                         Schema fixedTypeSchema = findTypeSchema(schemaFormSchema, FIXED_FIELD_TYPE);
@@ -1010,7 +1009,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      * @return the schema
      * @throws ParseException the parse exception
      */
-    private Schema createFieldSchema(GenericRecord fieldType, Map<String, Schema> namedSchemas) throws ParseException {
+    private Schema createFieldSchema(GenericRecord fieldType, Map<Fqn, Schema> namedSchemas) throws ParseException {
         if (namedSchemas == null) {
             namedSchemas = new HashMap<>();
         }
@@ -1039,11 +1038,10 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
         } else if (fieldTypeName.equals(FIXED_FIELD_TYPE) ||
                 fieldTypeName.equals(ENUM_FIELD_TYPE) ||
                 fieldTypeName.equals(RECORD_FIELD_TYPE)) {
-            String recordName = (String) fieldType.get(RECORD_NAME);
-            NamesValidator.validateClassNameOrThrowException(recordName);
             String recordNamespace = (String) fieldType.get(RECORD_NAMESPACE);
-            NamesValidator.validateNamespaceOrThrowException(recordNamespace);
-            String fqn = recordNamespace + "." + recordName;
+            String recordName = (String) fieldType.get(RECORD_NAME);
+            Fqn fqn = new Fqn(recordNamespace, recordName);
+            NamesValidator.validateFqnOrThrowException(fqn);
             if (fieldTypeName.equals(FIXED_FIELD_TYPE)) {
                 int fixedSize = (int) fieldType.get(FIXED_SIZE);
                 fieldSchema = Schema.createFixed(recordName, null, 
@@ -1100,7 +1098,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 fieldSchema.setFields(recordFields);
             }
         } else if (fieldTypeName.equals(NAMED_REFERENCE_FIELD_TYPE)) {
-            String fqn = (String) fieldType.get(FQN);
+            Fqn fqn = new Fqn((String) fieldType.get(FQN));
             fieldSchema = namedSchemas.get(fqn);
             if (fieldSchema == null) {
                 throw new IllegalArgumentException("Type with FQN '" + 
@@ -1133,7 +1131,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      * @return the field
      * @throws ParseException the parse exception
      */
-    private Field createSchemaFieldFromForm(Record field, Map<String, Schema> recordSchemas) throws ParseException {
+    private Field createSchemaFieldFromForm(Record field, Map<Fqn, Schema> recordSchemas) throws ParseException {
         Record fieldType = (Record)field.get(FIELD_TYPE);
         Schema fieldSchema = createFieldSchema(fieldType, recordSchemas);
         Boolean optional = (Boolean)field.get(OPTIONAL);

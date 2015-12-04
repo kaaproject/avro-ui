@@ -121,6 +121,14 @@ public class FqnReferenceBox extends SimplePanel implements HasValue<FqnKey>, Ch
         setValue(this.value, true);
     }
     
+    public void reset() {
+        this.value = null;
+        hashToKeyMap.clear();
+        fqnsMap.clear();
+        clearListBox();
+        AvroChoosenListBox.setChoosenSearchFieldVisible(fqnListBox, true);
+    }
+    
     private void updateListBox() {
         if (value != null) {
             fqnListBox.setSelectedValue(value.hashCode() + "");
