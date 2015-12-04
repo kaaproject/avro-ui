@@ -1,7 +1,7 @@
 {
   "type" : "record",
   "name" : "test",
-  "namespace" : "test",
+  "namespace" : "ctl.test",
   "fields" : [ {
     "name" : "f1",
     "type" : [ "org.kaaproject.ctl.TypeA", "null" ]
