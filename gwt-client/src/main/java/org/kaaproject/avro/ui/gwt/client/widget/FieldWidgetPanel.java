@@ -24,6 +24,7 @@ import org.kaaproject.avro.ui.shared.FormField.ChangeListener;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -76,7 +77,7 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
         initWidget(uiBinder.createAndBindUi(this));
         
         contentPanel.getElement().getStyle().setProperty("padding", "0px");
-        contentPanel.getElement().getStyle().setProperty("overflow", "hidden");
+        contentPanel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
 
         legendLabel.setText(field.getDisplayName());
         if (!field.isOptional()) {
@@ -101,6 +102,11 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
         setContentDisplay(false);
     }
     
+    @Override
+    public void onChanged(boolean changed) {
+        setValue(changed, false, true);
+    }
+    
     public void setContent(Widget widget) {
         contentPanel.setWidget(widget);
         setContentDisplay(false);
@@ -118,11 +124,6 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
     public void setLegendNotes(String notes) {
         legendNotesLabel.setVisible(true);
         legendNotesLabel.setText(notes);
-    }
-
-    @Override
-    public void onChanged(boolean changed) {
-        setValue(changed, false, true);
     }
 
     @Override
@@ -194,6 +195,8 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
             fieldSet.addStyleName(avroUiStyle.fieldsetInvisible());
             arrowImage.setResource(avroUiResources.arrowRightImage());
         }
+        
+        
     }
     
     /**
@@ -228,8 +231,14 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
         } else {
           panel.updateStyles();
           panel.contentPanel.setVisible(panel.isOpen);
-          if (panel.isOpen && panel.getContent() != null) {
-              panel.getContent().setVisible(true);
+          panel.contentPanel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
+          if (panel.isOpen) {
+              panel.contentPanel.getElement().getStyle().clearProperty("overflow");
+              if (panel.getContent() != null) {
+                  panel.getContent().setVisible(true);
+              }
+          } else {
+              panel.contentPanel.getElement().getStyle().setProperty("overflow", "hidden");
           }
         }
       }
@@ -239,6 +248,9 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
         if (!opening) {
           curPanel.contentPanel.setVisible(false);
           curPanel.updateStyles();  
+        } else {
+            curPanel.contentPanel.getElement().getStyle().clearProperty("overflow");
+            curPanel.contentPanel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
         }
         curPanel.contentPanel.getElement().getStyle().setProperty("height", "auto");
         curPanel = null;
@@ -250,9 +262,12 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
         if (opening) {
           curPanel.updateStyles();  
           curPanel.contentPanel.setVisible(true);
+          curPanel.contentPanel.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
           if (curPanel.getContent() != null) {
               curPanel.getContent().setVisible(true);
           }
+        } else {
+            curPanel.contentPanel.getElement().getStyle().setProperty("overflow", "hidden");
         }
       }
 
@@ -265,7 +280,6 @@ public class FieldWidgetPanel extends Composite implements HasValue<Boolean>, Cl
         }
         height = Math.max(height, 1);
         curPanel.contentPanel.getElement().getStyle().setProperty("height", height + "px");
-        //curPanel.contentPanel.getElement().getStyle().setProperty("width", "auto");
       }
     }
 

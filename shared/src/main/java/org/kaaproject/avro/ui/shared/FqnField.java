@@ -20,48 +20,38 @@ public abstract class FqnField extends FormField {
 
     private static final long serialVersionUID = 7473310438849667183L;
 
-    private String typeName;
-    
-    private String typeNamespace;
+    protected Fqn fqn;
     
     public FqnField() {
         super();
     }
     
-    public FqnField(String fieldName, 
+    public FqnField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
-    public String getTypeName() {
-        return typeName;
+    public Fqn getFqn() {
+        return fqn;
     }
 
-    public void setTypeName(String typeName) {
-        this.typeName = typeName;
-    }
-
-    public String getTypeNamespace() {
-        return typeNamespace;
-    }
-
-    public void setTypeNamespace(String typeNamespace) {
-        this.typeNamespace = typeNamespace;
+    public void setFqn(Fqn fqn) {
+        this.fqn = fqn;
     }
 
     @Override
     public String getTypeFullname() {
-        return typeNamespace + "." + typeName;
+        return fqn.getFqnString();
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         FqnField clonedFqnField = (FqnField)cloned;
-        clonedFqnField.typeName = typeName;
-        clonedFqnField.typeNamespace = typeNamespace;
+        clonedFqnField.fqn = fqn;
     }
 
     @Override
@@ -69,9 +59,7 @@ public abstract class FqnField extends FormField {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-                + ((typeName == null) ? 0 : typeName.hashCode());
-        result = prime * result
-                + ((typeNamespace == null) ? 0 : typeNamespace.hashCode());
+                + ((fqn == null) ? 0 : fqn.hashCode());
         return result;
     }
 
@@ -84,15 +72,10 @@ public abstract class FqnField extends FormField {
         if (getClass() != obj.getClass())
             return false;
         FqnField other = (FqnField) obj;
-        if (typeName == null) {
-            if (other.typeName != null)
+        if (fqn == null) {
+            if (other.fqn != null)
                 return false;
-        } else if (!typeName.equals(other.typeName))
-            return false;
-        if (typeNamespace == null) {
-            if (other.typeNamespace != null)
-                return false;
-        } else if (!typeNamespace.equals(other.typeNamespace))
+        } else if (!fqn.equals(other.fqn))
             return false;
         return true;
     }

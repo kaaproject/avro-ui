@@ -32,11 +32,12 @@ public class FixedField extends FqnField {
         super();
     }
     
-    public FixedField(String fieldName, 
+    public FixedField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public byte[] getBytes() throws ParseException {
@@ -117,8 +118,8 @@ public class FixedField extends FqnField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         FixedField clonedFixedField = (FixedField)cloned;
         clonedFixedField.defaultValue = defaultValue;
         clonedFixedField.value = value;

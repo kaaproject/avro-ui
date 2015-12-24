@@ -5,7 +5,7 @@
   font-family: Arial;
   border-bottom: 1px solid #DDDDDD;
   font-size: 12px;
-  padding: 3px 15px;
+  padding: 3px 8px;
   text-align: left;
   text-shadow: none;
   color: #666666;
@@ -15,10 +15,11 @@
 }
 
 .dataGridCell {
-  padding: 2px 15px;
+  padding: 2px 8px;
   overflow: hidden;
-  height: 20px;
+  height: 26px;
   font-size: 12px;
   vertical-align: inherit !important;
+  word-break: break-all;
 }
 

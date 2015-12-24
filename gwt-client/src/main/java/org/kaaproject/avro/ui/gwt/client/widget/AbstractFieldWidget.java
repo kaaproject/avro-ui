@@ -20,27 +20,39 @@ import static org.kaaproject.avro.ui.gwt.client.util.Utils.isBlank;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
 import org.kaaproject.avro.ui.gwt.client.input.InputEvent;
 import org.kaaproject.avro.ui.gwt.client.input.InputEventHandler;
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
+import org.kaaproject.avro.ui.gwt.client.widget.AlertPanel.Type;
 import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog;
 import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog.ConfirmListener;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationActionListener;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
+import org.kaaproject.avro.ui.shared.AlertField;
 import org.kaaproject.avro.ui.shared.ArrayField;
 import org.kaaproject.avro.ui.shared.BooleanField;
 import org.kaaproject.avro.ui.shared.BytesField;
+import org.kaaproject.avro.ui.shared.DependenciesField;
 import org.kaaproject.avro.ui.shared.DoubleField;
 import org.kaaproject.avro.ui.shared.EnumField;
 import org.kaaproject.avro.ui.shared.FieldType;
 import org.kaaproject.avro.ui.shared.FixedField;
 import org.kaaproject.avro.ui.shared.FloatField;
+import org.kaaproject.avro.ui.shared.FormContext;
+import org.kaaproject.avro.ui.shared.FormContext.CtlDependenciesListener;
+import org.kaaproject.avro.ui.shared.FormContext.DeclaredTypesListener;
 import org.kaaproject.avro.ui.shared.FormEnum;
 import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.FormField.ChangeListener;
 import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
+import org.kaaproject.avro.ui.shared.FormField.ValueChangeListener;
+import org.kaaproject.avro.ui.shared.Fqn;
+import org.kaaproject.avro.ui.shared.FqnKey;
+import org.kaaproject.avro.ui.shared.FqnReferenceField;
+import org.kaaproject.avro.ui.shared.FqnVersion;
 import org.kaaproject.avro.ui.shared.IntegerField;
 import org.kaaproject.avro.ui.shared.LongField;
 import org.kaaproject.avro.ui.shared.RecordField;
@@ -48,6 +60,7 @@ import org.kaaproject.avro.ui.shared.SizedField;
 import org.kaaproject.avro.ui.shared.StringField;
 import org.kaaproject.avro.ui.shared.StringField.InputType;
 import org.kaaproject.avro.ui.shared.UnionField;
+import org.kaaproject.avro.ui.shared.VersionField;
 
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
@@ -71,7 +84,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class AbstractFieldWidget<T extends FormField> extends SimplePanel implements HasValue<T> {
+public abstract class AbstractFieldWidget<T extends FormField> extends SimplePanel implements HasValue<T>, ShowableWidget {
     
     private static final String DEFAULT_INTEGER_FORMAT = "#";
     private static final String DEFAULT_DECIMAL_FORMAT = "#.#############################";
@@ -138,7 +151,13 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             ValueChangeEvent.fireIfNotEqual(this, before, value);
         }
     }
-    
+
+    @Override
+    protected void onUnload() {
+        //clearRegistrations();
+        super.onUnload();
+    }
+
     public boolean validate() {
         return value != null && value.isValid();
     }
@@ -147,20 +166,28 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         this.readOnly = readOnly;
     }
     
+    @Override
     public void onShown() {
         traverseShown(this);
     }
     
-    private void traverseShown(HasWidgets hasWidgets) {
+    protected void clearRegistrations() {
+        for (HandlerRegistration registration : registrations) {
+            registration.removeHandler();
+        }
+        registrations.clear();
+    }
+    
+    protected void traverseShown(HasWidgets hasWidgets) {
         for (Widget childWidget : hasWidgets) {
-            if (childWidget instanceof AbstractFieldWidget) {
-                ((AbstractFieldWidget<?>)childWidget).onShown();
+            if (childWidget instanceof ShowableWidget) {
+                ((ShowableWidget)childWidget).onShown();
             } else if (childWidget instanceof HasWidgets) {
                 traverseShown((HasWidgets)childWidget);
             } else if (childWidget instanceof FieldWidgetPanel) {
                 Widget w = ((FieldWidgetPanel)childWidget).getContent();
-                if (w instanceof AbstractFieldWidget) {
-                    ((AbstractFieldWidget<?>)w).onShown();
+                if (w instanceof ShowableWidget) {
+                    ((ShowableWidget)w).onShown();
                 } else if (w instanceof HasWidgets) {
                     traverseShown((HasWidgets)w);
                 }
@@ -199,10 +226,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
     }
 
     protected void updateFields() {
-        for (HandlerRegistration registration : registrations) {
-            registration.removeHandler();
-        }
-        registrations.clear();
+        clearRegistrations();
         setWidget(constructForm());
     }
     
@@ -213,7 +237,8 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         if (field != null && field.getFieldAccess() != FieldAccess.HIDDEN) {
             int row = 0;
             if (field.getFieldType()==FieldType.RECORD) {
-                for (FormField formField : ((RecordField)field).getValue()) {
+                RecordField recordField = ((RecordField)field);
+                for (FormField formField : recordField.getValue()) {
                     if (formField.getFieldAccess() != FieldAccess.HIDDEN) {
                         row = constructField(table, row, formField, handlerRegistrations);
                         row++;
@@ -246,10 +271,10 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             if (type == FieldType.UNION) {
                 return value.getFieldType() == FieldType.UNION;
             } else {
-                return type != FieldType.ARRAY;
+                return type != FieldType.ARRAY && type != FieldType.DEPENDENCIES;
             }
         } else {
-            return true;
+            return type != FieldType.ALERT;
         }
     }
     
@@ -258,7 +283,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             if (type == FieldType.UNION) {
                 return value.getFieldType() == FieldType.UNION;
             } else {
-                return type != FieldType.ARRAY;
+                return type != FieldType.ARRAY && type != FieldType.DEPENDENCIES;
             }
         } else {
             return false;
@@ -280,6 +305,9 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             table.getFlexCellFormatter().setColSpan(row, column, 3);
         } else {
             table.setWidget(row, column, widget);
+            if (type == FieldType.ALERT) {
+                table.getFlexCellFormatter().setColSpan(row, column, 2);
+            }
         }
         return row;
     }
@@ -343,6 +371,18 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
                 case UNION:
                     widget = constructUnionWidget((UnionField)field, handlerRegistrations);
                     break;
+                case TYPE_REFERENCE:
+                    widget = constructFqnReferenceWidget((FqnReferenceField)field, handlerRegistrations);
+                    break;    
+                case ALERT:
+                    widget = constructAlertWidget((AlertField)field, handlerRegistrations);
+                    break;
+                case VERSION:
+                    widget = constructVersionWidget((VersionField)field, handlerRegistrations);
+                    break;          
+                case DEPENDENCIES:
+                    widget = constructDependenciesWidget((DependenciesField)field, handlerRegistrations);
+                    break;                            
             }
         }
         widget.setWidth(FULL_WIDTH);
@@ -372,6 +412,12 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         case ENUM:
             FormEnum enumVal = ((EnumField)field).getValue();
             return enumVal != null ? enumVal.getDisplayValue() : null;
+        case TYPE_REFERENCE:
+            Fqn fqnVal = ((FqnReferenceField)field).getFqnValue();
+            return fqnVal != null ? fqnVal.getFqnString() : null;
+        case VERSION:
+            Integer versionVal = ((VersionField)field).getValue();
+            return versionVal != null ? String.valueOf(versionVal) : null;
         default:
             return "";
         }
@@ -477,6 +523,142 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
             }
         }));       
         return doubleBox;
+    }
+    
+    private Widget constructFqnReferenceWidget(final FqnReferenceField field, List<HandlerRegistration> handlerRegistrations) {
+        final FqnReferenceBox fqnBox = new FqnReferenceBox(field.getDisplayPrompt());
+        fqnBox.updateDeclaredFqns(field.getContext().getDeclaredTypes());
+        fqnBox.setValue(field.getValue());
+        final DeclaredTypesListener listener = new DeclaredTypesListener() {
+            @Override
+            public void onDeclaredTypesUpdated(Map<FqnKey, Fqn> declaredFqns) {
+                if (fqnBox.isAttached()) {
+                    fqnBox.updateDeclaredFqns(declaredFqns);
+                }
+            }
+        };
+        field.getContext().addDeclaredTypesListener(listener);
+        final FormContext context = field.getContext();
+        HandlerRegistration handlerRegistration = new HandlerRegistration() {
+            @Override
+            public void removeHandler() {
+                context.removeDeclaredTypesListener(listener);
+            }
+        };
+        handlerRegistrations.add(handlerRegistration);
+        handlerRegistrations.add(fqnBox.addValueChangeHandler(new ValueChangeHandler<FqnKey>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<FqnKey> event) {
+                field.setValue(event.getValue());
+                fireChanged();
+            }
+        }));       
+        return fqnBox;
+    }
+    
+    private Widget constructAlertWidget(final AlertField field, List<HandlerRegistration> handlerRegistrations) {
+        final AlertPanel alertPanel = new AlertPanel(Type.ERROR);
+        alertPanel.getElement().getStyle().setMargin(5, Unit.PX);
+        if (field.getValue() != null) {
+            alertPanel.setMessage(field.getValue());
+            alertPanel.setVisible(true);
+        } else {
+            alertPanel.setMessage("");
+            alertPanel.setVisible(false);
+        }
+        final ValueChangeListener listener = new ValueChangeListener() {
+            
+            private static final long serialVersionUID = -4935107365199693997L;
+
+            @Override
+            public void onValueChanged(Object value) {
+                if (value != null) {
+                    alertPanel.setMessage(value.toString());
+                    alertPanel.setVisible(true);
+                } else {
+                    alertPanel.setMessage("");
+                    alertPanel.setVisible(false);
+                }
+            }
+        };
+        field.addTransientValueChangeListener(listener);
+        HandlerRegistration handlerRegistration = new HandlerRegistration() {
+            @Override
+            public void removeHandler() {
+                field.removeTransientValueChangeListener(listener);
+            }
+        };
+        handlerRegistrations.add(handlerRegistration);
+        return alertPanel;
+    }
+    
+    private Widget constructVersionWidget(final VersionField field, List<HandlerRegistration> handlerRegistrations) {
+        final IntegerBox integerBox = new IntegerBox(style, field.getDisplayPrompt(), DEFAULT_INTEGER_FORMAT);
+        integerBox.setValue(field.getValue());
+        handlerRegistrations.add(integerBox.addKeyUpHandler(new KeyUpHandler() {
+            @Override
+            public void onKeyUp(KeyUpEvent event) {
+                field.setValue(integerBox.getValue());
+                fireChanged();                
+            }
+        }));       
+        
+        final ValueChangeListener listener = new ValueChangeListener() {
+            
+            private static final long serialVersionUID = -6240272895089248662L;
+
+            @Override
+            public void onValueChanged(Object value) {
+                integerBox.setValue(field.getValue());
+            }
+        };
+        field.addTransientValueChangeListener(listener);
+        HandlerRegistration handlerRegistration = new HandlerRegistration() {
+            @Override
+            public void removeHandler() {
+                field.removeTransientValueChangeListener(listener);
+            }
+        };
+        handlerRegistrations.add(handlerRegistration);
+        
+        return integerBox;
+    }
+    
+    private Widget constructDependenciesWidget(final DependenciesField field, List<HandlerRegistration> handlerRegistrations) {
+        final DependenciesFieldWidget widget = new DependenciesFieldWidget(config, style, navigationContainer, readOnly);
+        widget.setValue(field);
+        
+        if (field.getValue() != null && !field.getValue().isEmpty()) {
+            widget.setVisible(true);
+        } else {
+            widget.setVisible(false);
+        }
+        
+        final CtlDependenciesListener listener = new CtlDependenciesListener() {
+            @Override
+            public void onCtlDependenciesUpdated(
+                    List<FqnVersion> ctlDependenciesList) {
+                if (ctlDependenciesList != null && !ctlDependenciesList.isEmpty()) {
+                    widget.setVisible(true);
+                    widget.reload();
+                } else {
+                    widget.setVisible(false);
+                }
+                fireChanged();
+            }
+        };
+        
+        field.getContext().addCtlDependenciesListener(listener);
+        
+        HandlerRegistration handlerRegistration = new HandlerRegistration() {
+            @Override
+            public void removeHandler() {
+                field.getContext().removeCtlDependenciesListener(listener);
+            }
+        };
+        handlerRegistrations.add(handlerRegistration);
+        
+        return widget;
     }
     
     private Widget constructEnumWidget(final EnumField field, List<HandlerRegistration> handlerRegistrations) {
@@ -620,7 +802,7 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         return nestedWidget;
     }
     
-    private class FieldWidgetLabel extends FlowPanel implements ChangeListener {
+    private class FieldWidgetLabel extends FlowPanel implements ChangeListener  {
         
         private CheckBox overrideBox;
         

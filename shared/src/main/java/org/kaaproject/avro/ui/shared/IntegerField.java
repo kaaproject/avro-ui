@@ -16,7 +16,6 @@
 
 package org.kaaproject.avro.ui.shared;
 
-
 public class IntegerField extends FormField {
 
     private static final long serialVersionUID = -5046250549233854347L;
@@ -29,11 +28,12 @@ public class IntegerField extends FormField {
         super();
     }
 
-    public IntegerField(String fieldName, 
+    public IntegerField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public Integer getDefaultValue() {
@@ -74,8 +74,8 @@ public class IntegerField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         IntegerField clonedIntegerField = (IntegerField)cloned;
         clonedIntegerField.defaultValue = defaultValue;
         clonedIntegerField.value = value;
@@ -117,6 +117,5 @@ public class IntegerField extends FormField {
             return false;
         return true;
     }
-
 
 }

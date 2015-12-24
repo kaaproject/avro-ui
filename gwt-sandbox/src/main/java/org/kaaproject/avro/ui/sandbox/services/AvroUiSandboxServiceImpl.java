@@ -117,8 +117,7 @@ public class AvroUiSandboxServiceImpl implements AvroUiSandboxService, Initializ
     public RecordField generateSchemaFormFromSchema(String avroSchema)
             throws AvroUiSandboxServiceException {
         try {
-            Schema schema = new Schema.Parser().parse(avroSchema);
-            RecordField generatedForm = schemaFormConverter.createSchemaFormFromSchema(schema);
+            RecordField generatedForm = schemaFormConverter.createSchemaFormFromSchema(avroSchema);
             return generatedForm;
         } catch (Exception e) {
             throw Utils.handleException(e);

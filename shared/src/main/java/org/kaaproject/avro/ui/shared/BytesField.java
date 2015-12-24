@@ -30,11 +30,12 @@ public class BytesField extends FormField {
         super();
     }
     
-    public BytesField(String fieldName, 
+    public BytesField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public byte[] getBytes() throws ParseException {
@@ -93,8 +94,8 @@ public class BytesField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         BytesField clonedBytesField = (BytesField)cloned;
         clonedBytesField.defaultValue = defaultValue;
         clonedBytesField.value = value;

@@ -39,9 +39,11 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionChangeEvent;
+
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
 import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog;
 import org.kaaproject.avro.ui.gwt.client.widget.dialog.ConfirmDialog.ConfirmListener;
+import org.kaaproject.avro.ui.gwt.client.widget.grid.ColumnFilterEvent.HasColumnFilterEventHandlers;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell.ActionListener;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.cell.ActionButtonCell.ActionValidator;
@@ -52,13 +54,14 @@ import org.kaaproject.avro.ui.gwt.client.widget.grid.event.HasRowActionEventHand
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasRowActionEventHandlers<K> {
+public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasRowActionEventHandlers<K>, HasColumnFilterEventHandlers {
     
     public static final int DEFAULT_GRID_MARGIN = 10;
     
@@ -84,6 +87,8 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     protected Column<T,T> deleteColumn;
     
     private final Map<Column<?, ?>, Comparator<T>> comparators = new HashMap<Column<?, ?>, Comparator<T>>();
+    
+    private final List<FiltrableStringColumn<T>> filtrableColumns = new ArrayList<>();
     
     public AbstractGrid(Style.Unit unit) {
         this(unit, true);
@@ -162,6 +167,10 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
 
         prefferredWidth = initColumns(table);
         table.setMinimumTableWidth(prefferredWidth, Unit.PX);
+        
+        if (!filtrableColumns.isEmpty()) {
+            table.setHeaderBuilder(new StringFilterHeaderBuilder<T>(this));
+        }
 
         SimplePager pager = getPager();
         pager.setDisplay(table);
@@ -223,6 +232,22 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
         }
     }
     
+    public List<T> filter(List<T> data) {
+        List<T> filteredData = data;
+        for (FiltrableStringColumn<T> filtrableStringColumn : filtrableColumns) {
+            if (!filtrableStringColumn.isFilterEmpty()) {
+                List<T> newFilteredData = new ArrayList<>();
+                for (T object : filteredData) {
+                    if (filtrableStringColumn.matched(object)) {
+                        newFilteredData.add(object);
+                    }
+                }
+                filteredData = newFilteredData;
+            }
+        }
+        return filteredData;
+    }
+    
     protected void onRowClicked(K id) {
         RowActionEvent<K> rowClickEvent = new RowActionEvent<>(id, RowActionEvent.CLICK);
         fireEvent(rowClickEvent);
@@ -237,6 +262,11 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     public HandlerRegistration addRowActionHandler(RowActionEventHandler<K> handler) {
         return this.addHandler(handler, RowActionEvent.getType());
     }
+    
+    @Override
+    public HandlerRegistration addColumnFilterEventHandler(ColumnFilterEvent.Handler handler) {
+        return this.addHandler(handler, ColumnFilterEvent.getType());
+    }
 
     private float initColumns (DataGrid<T> table) {
         float prefWidth = 0f;
@@ -249,18 +279,36 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
             final StringValueProvider<T> valueProvider, float prefWidth) {
         return constructStringColumn(table, title, valueProvider, null, null, prefWidth);
     }
-
+    
     protected float constructStringColumn(DataGrid<T> table, String title,
             final StringValueProvider<T> valueProvider, 
             Comparator<T> comparator, Boolean isSortAscending, float prefWidth) {
+        return constructStringColumn(table, title, valueProvider, comparator, isSortAscending, false, prefWidth);
+    }
+
+    protected float constructStringColumn(DataGrid<T> table, String title,
+            final StringValueProvider<T> valueProvider, 
+            Comparator<T> comparator, Boolean isSortAscending, boolean filtrable, float prefWidth) {
         Header<SafeHtml> header = new SafeHtmlHeader(
                 SafeHtmlUtils.fromSafeConstant(title));
-        Column<T, String> column = new Column<T, String>(new LinkCell()) {
-            @Override
-            public String getValue(T item) {
-                return valueProvider.getValue(item);
-            }
-        };
+        Column<T, String> column = null;
+        if (filtrable) {
+            FiltrableStringColumn<T> filtrableColumn = new FiltrableStringColumn<T>(new LinkCell()) {
+                @Override
+                public String getValue(T item) {
+                    return valueProvider.getValue(item);
+                }
+            };
+            filtrableColumns.add(filtrableColumn);
+            column = filtrableColumn;
+        } else {
+            column = new Column<T, String>(new LinkCell()) {
+                @Override
+                public String getValue(T item) {
+                    return valueProvider.getValue(item);
+                }
+            };
+        }
         column.setFieldUpdater(new FieldUpdater<T,String>() {
             @Override
             public void update(int index, T object, String value) {
@@ -459,6 +507,11 @@ public abstract class AbstractGrid<T, K> extends DockLayoutPanel implements HasR
     }
 
     public int getPageSize() {
-        return pageSize;
+        return table.getPageSize();
     }
+    
+    public void setPageSize(int pageSize) {
+        table.setPageSize(pageSize);
+    }
+    
 }

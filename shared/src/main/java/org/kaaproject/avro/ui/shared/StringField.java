@@ -36,11 +36,12 @@ public class StringField extends SizedField {
         super();
     }
     
-    public StringField(String fieldName, 
+    public StringField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
 
     public String getDefaultValue() {
@@ -56,7 +57,11 @@ public class StringField extends SizedField {
     }
 
     public void setValue(String value) {
-        this.value = value;
+        if ((this.value == null && value != null) || 
+            (this.value != null && !this.value.equals(value))) {
+                this.value = value;
+                fireValueChanged(this.value);
+        }
         fireChanged();
     }
     
@@ -89,8 +94,8 @@ public class StringField extends SizedField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         StringField clonedStringField = (StringField)cloned;
         clonedStringField.defaultValue = defaultValue;
         clonedStringField.value = value;

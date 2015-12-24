@@ -31,32 +31,39 @@ import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.codehaus.jackson.JsonNode;
+import org.kaaproject.avro.ui.shared.AlertField;
 import org.kaaproject.avro.ui.shared.ArrayField;
 import org.kaaproject.avro.ui.shared.ArrayField.OverrideStrategy;
 import org.kaaproject.avro.ui.shared.Base64Utils;
 import org.kaaproject.avro.ui.shared.BooleanField;
 import org.kaaproject.avro.ui.shared.BytesField;
+import org.kaaproject.avro.ui.shared.DependenciesField;
 import org.kaaproject.avro.ui.shared.DoubleField;
 import org.kaaproject.avro.ui.shared.EnumField;
 import org.kaaproject.avro.ui.shared.FieldType;
 import org.kaaproject.avro.ui.shared.FixedField;
 import org.kaaproject.avro.ui.shared.FloatField;
+import org.kaaproject.avro.ui.shared.FormContext;
 import org.kaaproject.avro.ui.shared.FormEnum;
 import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
+import org.kaaproject.avro.ui.shared.Fqn;
+import org.kaaproject.avro.ui.shared.FqnKey;
+import org.kaaproject.avro.ui.shared.FqnReferenceField;
+import org.kaaproject.avro.ui.shared.FqnVersion;
 import org.kaaproject.avro.ui.shared.IntegerField;
 import org.kaaproject.avro.ui.shared.LongField;
 import org.kaaproject.avro.ui.shared.RecordField;
-import org.kaaproject.avro.ui.shared.SizedField;
 import org.kaaproject.avro.ui.shared.StringField;
 import org.kaaproject.avro.ui.shared.StringField.InputType;
 import org.kaaproject.avro.ui.shared.UnionField;
+import org.kaaproject.avro.ui.shared.VersionField;
 
 /**
  * The Class FormAvroConverter.
  */
 public class FormAvroConverter implements ConverterConstants {
-
+    
     /**
      * Creates the record field from schema.
      *
@@ -65,7 +72,20 @@ public class FormAvroConverter implements ConverterConstants {
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public static RecordField createRecordFieldFromSchema(Schema schema) throws IOException {
-        FormField formField = createFieldFromSchema(null, schema);
+        return createRecordFieldFromSchema(schema, null);
+    }
+
+    /**
+     * Creates the record field from schema.
+     *
+     * @param schema the schema
+     * @param ctlSource the ctl source
+     * @return the record field
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public static RecordField createRecordFieldFromSchema(Schema schema, CtlSource ctlSource) throws IOException {
+        FormContext context = ctlSource != null ? new FormContext(ctlSource.getCtlTypes()) : new FormContext();
+        FormField formField = createFieldFromSchema(context, schema, null);
         if (formField instanceof RecordField) {
             return (RecordField)formField;
         } else {
@@ -100,21 +120,34 @@ public class FormAvroConverter implements ConverterConstants {
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public static RecordField createRecordFieldFromGenericRecord(GenericRecord record) throws IOException {
+        return createRecordFieldFromGenericRecord(record, null);
+    }
+    
+    /**
+     * Creates the record field from generic record.
+     *
+     * @param record the record
+     * @param ctlSource the ctl source
+     * @return the record field
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public static RecordField createRecordFieldFromGenericRecord(GenericRecord record, CtlSource ctlSource) throws IOException {
         Schema schema = record.getSchema();
-        RecordField formData = createRecordFieldFromSchema(schema);
-        fillRecordFieldFromGenericRecord(formData, formData, record);
+        RecordField formData = createRecordFieldFromSchema(schema, ctlSource);
+        fillRecordFieldFromGenericRecord(formData.getContext(), formData, record);
         return formData;
     }
     
     /**
      * Creates the field from schema.
      *
-     * @param rootRecord the root record
+     * @param context the context
      * @param schema the schema
+     * @param fieldType the field type
      * @return the form field
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private static FormField createFieldFromSchema(RecordField rootRecord, Schema schema) throws IOException {
+    private static FormField createFieldFromSchema(FormContext context, Schema schema, FieldType fieldType) throws IOException {
         FormField formField = null;
         String fieldName = schema.getName();
         String displayName = fieldName;
@@ -128,109 +161,124 @@ public class FormAvroConverter implements ConverterConstants {
         boolean optional = isNullTypeSchema(schema);
         boolean isOverride = isOverrideTypeSchema(schema);
         
-        FieldType fieldType = toFieldType(schema);
+        fieldType = fieldType == null ? toFieldType(schema) : fieldType;
         Schema fieldTypeSchema = getFieldTypeSchema(schema);
         String fieldTypeSchemaString = SchemaFormAvroConverter.createSchemaString(fieldTypeSchema, false);
         if (fieldType == FieldType.UNION) {
-            UnionField unionField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            UnionField unionField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
             List<FormField> acceptableValues = new ArrayList<>();
             List<Schema> acceptableTypes = fieldTypeSchema.getTypes();
             for (int i=0;i<acceptableTypes.size();i++) {
                 if (!isOverrideType(acceptableTypes.get(i)) && acceptableTypes.get(i).getType() != Schema.Type.NULL) {
-                    FormField acceptableValue = createFieldFromSchema(rootRecord, acceptableTypes.get(i));
+                    FormField acceptableValue = createFieldFromSchema(context, acceptableTypes.get(i), null);
                     acceptableValues.add(acceptableValue);
                 }
             }
             unionField.setAcceptableValues(acceptableValues);
             formField = unionField;
-        } else if (fieldType == FieldType.RECORD) {
-            RecordField recordField= null;
-            if (rootRecord == null || !rootRecord.containsRecordMetadata(fieldTypeSchema.getFullName())) {
-                RecordField newRecordField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                newRecordField.setTypeName(fieldTypeSchema.getName());
-                newRecordField.setTypeNamespace(fieldTypeSchema.getNamespace());
-                if (rootRecord == null) {
-                    rootRecord = newRecordField;
-                    recordField = rootRecord;
+        } else if (fieldType == FieldType.RECORD) {          
+            boolean isRootRecord = false;
+            if (!context.containsRecordMetadata(fieldTypeSchema.getNamespace(), fieldTypeSchema.getName())) {
+                boolean isTypeHolder = false;
+                boolean isTypeConsumer = false;
+                JsonNode isTypeHolderVal = fieldTypeSchema.getJsonProp(IS_TYPE_HOLDER);
+                if (isTypeHolderVal != null && isTypeHolderVal.isBoolean()) {
+                    isTypeHolder = isTypeHolderVal.asBoolean();
                 }
-                if (!rootRecord.containsRecordMetadata(fieldTypeSchema.getFullName())) {
-                    rootRecord.putRecordMetadata(fieldTypeSchema.getFullName(), newRecordField);
-                    parseFields(rootRecord, newRecordField, fieldTypeSchema);
-                    newRecordField = (RecordField)newRecordField.clone();
-                    newRecordField.finalizeMetadata();
-                    rootRecord.putRecordMetadata(fieldTypeSchema.getFullName(), newRecordField);
-                } else {
-                    parseFields(rootRecord, newRecordField, fieldTypeSchema);
+                JsonNode isTypeConsumerVal = fieldTypeSchema.getJsonProp(IS_TYPE_CONSUMER);
+                if (isTypeConsumerVal != null && isTypeConsumerVal.isBoolean()) {
+                    isTypeConsumer = isTypeConsumerVal.asBoolean();
                 }
+                RecordField newRecordField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+                newRecordField.setFqn(new Fqn(fieldTypeSchema.getNamespace(), fieldTypeSchema.getName()));
+                newRecordField.setIsTypeHolder(isTypeHolder);
+                newRecordField.setIsTypeConsumer(isTypeConsumer);
+                context.putRecordMetadata(fieldTypeSchema.getNamespace(), fieldTypeSchema.getName(), newRecordField);
+                if (context.getRootRecord() == null) {
+                    context.setRootRecord(newRecordField);
+                    isRootRecord = true;
+                }
+                parseFields(context, newRecordField, fieldTypeSchema);
             }
-            if (recordField == null) {
-	            recordField = (RecordField)rootRecord.getRecordMetadata(fieldTypeSchema.getFullName()).clone();
-	            recordField.setFieldName(fieldName);
-	            recordField.setDisplayName(displayName);
-	            recordField.setOptional(optional);
+            RecordField metadata = context.getRecordMetadata(fieldTypeSchema.getNamespace(), fieldTypeSchema.getName());
+            RecordField recordField = (RecordField)metadata.clone();
+            recordField.setFieldName(fieldName);
+            recordField.setDisplayName(displayName);
+            recordField.setOptional(optional);
+            if (isRootRecord) {
+                context.setRootRecord(recordField);
+                recordField.finalizeMetadata();
             }
             formField = recordField;
         } else if (fieldType == FieldType.ARRAY) {
-            ArrayField arrayField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-            FormField elementMetadata = createFieldFromSchema(rootRecord, fieldTypeSchema.getElementType());
+            ArrayField arrayField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            FormField elementMetadata = createFieldFromSchema(context, fieldTypeSchema.getElementType(), null);
             arrayField.setElementMetadata(elementMetadata);
             formField = arrayField;
-        } else {
-            if (fieldType == FieldType.ENUM) {
-                EnumField enumField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                enumField.setTypeName(fieldTypeSchema.getName());
-                enumField.setTypeNamespace(fieldTypeSchema.getNamespace());
-                List<String> enumSymbols = fieldTypeSchema.getEnumSymbols();
-                List<FormEnum> enumValues = new ArrayList<>(enumSymbols.size());
-                for (int i=0;i<enumSymbols.size();i++) {
-                    String enumSymbol = enumSymbols.get(i);
-                    String displayValue = enumSymbol;
-                    FormEnum formEnum = new FormEnum(enumSymbol, displayValue);
-                    enumValues.add(formEnum);
-                }
-                enumField.setEnumValues(enumValues);
-                formField = enumField;
-            } else if (fieldType == FieldType.BYTES) {
-                BytesField bytesField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = bytesField;
-            } else if (fieldType == FieldType.FIXED) {
-                FixedField fixedField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                fixedField.setTypeName(fieldTypeSchema.getName());
-                fixedField.setTypeNamespace(fieldTypeSchema.getNamespace());
-                fixedField.setFixedSize(fieldTypeSchema.getFixedSize());
-                formField = fixedField;
-            } else if (fieldType == FieldType.BOOLEAN) {
-                BooleanField booleanField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = booleanField;
-            } else if (fieldType == FieldType.STRING){
-                StringField stringField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = stringField;
-            } else if (fieldType == FieldType.INT) {
-                IntegerField integerField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = integerField;
-            } else if (fieldType == FieldType.LONG) {
-                LongField longField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = longField;
-            } else if (fieldType == FieldType.FLOAT) {
-                FloatField floatField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = floatField;
-            } else if (fieldType == FieldType.DOUBLE) {
-                DoubleField doubleField = createField(rootRecord, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
-                formField = doubleField;
+        } else if (fieldType == FieldType.ENUM) {
+            EnumField enumField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            enumField.setFqn(new Fqn(fieldTypeSchema.getNamespace(), fieldTypeSchema.getName()));
+            List<String> enumSymbols = fieldTypeSchema.getEnumSymbols();
+            List<FormEnum> enumValues = new ArrayList<>(enumSymbols.size());
+            for (int i=0;i<enumSymbols.size();i++) {
+                String enumSymbol = enumSymbols.get(i);
+                String displayValue = enumSymbol;
+                FormEnum formEnum = new FormEnum(enumSymbol, displayValue);
+                enumValues.add(formEnum);
             }
-        }
+            enumField.setEnumValues(enumValues);
+            formField = enumField;
+        } else if (fieldType == FieldType.BYTES) {
+            BytesField bytesField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = bytesField;
+        } else if (fieldType == FieldType.FIXED) {
+            FixedField fixedField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            fixedField.setFqn(new Fqn(fieldTypeSchema.getNamespace(), fieldTypeSchema.getName()));
+            fixedField.setFixedSize(fieldTypeSchema.getFixedSize());
+            formField = fixedField;
+        } else if (fieldType == FieldType.BOOLEAN) {
+            BooleanField booleanField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = booleanField;
+        } else if (fieldType == FieldType.STRING){
+            StringField stringField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = stringField;
+        } else if (fieldType == FieldType.INT) {
+            IntegerField integerField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = integerField;
+        } else if (fieldType == FieldType.LONG) {
+            LongField longField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = longField;
+        } else if (fieldType == FieldType.FLOAT) {
+            FloatField floatField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = floatField;
+        } else if (fieldType == FieldType.DOUBLE) {
+            DoubleField doubleField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = doubleField;
+        } else if (fieldType == FieldType.TYPE_REFERENCE) { 
+            FqnReferenceField fqnReferenceField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = fqnReferenceField;
+        } else if (fieldType == FieldType.ALERT) { 
+            AlertField alertField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = alertField;
+        } else if (fieldType == FieldType.VERSION) { 
+            VersionField versionField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = versionField;
+        } else if (fieldType == FieldType.DEPENDENCIES) { 
+            DependenciesField dependenciesField = createField(context, fieldType, fieldName, displayName, fieldTypeSchemaString, optional, isOverride);
+            formField = dependenciesField;
+        } 
         return formField;
     }
     
     /**
      * Parses the fields.
      *
-     * @param rootRecord the root record
+     * @param context the context
      * @param formData the form data
      * @param schema the schema
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private static void parseFields(RecordField rootRecord, RecordField formData, Schema schema) throws IOException {
+    private static void parseFields(FormContext context, RecordField formData, Schema schema) throws IOException {
         List<Field> schemaFields = schema.getFields();
         java.util.Set<String> schemaFieldNames = new java.util.HashSet<>();
 
@@ -241,9 +289,19 @@ public class FormAvroConverter implements ConverterConstants {
             } else {
                 throw new IllegalArgumentException("Duplicate field name: " + schemaFieldName);
             }
-
-            FieldType fieldType = toFieldType(field.schema());
-            FormField formField = createFieldFromSchema(rootRecord, field.schema());
+            FieldType fieldType;
+            if (isTypeReferenceType(field)) {
+                fieldType = FieldType.TYPE_REFERENCE;
+            } else if (isAlertType(field)) {
+                fieldType = FieldType.ALERT;
+            } else if (isVersionType(field)) {
+                fieldType = FieldType.VERSION;
+            } else if (isDependenciesType(field)) {
+                fieldType = FieldType.DEPENDENCIES;
+            } else {
+                fieldType = toFieldType(field.schema());
+            }
+            FormField formField = createFieldFromSchema(context, field.schema(), fieldType);
             
             String fieldName = field.name();
             String displayName = fieldName;
@@ -402,7 +460,7 @@ public class FormAvroConverter implements ConverterConstants {
      * Creates the field.
      *
      * @param <T> the generic type
-     * @param rootRecord the root record
+     * @param context the context
      * @param type the type
      * @param fieldName the field name
      * @param displayName the display name
@@ -412,7 +470,7 @@ public class FormAvroConverter implements ConverterConstants {
      * @return the t
      */
     @SuppressWarnings("unchecked")
-    private static <T extends FormField> T createField(RecordField rootRecord, FieldType type, 
+    private static <T extends FormField> T createField(FormContext context, FieldType type, 
             String fieldName, 
             String displayName,
             String schema,
@@ -421,41 +479,53 @@ public class FormAvroConverter implements ConverterConstants {
         T field = null;
         switch (type) {
         case STRING:
-            field = (T) new StringField(fieldName, displayName, schema, optional);
+            field = (T) new StringField(context, fieldName, displayName, schema, optional);
             break;
         case ARRAY:
-            field = (T) new ArrayField(fieldName, displayName, schema, optional);
+            field = (T) new ArrayField(context, fieldName, displayName, schema, optional);
             break;
         case BOOLEAN:
-            field = (T) new BooleanField(fieldName, displayName, schema, optional);
+            field = (T) new BooleanField(context, fieldName, displayName, schema, optional);
             break;
         case ENUM:
-            field = (T) new EnumField(fieldName, displayName, schema, optional);
+            field = (T) new EnumField(context, fieldName, displayName, schema, optional);
             break;
         case INT:
-            field = (T) new IntegerField(fieldName, displayName, schema, optional);
+            field = (T) new IntegerField(context, fieldName, displayName, schema, optional);
             break;
         case LONG:
-            field = (T) new LongField(fieldName, displayName, schema, optional);
+            field = (T) new LongField(context, fieldName, displayName, schema, optional);
             break;
         case FLOAT:
-            field = (T) new FloatField(fieldName, displayName, schema, optional);
+            field = (T) new FloatField(context, fieldName, displayName, schema, optional);
             break;            
         case DOUBLE:
-            field = (T) new DoubleField(fieldName, displayName, schema, optional);
+            field = (T) new DoubleField(context, fieldName, displayName, schema, optional);
             break;            
         case BYTES:
-            field = (T) new BytesField(fieldName, displayName, schema, optional);
+            field = (T) new BytesField(context, fieldName, displayName, schema, optional);
             break;            
         case RECORD:
-            field = (T) new RecordField(rootRecord, fieldName, displayName, schema, optional);
+            field = (T) new RecordField(context, fieldName, displayName, schema, optional);
             break;
         case FIXED:
-            field = (T) new FixedField(fieldName, displayName, schema, optional);
+            field = (T) new FixedField(context, fieldName, displayName, schema, optional);
             break;
         case UNION:
-            field = (T) new UnionField(fieldName, displayName, schema, optional);
+            field = (T) new UnionField(context, fieldName, displayName, schema, optional);
             break;
+        case TYPE_REFERENCE:
+            field = (T) new FqnReferenceField(context, fieldName, displayName, schema, optional);
+            break;
+        case ALERT:
+            field = (T) new AlertField(context, fieldName, displayName, schema, optional);
+            break;
+        case VERSION:
+            field = (T) new VersionField(context, fieldName, displayName, schema, optional);
+            break;        
+        case DEPENDENCIES:
+            field = (T) new DependenciesField(context, fieldName, displayName, schema, optional);
+            break;               
         default:
             break;
         }
@@ -722,6 +792,62 @@ public class FormAvroConverter implements ConverterConstants {
     }
     
     /**
+     * Checks if is type reference type.
+     *
+     * @param field the field
+     * @return true, if is type reference type
+     */
+    private static boolean isTypeReferenceType(Field field) {
+        JsonNode fqnReferenceVal = field.getJsonProp(TYPE_REFERENCE);
+        if (fqnReferenceVal != null && fqnReferenceVal.isBoolean()) {
+            return fqnReferenceVal.asBoolean();
+        }
+        return false;
+    }
+    
+    /**
+     * Checks if is alert type.
+     *
+     * @param field the field
+     * @return true, if is alert type
+     */
+    private static boolean isAlertType(Field field) {
+        JsonNode alertVal = field.getJsonProp(ALERT);
+        if (alertVal != null && alertVal.isBoolean()) {
+            return alertVal.asBoolean();
+        }
+        return false;
+    }
+    
+    /**
+     * Checks if is version type.
+     *
+     * @param field the field
+     * @return true, if is version type
+     */
+    private static boolean isVersionType(Field field) {
+        JsonNode typeVersionVal = field.getJsonProp(TYPE_VERSION);
+        if (typeVersionVal != null && typeVersionVal.isBoolean()) {
+            return typeVersionVal.asBoolean();
+        }
+        return false;
+    }
+    
+    /**
+     * Checks if is dependencies type.
+     *
+     * @param field the field
+     * @return true, if is dependencies type
+     */
+    private static boolean isDependenciesType(Field field) {
+        JsonNode typeDependenciesVal = field.getJsonProp(TYPE_DEPENDENCIES);
+        if (typeDependenciesVal != null && typeDependenciesVal.isBoolean()) {
+            return typeDependenciesVal.asBoolean();
+        }
+        return false;
+    }
+    
+    /**
      * Gets the field type schema.
      *
      * @param schema the schema
@@ -763,31 +889,54 @@ public class FormAvroConverter implements ConverterConstants {
     /**
      * Fill record field from generic record.
      *
-     * @param rootRecord the root record
+     * @param context the context
      * @param recordField the record field
      * @param record the record
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    private static void fillRecordFieldFromGenericRecord(RecordField rootRecord, RecordField recordField, GenericRecord record) throws IOException {
-    	if (recordField != rootRecord) {
+    private static void fillRecordFieldFromGenericRecord(FormContext context, RecordField recordField, GenericRecord record) throws IOException {
+    	if (recordField.isNull()) {
     		recordField.finalizeMetadata();
     	}
+
         for (FormField field : recordField.getValue()) {
             Object value = record.get(field.getFieldName());
-            setFormFieldValue(rootRecord, field, value);
+            setFormFieldValue(context, field, value);
+        }
+        
+        if (context.isCtlSchema() && recordField.isRoot()) {
+            Object value = record.get(SchemaFormAvroConverter.DEPENDENCIES);
+            if (value != null) {
+                setDependenciesValue(context, value);
+            }
         }
     }
     
+    @SuppressWarnings("unchecked")
+    private static void setDependenciesValue(FormContext context, Object value) throws IOException {
+        Iterable<Object> dependenciesData = (Iterable<Object>)value;
+        if (dependenciesData != null) {
+            List<FqnVersion> fqnVersions = new ArrayList<>();
+            for (Object arrayValue : dependenciesData) {
+                GenericRecord record = (GenericRecord)arrayValue;
+                String fqn = record.get(SchemaFormConstants.FQN).toString();
+                Integer version = (Integer)record.get(SchemaFormConstants.VERSION);
+                fqnVersions.add(new FqnVersion(fqn, version));
+            }
+            context.setCtlDependenciesList(fqnVersions);
+            context.updateCtlDependencies();
+        }
+    }
     /**
      * Sets the form field value.
      *
-     * @param rootRecord the root record
+     * @param context the context
      * @param field the field
      * @param value the value
      * @throws IOException Signals that an I/O exception has occurred.
      */
     @SuppressWarnings("unchecked")
-    private static void setFormFieldValue(RecordField rootRecord, FormField field, Object value) throws IOException {
+    private static void setFormFieldValue(FormContext context, FormField field, Object value) throws IOException {
         if (field.isOverride() && isOverrideUnchangedDatum(value)) {
             field.setChanged(false);
         } else {
@@ -799,18 +948,48 @@ public class FormAvroConverter implements ConverterConstants {
             	RecordField recordField = (RecordField)field;
             	if (value != null) {
             		GenericRecord record = (GenericRecord)value;
-            		fillRecordFieldFromGenericRecord(rootRecord, recordField, record);
+            		fillRecordFieldFromGenericRecord(context, recordField, record);
             	} else {
             		recordField.setNull();
             	}
                 break;
+            case TYPE_REFERENCE:
+                FqnReferenceField fqnReferenceField = (FqnReferenceField)field;
+                if (value != null) {
+                    String fqnString = value.toString();
+                    Fqn fqn = new Fqn(fqnString);
+                    FqnKey fqnKey = context.fqnToFqnKey(fqn);
+                    if (fqnKey == null) {
+                        throw new IllegalArgumentException("Type with FQN '" + fqnString + "' is not defined.");
+                    }                    
+                    fqnReferenceField.setValue(fqnKey);
+                } else {
+                    fqnReferenceField.setValue(null);
+                }
+                break;
+            case ALERT:
+                AlertField alertField = (AlertField)field;
+                if (value != null) {
+                    alertField.setValue(value.toString());
+                } else {
+                    alertField.setValue(null);
+                }
+                break;
+            case VERSION:
+                VersionField versionField = (VersionField)field;
+                if (value != null) {
+                    versionField.setValue((Integer)value);
+                } else {
+                    versionField.setValue(null);
+                }
+                break;        
             case UNION:
                 UnionField unionField = (UnionField)field;
                 if (value != null) {
                     Schema unionSchema = new Schema.Parser().parse(unionField.getSchema());
                     Schema valueSchema = unionSchema.getTypes().get(GenericData.get().resolveUnion(unionSchema, value));
-                    FormField unionValue = createFieldFromSchema(rootRecord, valueSchema);
-                    setFormFieldValue(rootRecord, unionValue, value);
+                    FormField unionValue = createFieldFromSchema(context, valueSchema, null);
+                    setFormFieldValue(context, unionValue, value);
                     unionField.setValue(unionValue);
                 } else {
                     unionField.setValue(null);
@@ -873,7 +1052,7 @@ public class FormAvroConverter implements ConverterConstants {
                 if (arrayData != null) {
                     for (Object arrayValue : arrayData) {
                         FormField fieldValue = arrayField.createRow();
-                        setFormFieldValue(rootRecord, fieldValue, arrayValue);
+                        setFormFieldValue(context, fieldValue, arrayValue);
                         ((ArrayField)field).addArrayData(fieldValue);
                     }
                 }
@@ -903,6 +1082,12 @@ public class FormAvroConverter implements ConverterConstants {
         case RECORD:
             return createGenericRecordFromRecordField((RecordField)formField);
         case STRING:
+            if (formField instanceof FqnReferenceField) {
+                Fqn fqn = ((FqnReferenceField)formField).getFqnValue();
+                return fqn != null ? fqn.getFqnString() : null;
+            } else if (formField instanceof AlertField) {
+                return ((AlertField)formField).getValue();
+            }
             return ((StringField)formField).getValue();
         case INT:
             return ((IntegerField)formField).getValue();
@@ -964,8 +1149,26 @@ public class FormAvroConverter implements ConverterConstants {
                 if (formField.getFieldType() == FieldType.UNION) {
                     UnionField unionField = (UnionField)formField;
                     value = unionField.getValue();
+                } else if (formField.getFieldType() == FieldType.VERSION) {
+                    return ((VersionField)formField).getValue();
+                } else if (formField.getFieldType() == FieldType.DEPENDENCIES) {
+                    List<FqnVersion> fqnVersions = ((DependenciesField)formField).getValue();
+                    int index = fieldSchema.getIndexNamed(FieldType.ARRAY.getName());
+                    Schema dependenciesSchema = fieldSchema.getTypes().get(index);
+                    genericArrayData = new GenericData.Array<>(fqnVersions.size(), dependenciesSchema);
+                    Schema dependencySchema = dependenciesSchema.getElementType();
+                    for (FqnVersion fqnVersion : fqnVersions) {
+                        GenericRecordBuilder builder = new GenericRecordBuilder(dependencySchema);
+                        Field field = dependencySchema.getField(SchemaFormAvroConverter.FQN);
+                        builder.set(field, fqnVersion.getFqnString());
+                        field = dependencySchema.getField(SchemaFormAvroConverter.VERSION);
+                        builder.set(field, fqnVersion.getVersion());
+                        GenericRecord record = builder.build();
+                        genericArrayData.add(record);
+                    }
+                    return genericArrayData;
                 } else {
-                	value = formField;
+                    value = formField;
                 }
                 int index = fieldSchema.getIndexNamed(value.getTypeFullname());
                 Schema schema = fieldSchema.getTypes().get(index);

@@ -30,6 +30,9 @@ public class AvroWidgetsConfig {
     private final int gridHeightPx;
     private final int tableHeightPx;
     
+    private final int dependenciesHeightPx;
+    private final int dependenciesPageSize;
+    
     public static class Builder {
         
         private static final int DEFAULT_RECORD_PANEL_WIDTH_PX = 700;
@@ -38,11 +41,17 @@ public class AvroWidgetsConfig {
         private static final int DEFAULT_GRID_HEIGHT_PX = 180;
         private static final int DEFAULT_TABLE_HEIGHT_PX = 200;
         
+        private static final int DEFAULT_DEPENDENCIES_HEIGHT_PX = 200;
+        private static final int DEFAULT_DEPENDENCIES_PAGE_SIZE = 4;
+        
         private int recordPanelWidthPx = DEFAULT_RECORD_PANEL_WIDTH_PX;
         private int labelsColumnWidthPx = DEFAULT_LABELS_COLUMN_WIDTH_PX;
         
         private int gridHeightPx = DEFAULT_GRID_HEIGHT_PX;
         private int tableHeightPx = DEFAULT_TABLE_HEIGHT_PX;
+        
+        private int dependenciesHeightPx = DEFAULT_DEPENDENCIES_HEIGHT_PX;
+        private int dependenciesPageSize = DEFAULT_DEPENDENCIES_PAGE_SIZE;
         
         public Builder() {}
         
@@ -66,11 +75,23 @@ public class AvroWidgetsConfig {
             return this;
         }
         
+        public Builder dependenciesHeight(int heightPx) {
+            this.dependenciesHeightPx = heightPx;
+            return this;
+        }
+        
+        public Builder dependenciesPageSize(int pageSize) {
+            this.dependenciesPageSize = pageSize;
+            return this;
+        }
+        
         public AvroWidgetsConfig createConfig() {
             return new AvroWidgetsConfig(recordPanelWidthPx, 
                                          labelsColumnWidthPx, 
                                          gridHeightPx, 
-                                         tableHeightPx);
+                                         tableHeightPx,
+                                         dependenciesHeightPx,
+                                         dependenciesPageSize);
         }
 
     }
@@ -78,7 +99,9 @@ public class AvroWidgetsConfig {
     public AvroWidgetsConfig(int recordPanelWidthPx, 
                               int labelsColumnWidthPx,
                               int gridHeightPx, 
-                              int tableHeightPx) {
+                              int tableHeightPx,
+                              int dependenciesHeightPx,
+                              int dependenciesPageSize) {
         this.recordPanelWidthPx = recordPanelWidthPx;
         this.fieldsColumnWidthPx = (int) ((float)(recordPanelWidthPx - 200) * 0.6f);
         this.labelsColumnWidthPx = labelsColumnWidthPx;
@@ -86,6 +109,8 @@ public class AvroWidgetsConfig {
         this.unionPanelWidthPx = recordPanelWidthPx - 50;
         this.gridHeightPx = gridHeightPx;
         this.tableHeightPx = tableHeightPx;
+        this.dependenciesHeightPx = dependenciesHeightPx;
+        this.dependenciesPageSize = dependenciesPageSize;
     }
 
     public int getRecordPanelWidthPx() {
@@ -142,6 +167,18 @@ public class AvroWidgetsConfig {
     
     public String getTableHeight() {
         return tableHeightPx + PX;
+    }
+    
+    public int getDependenciesHeightPx() {
+        return dependenciesHeightPx;
+    }
+    
+    public String getDependenciesHeigh() {
+        return dependenciesHeightPx + PX;
+    }
+    
+    public int getDependenciesPageSize() {
+        return dependenciesPageSize;
     }
     
 }

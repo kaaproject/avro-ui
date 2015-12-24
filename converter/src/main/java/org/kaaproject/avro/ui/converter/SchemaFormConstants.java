@@ -65,6 +65,9 @@ public interface SchemaFormConstants {
     
     /** The Constant NAMED_REFERENCE_FIELD_TYPE. */
     public static final String NAMED_REFERENCE_FIELD_TYPE = "NamedReferenceFieldType";
+    
+    /** The Constant DEPENDENCY_FIELD_TYPE. */
+    public static final String DEPENDENCY_FIELD_TYPE = "DependencyFieldType";
 
     /** The Constant DEFAULT_VALUE. */
     public static final String DEFAULT_VALUE = "defaultValue";
@@ -98,6 +101,12 @@ public interface SchemaFormConstants {
 
     /** The Constant FQN. */
     public static final String FQN = "fqn";
+    
+    /** The Constant VERSION. */
+    public static final String VERSION = "version";
+    
+    /** The Constant DEPENDENCIES. */
+    public static final String DEPENDENCIES = "dependencies";
 
     /** The Constant SCHEMA. */
     public static final String SCHEMA = "Schema";

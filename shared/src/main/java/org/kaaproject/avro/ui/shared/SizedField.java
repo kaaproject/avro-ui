@@ -29,11 +29,12 @@ public abstract class SizedField extends FormField {
         super();
     }
     
-    public SizedField(String fieldName, 
+    public SizedField(FormContext context,
+            String fieldName, 
             String displayName, 
             String schema,
             boolean optional) {
-        super(fieldName, displayName, schema, optional);
+        super(context, fieldName, displayName, schema, optional);
     }
     
     public int getMaxLength() {
@@ -50,8 +51,8 @@ public abstract class SizedField extends FormField {
     }
     
     @Override
-    protected void copyFields(FormField cloned) {
-        super.copyFields(cloned);
+    protected void copyFields(FormField cloned, boolean deepCopy) {
+        super.copyFields(cloned, deepCopy);
         SizedField clonedSizedField = (SizedField)cloned;
         clonedSizedField.maxLength = maxLength;
     }

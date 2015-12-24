@@ -101,7 +101,7 @@ public class NamesValidator {
      *
      * @param name the name
      */
-    public static void validateClassNameOrThrowException(String name) {
+    private static void validateClassNameOrThrowException(String name) {
         if (!validateClassName(name)) {
             throw new IllegalArgumentException("Class name is not valid. '" + name + "' is not a valid identifier.");
         }
@@ -112,13 +112,30 @@ public class NamesValidator {
      *
      * @param namespace the namespace
      */
-    public static void validateNamespaceOrThrowException(String namespace) {
+    private static void validateNamespaceOrThrowException(String namespace) {
         if (namespace == null || namespace.isEmpty()) {
             throw new IllegalArgumentException("Namespace field is mandatory. Please, add \"namespace\" field with non" +
             " empty value into your schema.");
         }
         if (!validateNamespace(namespace)) {
             throw new IllegalArgumentException("Namespace is not valid. '" + namespace + "' is not a valid identifier.");
+        }
+    }
+    
+    /**
+     * Validate fqn or throw exception.
+     *
+     * @param fqn the fqn
+     */
+    public static void validateFqnOrThrowException(Fqn fqn) {
+        validateNamespaceOrThrowException(fqn.getNamespace());
+        validateClassNameOrThrowException(fqn.getName());
+        String[] namespaceSplits = fqn.getNamespace().split("\\.");
+        if (namespaceSplits.length>0) {
+            String firstSplit = namespaceSplits[0];
+            if (firstSplit.equals(fqn.getName())) {
+                throw new IllegalArgumentException("FQN is not valid. '" + fqn.getFqnString() + "' is not a valid identifier.");
+            }
         }
     }
 

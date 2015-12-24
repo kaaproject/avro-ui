@@ -15,50 +15,46 @@
  */
 package org.kaaproject.avro.ui.converter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.avro.Schema;
+import org.apache.commons.compress.utils.IOUtils;
 
 public class TestAvroSchemas {
 
-    private static final String SINGLE_FIELDS = "single-fields.avsc";
-    private static Schema singleFieldsSchema;
-
-    private static final String ARRAY = "array.avsc";
-    private static Schema arraySchema;
-
-    private static final String UNION = "union.avsc";
-    private static Schema unionSchema;
+    public static final String SINGLE_FIELDS = "single-fields.avsc";
+    public static final String ARRAY = "array.avsc";
+    public static final String UNION = "union.avsc";
+    public static final String OVERRIDE_SCHEMA = "override-schema.avsc";
+    public static final String TYPE_REFERENCES_SCHEMA = "type-references.avsc";
+    public static final String TYPE_REFERENCES2_SCHEMA = "type-references2.avsc";
+    public static final String TYPE_CTL_REFERENCES = "type-ctl-references.avsc";
     
-    private static final String OVERRIDE_SCHEMA = "override-schema.avsc";
-    private static Schema overrideSchema;
+    private static final Map<String, Schema> schemasMap = new HashMap<>();
+    private static final Map<String, String> schemaJsonsMap = new HashMap<>();
     
-    public static Schema getSingleFieldsSchema() throws IOException {
-        if (singleFieldsSchema == null) {
-            singleFieldsSchema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(SINGLE_FIELDS));
+    public static Schema getSchema(String resourceName) throws IOException {
+        Schema schema = schemasMap.get(resourceName);
+        if (schema == null) {
+            schema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName));
+            schemasMap.put(resourceName, schema);
         }
-        return singleFieldsSchema;
+        return schema;
+    }
+    
+    public static String getSchemaJson(String resourceName) throws IOException {
+        String schema = schemaJsonsMap.get(resourceName);
+        if (schema == null) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            IOUtils.copy(Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName), baos);
+            schema = new String(baos.toByteArray());
+            schemaJsonsMap.put(resourceName, schema);
+        }
+        return schema;
     }
 
-    public static Schema getArraySchema() throws IOException {
-        if (arraySchema == null) {
-            arraySchema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(ARRAY));
-        }
-        return arraySchema;
-    }
-    
-    public static Schema getUnionSchema() throws IOException {
-        if (unionSchema == null) {
-            unionSchema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(UNION));
-        }
-        return unionSchema;
-    }
-    
-    public static Schema getOverrideSchema() throws IOException {
-        if (overrideSchema == null) {
-            overrideSchema = new Schema.Parser().parse(Thread.currentThread().getContextClassLoader().getResourceAsStream(OVERRIDE_SCHEMA));
-        }
-        return overrideSchema;
-    }
 
 }
