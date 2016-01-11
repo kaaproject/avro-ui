@@ -64,7 +64,7 @@ public class ExtendedValueListBox<T> extends ValueListBox<T> {
             int index = select.getSelectedIndex();
             if (index > -1) {
                 OptionElement selectedOption = getOptionElement(index);
-                if (Utils.isBlank(selectedOption.getValue())) {
+                if ("Null".equals(selectedOption.getValue())) {
                     selectedOption.setClassName(style.prompt());
                     selectedOption.setText(promptText);
                     addStyleName(style.prompt());

@@ -201,7 +201,7 @@ public class UnionFieldWidget extends AbstractFieldWidget<UnionField> implements
 
         @Override
         public String render(FormField object) {
-            return object != null ? object.getDisplayName() : "";
+            return object != null ? object.getDisplayName() : "Null";
         }
 
         @Override
