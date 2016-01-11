@@ -28,15 +28,8 @@ import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationActionListener;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
-import org.kaaproject.avro.ui.shared.ArrayField;
-import org.kaaproject.avro.ui.shared.BooleanField;
-import org.kaaproject.avro.ui.shared.FieldType;
-import org.kaaproject.avro.ui.shared.FormField;
+import org.kaaproject.avro.ui.shared.*;
 import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
-import org.kaaproject.avro.ui.shared.Fqn;
-import org.kaaproject.avro.ui.shared.FqnKey;
-import org.kaaproject.avro.ui.shared.RecordField;
-import org.kaaproject.avro.ui.shared.UnionField;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -477,7 +470,7 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                                     value += "null";
                                 } else {
                                     if (unionVal.getFieldType() == FieldType.RECORD && ((RecordField)unionVal).isTypeConsumer()) {
-                                        String fqnString = "Ivalid FQN reference";
+                                        String fqnString = "Invalid FQN reference";
                                         FqnKey fqnKey = ((RecordField)unionVal).getConsumedFqnKey();
                                         if (fqnKey != null) {
                                             Fqn fqn = unionVal.getContext().getDeclaredTypes().get(fqnKey);
@@ -487,7 +480,21 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                                         } 
                                         value += fqnString;
                                     } else {
-                                        value += unionVal.getDisplayName();
+                                        FormField displayName = ((RecordField) unionVal).getFieldByName("displayName");
+                                        Fqn declaredFqn = ((RecordField) unionVal).getDeclaredFqn();
+
+                                        String displayNameStr = displayName != null ? ((StringField) displayName).getValue() : null;
+                                        String declaredFqnStr = declaredFqn != null ? declaredFqn.getFqnString() : null;
+
+                                        if (displayNameStr != null && !displayNameStr.isEmpty()) {
+                                            value += displayNameStr;
+                                        } else {
+                                            if (declaredFqnStr != null && !declaredFqnStr.isEmpty()){
+                                                value += declaredFqnStr;
+                                            } else {
+                                                value += unionVal.getDisplayName();
+                                            }
+                                        }
                                     }
                                 }
                             } else {
