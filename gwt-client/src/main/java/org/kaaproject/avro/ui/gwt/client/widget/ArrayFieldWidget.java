@@ -246,7 +246,9 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                 table.setWidget(0, column, new Label(metaField.getDisplayName()));
             }
 
-            table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.delete()));
+            if (!readOnly) {
+                table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.delete()));
+            }
             hasHeader = true;
         } else {
             hasHeader = false;
@@ -314,33 +316,35 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             constructAndPlaceWidget(table, field, row, 0, handlerRegistrations);
         }
 
-        final Button delButton = new Button("");
-        Image img = new Image(Utils.resources.remove());
-        img.getElement().getStyle().setVerticalAlign(Style.VerticalAlign.MIDDLE);
-        delButton.getElement().appendChild(img.getElement());
-        delButton.addStyleName(style.cellButton());
-        delButton.addStyleName(style.cellButtonSmall());
-        delButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
-        HandlerRegistration handlerRegistration = delButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                int tableRow = table.getCellForEvent(event).getRowIndex();
-                int rowIndex = hasHeader ? tableRow - 1 : tableRow;
-                FormField toDelete = value.getValue().get(rowIndex);
-                List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
-                if (registrations != null) {
-                    for (HandlerRegistration registration : registrations) {
-                        registration.removeHandler();
+        if (!readOnly) {
+            final Button delButton = new Button("");
+            Image img = new Image(Utils.resources.remove());
+            img.getElement().getStyle().setVerticalAlign(Style.VerticalAlign.MIDDLE);
+            delButton.getElement().appendChild(img.getElement());
+            delButton.addStyleName(style.cellButton());
+            delButton.addStyleName(style.cellButtonSmall());
+            delButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
+            HandlerRegistration handlerRegistration = delButton.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    int tableRow = table.getCellForEvent(event).getRowIndex();
+                    int rowIndex = hasHeader ? tableRow - 1 : tableRow;
+                    FormField toDelete = value.getValue().get(rowIndex);
+                    List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
+                    if (registrations != null) {
+                        for (HandlerRegistration registration : registrations) {
+                            registration.removeHandler();
+                        }
+                        registrations.clear();
                     }
-                    registrations.clear();
+                    table.removeRow(tableRow);
+                    value.getValue().remove(rowIndex);
+                    fireChanged();
                 }
-                table.removeRow(tableRow);
-                value.removeRow(rowIndex);
-                fireChanged();
-            }
-        });
-        handlerRegistrations.add(handlerRegistration);
-        table.setWidget(row, table.getCellCount(row), delButton);
+            });
+            handlerRegistrations.add(handlerRegistration);
+            table.setWidget(row, table.getCellCount(row), delButton);
+        }
     }
 
     private String getScrollTablePreferredWidth(int configWidth) {

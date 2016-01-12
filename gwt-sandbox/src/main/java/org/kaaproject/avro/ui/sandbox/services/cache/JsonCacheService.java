@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-package org.kaaproject.avro.ui.sandbox.client.mvp.view;
+package org.kaaproject.avro.ui.sandbox.services.cache;
 
-import com.google.gwt.user.client.ui.IsWidget;
-
-public interface MainView extends IsWidget {
-
-    void clearMessages();
-
-    void setErrorMessage(String message);
-
-    void setInfoMessage(String message);
-
-    FormConstructorView getSchemaConstructorView();
-
-    FormConstructorView getRecordConstructorView();
-
-    void reset();
+public interface JsonCacheService {
+    
+    String putJson(String json);
+    
+    String getJson(String jsonKey);
 
 }

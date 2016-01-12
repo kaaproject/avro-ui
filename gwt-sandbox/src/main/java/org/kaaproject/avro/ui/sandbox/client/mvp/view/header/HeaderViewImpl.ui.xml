@@ -29,8 +29,7 @@
                 </gwt:HorizontalPanel>
             </gwt:cell>
             <gwt:cell horizontalAlignment="ALIGN_RIGHT" verticalAlignment="ALIGN_MIDDLE">
-                <gwt:HorizontalPanel height="100%">
-                </gwt:HorizontalPanel>                              
-            </gwt:cell>	    	
+                    <gwt:Button ui:field="resetButton"/>
+            </gwt:cell>
         </gwt:HorizontalPanel>
 </ui:UiBinder>

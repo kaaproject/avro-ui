@@ -16,6 +16,7 @@
 
 package org.kaaproject.avro.ui.sandbox.client.mvp.view;
 
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FormPanel;
 import org.kaaproject.avro.ui.shared.RecordField;
 
@@ -29,12 +30,17 @@ public interface FormConstructorView extends IsWidget, HasValue<RecordField> {
 
     void setFormJson(String json);
 
-    HasClickHandlers getShowFormJsonButton();
+    Button getGenerateRecordButton();
     
-    HasClickHandlers getUploadButton();
+    Button getDownloadJsonButton();
+
+    HasClickHandlers getShowJsonButton();
 
     FormPanel getUploadFileForm();
-    
+
+    HasClickHandlers getUploadJSONButton();
+
+    void fireChanged();
+
     void reset();
-    
 }
