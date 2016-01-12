@@ -31,6 +31,8 @@ public interface FormConstructorView extends IsWidget, HasValue<RecordField> {
     void setFormJson(String json);
 
     Button getGenerateRecordButton();
+    
+    Button getDownloadJsonButton();
 
     HasClickHandlers getShowJsonButton();
 

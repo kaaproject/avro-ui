@@ -16,31 +16,46 @@
 
 package org.kaaproject.avro.ui.sandbox.services;
 
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.fileupload.util.Streams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
+import org.kaaproject.avro.ui.sandbox.services.cache.JsonCacheService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.context.support.SpringBeanAutowiringSupport;
+
 public class FileUploadServlet extends HttpServlet {
 
-    private static final int BYTES_DOWNLOAD = 1024;
-    private static final String FILE_NAME = "AvroUiJSON.txt";
-    private static final String FILE_PARAM = "jsonArea";
+    private static final long serialVersionUID = -1660736020844466375L;
+    
+    private static final String FILE_NAME = "fileName";
+    private static final String JSON_KEY = "jsonKey";
 
     /** The Constant logger. */
     private static final Logger logger = LoggerFactory.getLogger(FileUploadServlet.class);
+    
+    @Autowired
+    private JsonCacheService jsonCacheService;
+    
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this,
+          config.getServletContext());
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -80,23 +95,16 @@ public class FileUploadServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        String jsonArea = request.getParameter(FILE_PARAM);
-
-        if (jsonArea != null) {
-            try (   InputStream is = new ByteArrayInputStream(jsonArea.getBytes("UTF8"));
-                    OutputStream os = response.getOutputStream()
-            ) {
-
-                response.setContentType("text/plain");
-                response.setHeader("Content-Disposition", "attachment;filename=" + FILE_NAME);
-
-                int read = 0;
-                byte[] bytes = new byte[BYTES_DOWNLOAD];
-                while ((read = is.read(bytes)) != -1) {
-                    os.write(bytes, 0, read);
-                }
-                logger.debug("Returning text file with name '{}'", FILE_NAME);
+        String jsonKey = request.getParameter(JSON_KEY);
+        String fileName = request.getParameter(FILE_NAME);
+        if (jsonKey != null && fileName != null) {
+            try ( OutputStream os = response.getOutputStream() )  {
+                  response.setContentType("application/json");
+                  response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+                  byte[] content = jsonCacheService.getJson(jsonKey).getBytes();
+                  os.write(content, 0, content.length);
+                  logger.debug("Returning text file with name '{}'", fileName);
+                  response.flushBuffer();
             } catch (IOException e) {
                 logger.error("Unexpected error in FileUploadServlet.doGet: ", e);
                 throw new RuntimeException(e);

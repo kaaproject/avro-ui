@@ -17,6 +17,8 @@ package org.kaaproject.avro.ui.sandbox.services;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -28,18 +30,23 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonDecoder;
 import org.apache.avro.io.JsonEncoder;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.kaaproject.avro.ui.converter.FormAvroConverter;
 import org.kaaproject.avro.ui.converter.SchemaFormAvroConverter;
+import org.kaaproject.avro.ui.sandbox.services.cache.JsonCacheService;
 import org.kaaproject.avro.ui.sandbox.services.util.Utils;
 import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxService;
 import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxServiceException;
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spring4gwt.server.SpringGwtRemoteServiceServlet;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service("avroUiSandboxService")
@@ -51,6 +58,9 @@ public class AvroUiSandboxServiceImpl implements AvroUiSandboxService, Initializ
     private static final Charset UTF8 = Charset.forName("UTF-8");
     
     private SchemaFormAvroConverter schemaFormConverter;
+    
+    @Autowired
+    private JsonCacheService jsonCacheService;
     
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -133,6 +143,12 @@ public class AvroUiSandboxServiceImpl implements AvroUiSandboxService, Initializ
         } catch (Exception e) {
             throw Utils.handleException(e);
         }
+    }
+
+    @Override
+    public String uploadJsonToFile(String json)
+            throws AvroUiSandboxServiceException {
+        return jsonCacheService.putJson(json);
     }
 
 }

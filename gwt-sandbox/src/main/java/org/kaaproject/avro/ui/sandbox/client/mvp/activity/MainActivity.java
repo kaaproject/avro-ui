@@ -25,6 +25,7 @@ import org.kaaproject.avro.ui.sandbox.client.mvp.ClientFactory;
 import org.kaaproject.avro.ui.sandbox.client.mvp.place.MainPlace;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.FormConstructorView;
 import org.kaaproject.avro.ui.sandbox.client.mvp.view.MainView;
+import org.kaaproject.avro.ui.sandbox.client.servlet.ServletHelper;
 import org.kaaproject.avro.ui.sandbox.client.util.Utils;
 import org.kaaproject.avro.ui.shared.RecordField;
 
@@ -98,6 +99,23 @@ public class MainActivity extends AbstractActivity  {
             }
         }));
         
+        registrations.add(schemaConstructor.getDownloadJsonButton().addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                String json = schemaConstructor.getFormJson().getValue();
+                AvroUiSandbox.getAvroUiSandboxService().uploadJsonToFile(json, new BusyAsyncCallback<String>() {
+                    @Override
+                    public void onSuccessImpl(String result) {
+                        ServletHelper.downloadJsonSchema(result);
+                    }
+                    @Override
+                    public void onFailureImpl(Throwable caught) {
+                        view.setErrorMessage(Utils.getErrorMessage(caught));
+                    }
+                });
+            }
+        }));
+        
         final FormConstructorView recordConstructor = view.getRecordConstructorView();
         registrations.add(recordConstructor.getShowJsonButton().addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -123,6 +141,23 @@ public class MainActivity extends AbstractActivity  {
             }
         }));
 
+        registrations.add(recordConstructor.getDownloadJsonButton().addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                String json = recordConstructor.getFormJson().getValue();
+                AvroUiSandbox.getAvroUiSandboxService().uploadJsonToFile(json, new BusyAsyncCallback<String>() {
+                    @Override
+                    public void onSuccessImpl(String result) {
+                        ServletHelper.downloadJsonRecord(result);
+                    }
+                    @Override
+                    public void onFailureImpl(Throwable caught) {
+                        view.setErrorMessage(Utils.getErrorMessage(caught));
+                    }
+                });
+            }
+        }));
+        
         registrations.add(clientFactory.getHeaderView().getResetButton().addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -130,7 +165,7 @@ public class MainActivity extends AbstractActivity  {
                 loadEmptySchemaForm();
             }
         }));
-
+        
         view.reset();
 
         loadEmptySchemaForm();

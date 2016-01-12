@@ -67,7 +67,6 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
     final Button downloadButton = new Button(Utils.constants.saveFile());
 
     private final FormPanel uploadForm = new FormPanel();
-    private final FormPanel saveForm = new FormPanel();
     private final FileUpload fileUpload = new FileUpload();
 
     private Button generateRecordButton;
@@ -173,21 +172,9 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
 
         formJsonPanel.setVisible(false);
 
-        saveForm.setEncoding(FormPanel.ENCODING_URLENCODED);
-        saveForm.setMethod(FormPanel.METHOD_GET);
-        saveForm.setAction(GWT.getModuleBaseURL() + UPLOAD_SERVLET_PATH);
-        saveForm.add(formJsonPanel);
-        setWidget(row, 0, saveForm);
+        setWidget(row, 0, formJsonPanel);
 
         downloadButton.setEnabled(false);
-        downloadButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent clickEvent) {
-                if (!"".equals(jsonArea.getValue())) {
-                    saveForm.submit();
-                }
-            }
-        });
 
         uploadForm.setEncoding(FormPanel.ENCODING_MULTIPART);
         uploadForm.setMethod(FormPanel.METHOD_POST);
@@ -255,8 +242,6 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         downloadButton.setEnabled(false);
         formJsonPanel.setVisible(false);
         uploadForm.reset();
-        saveForm.reset();
-
         generateRecordButton.setEnabled(false);
     }
     
@@ -315,5 +300,10 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
     @Override
     public HasClickHandlers getUploadJSONButton() {
         return loadJsonButton;
+    }
+
+    @Override
+    public Button getDownloadJsonButton() {
+        return downloadButton;
     }
 }
