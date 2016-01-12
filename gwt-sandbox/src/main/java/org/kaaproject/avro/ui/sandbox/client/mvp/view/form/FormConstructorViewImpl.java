@@ -53,7 +53,6 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
     private static final String FULL_WIDTH = "100%";
     private static final String JSON_PANEL_WIDTH = "600px";
     private static final String UPLOAD_SERVLET_PATH = "servlet/fileUploadServlet";
-    private static final String JSON_AREA_NAME = "jsonArea";
     private static final int MIN_PANEL_HEIGHT = 565;
 
     private RecordFieldWidget form;
@@ -151,7 +150,6 @@ public class FormConstructorViewImpl extends FlexTable implements FormConstructo
         buttonTable.getElement().getParentElement().getStyle().setPaddingTop(0, Unit.PX);
 
         jsonArea = new SizedTextArea(-1);
-        jsonArea.getTextArea().setName(JSON_AREA_NAME);
         jsonArea.getTextArea().setWidth(JSON_PANEL_WIDTH);
         jsonArea.getTextArea().getElement().getStyle().setPropertyPx("minHeight", 300);
         jsonArea.setVisible(false);
