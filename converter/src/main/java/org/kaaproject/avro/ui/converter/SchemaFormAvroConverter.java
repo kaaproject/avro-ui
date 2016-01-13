@@ -186,7 +186,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public RecordField createSchemaFormFromSchema(Schema schema, Set<Fqn> fqns) throws IOException {
-        GenericRecord record = (GenericRecord) createTypeFromSchema(schema, fqns);
+        GenericRecord record = (GenericRecord) createTypeFromSchema(schema, fqns, true, schema.getNamespace());
         RecordField recordField = FormAvroConverter.createRecordFieldFromGenericRecord(record, ctlSource);
         customizeUiForm(customizeUiFormForCtl(recordField));
         return recordField;
@@ -214,7 +214,8 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 namedSchemas.put(fqn, emptyRecordSchema);
             }
         }
-        Schema schema = createFieldSchema(record, namedSchemas);
+        String rootNamespace = field.getContext().getRootRecord().getDeclaredFqn().getNamespace();
+        Schema schema = createFieldSchema(record, namedSchemas, rootNamespace);
         return schema;
     }
     
@@ -608,7 +609,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      * @param namedFqns the named fqns
      * @return the record
      */
-    private Record createTypeFromSchema(Schema schema, Set<Fqn> namedFqns) {
+    private Record createTypeFromSchema(Schema schema, Set<Fqn> namedFqns, boolean isRoot, String rootNamespace) {
         if (namedFqns == null) {
             namedFqns = new HashSet<>();
         }
@@ -688,7 +689,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                                 throw new IllegalArgumentException("Duplicate field name: " + fieldName);
                             }
 
-                            fieldsArrayData.add(createFormFieldFromSchemaField(fieldSchema, field, namedFqns));
+                            fieldsArrayData.add(createFormFieldFromSchemaField(fieldSchema, field, namedFqns, rootNamespace));
                         }
                         record.put(FIELDS, fieldsArrayData);
 
@@ -726,13 +727,17 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                         }                        
                     }
                     record.put(RECORD_NAME, fieldTypeSchema.getName());
-                    record.put(RECORD_NAMESPACE, fieldTypeSchema.getNamespace());
+                    String namespace = fieldTypeSchema.getNamespace();
+                    if (!isRoot && rootNamespace.equals(namespace)) {
+                        namespace = null;
+                    }
+                    record.put(RECORD_NAMESPACE, namespace);
                 }
                 break;
             case ARRAY:
                 Schema arrayTypeSchema = findTypeSchema(schemaFormSchema, ARRAY_FIELD_TYPE);
                 record = new Record(arrayTypeSchema);
-                Record arrayItemRecord = createTypeFromSchema(fieldTypeSchema.getElementType(), namedFqns);
+                Record arrayItemRecord = createTypeFromSchema(fieldTypeSchema.getElementType(), namedFqns, false, rootNamespace);
                 record.put(ARRAY_ITEM, arrayItemRecord);
                 break;
             case UNION:
@@ -744,7 +749,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 GenericData.Array<Record> acceptableValuesArrayData = new GenericData.Array<>(types.size(), acceptableValuesField.schema());
                 for (Schema typeSchema : types) {
                     if (typeSchema.getType() != Schema.Type.NULL) {
-                        Record fieldTypeRecord = createTypeFromSchema(typeSchema, namedFqns);
+                        Record fieldTypeRecord = createTypeFromSchema(typeSchema, namedFqns, false, rootNamespace);
                         acceptableValuesArrayData.add(fieldTypeRecord);
                     }
                 }
@@ -768,7 +773,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      * @param namedFqns the named fqns
      * @return the record
      */
-    private Record createFormFieldFromSchemaField(Schema recordTypeFieldSchema, Field field, Set<Fqn> namedFqns) {
+    private Record createFormFieldFromSchemaField(Schema recordTypeFieldSchema, Field field, Set<Fqn> namedFqns, String rootNamespace) {
         Record fieldRecord = new Record(recordTypeFieldSchema);        
         Schema fieldSchema = field.schema();
         if (fieldRecord.getSchema().getField(OPTIONAL) != null) {
@@ -806,7 +811,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
             }
         }
         
-        Record fieldType = createTypeFromSchema(field.schema(), namedFqns);
+        Record fieldType = createTypeFromSchema(field.schema(), namedFqns, false, rootNamespace);
         
         if (fieldType.getSchema().getField(DEFAULT_VALUE) != null) {
             JsonNode defaultValueNode = field.getJsonProp(BY_DEFAULT);
@@ -1008,10 +1013,11 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      *
      * @param fieldType the field type
      * @param namedSchemas the named schemas
+     * @param rootNamespace the root namespace
      * @return the schema
      * @throws ParseException the parse exception
      */
-    private Schema createFieldSchema(GenericRecord fieldType, Map<Fqn, Schema> namedSchemas) throws ParseException {
+    private Schema createFieldSchema(GenericRecord fieldType, Map<Fqn, Schema> namedSchemas, String rootNamespace) throws ParseException {
         if (namedSchemas == null) {
             namedSchemas = new HashMap<>();
         }
@@ -1041,6 +1047,9 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 fieldTypeName.equals(ENUM_FIELD_TYPE) ||
                 fieldTypeName.equals(RECORD_FIELD_TYPE)) {
             String recordNamespace = (String) fieldType.get(RECORD_NAMESPACE);
+            if (recordNamespace == null || recordNamespace.isEmpty()) {
+                recordNamespace = rootNamespace;
+            }
             String recordName = (String) fieldType.get(RECORD_NAME);
             Fqn fqn = new Fqn(recordNamespace, recordName);
             NamesValidator.validateFqnOrThrowException(fqn);
@@ -1094,7 +1103,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 List<Field> recordFields = new ArrayList<Field>();
                 if (fieldsArray != null) {
                     for (Record field : fieldsArray) {
-                        recordFields.add(createSchemaFieldFromForm(field, namedSchemas));
+                        recordFields.add(createSchemaFieldFromForm(field, namedSchemas, rootNamespace));
                     }
                 }
                 fieldSchema.setFields(recordFields);
@@ -1108,7 +1117,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
             }
         } else if (fieldTypeName.equals(ARRAY_FIELD_TYPE)) {
             Record arrayItem = (Record) fieldType.get(ARRAY_ITEM);            
-            Schema elementTypeSchema = createFieldSchema(arrayItem, namedSchemas);
+            Schema elementTypeSchema = createFieldSchema(arrayItem, namedSchemas, rootNamespace);
             fieldSchema = Schema.createArray(elementTypeSchema);
         } else if (fieldTypeName.equals(UNION_FIELD_TYPE)) {
             List<Schema> unionTypes = new ArrayList<>();
@@ -1117,7 +1126,7 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                     (GenericData.Array<Record>)fieldType.get(ACCEPTABLE_VALUES);
             
             for (Record acceptableValue : acceptableValuesArray) {
-                unionTypes.add(createFieldSchema(acceptableValue, namedSchemas));
+                unionTypes.add(createFieldSchema(acceptableValue, namedSchemas, rootNamespace));
             }
             fieldSchema = Schema.createUnion(unionTypes);
         }
@@ -1133,9 +1142,9 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      * @return the field
      * @throws ParseException the parse exception
      */
-    private Field createSchemaFieldFromForm(Record field, Map<Fqn, Schema> recordSchemas) throws ParseException {
+    private Field createSchemaFieldFromForm(Record field, Map<Fqn, Schema> recordSchemas, String rootNamespace) throws ParseException {
         Record fieldType = (Record)field.get(FIELD_TYPE);
-        Schema fieldSchema = createFieldSchema(fieldType, recordSchemas);
+        Schema fieldSchema = createFieldSchema(fieldType, recordSchemas, rootNamespace);
         Boolean optional = (Boolean)field.get(OPTIONAL);
         if (optional != null && optional && 
                 !FormAvroConverter.isNullTypeSchema(fieldSchema)) {            
