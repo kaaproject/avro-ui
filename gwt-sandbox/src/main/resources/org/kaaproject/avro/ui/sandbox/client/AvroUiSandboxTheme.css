@@ -40,3 +40,9 @@
     font-weight: bold;
     padding-left: 0px;
 }
+
+.b-app-footer {
+    font-family: Arial; 
+    font-size: 12px;
+    color: #666666; 
+}
