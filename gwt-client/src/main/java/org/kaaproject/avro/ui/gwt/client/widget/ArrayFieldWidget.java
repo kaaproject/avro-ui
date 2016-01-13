@@ -28,8 +28,15 @@ import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEvent;
 import org.kaaproject.avro.ui.gwt.client.widget.grid.event.RowActionEventHandler;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationActionListener;
 import org.kaaproject.avro.ui.gwt.client.widget.nav.NavigationContainer;
-import org.kaaproject.avro.ui.shared.*;
+import org.kaaproject.avro.ui.shared.ArrayField;
+import org.kaaproject.avro.ui.shared.BooleanField;
+import org.kaaproject.avro.ui.shared.FieldType;
+import org.kaaproject.avro.ui.shared.FormField;
 import org.kaaproject.avro.ui.shared.FormField.FieldAccess;
+import org.kaaproject.avro.ui.shared.Fqn;
+import org.kaaproject.avro.ui.shared.FqnKey;
+import org.kaaproject.avro.ui.shared.RecordField;
+import org.kaaproject.avro.ui.shared.UnionField;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -239,7 +246,9 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                 table.setWidget(0, column, new Label(metaField.getDisplayName()));
             }
 
-            table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.delete()));
+            if (!readOnly) {
+                table.setWidget(0, table.getCellCount(0), new Label(Utils.constants.delete()));
+            }
             hasHeader = true;
         } else {
             hasHeader = false;
@@ -307,33 +316,35 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
             constructAndPlaceWidget(table, field, row, 0, handlerRegistrations);
         }
 
-        final Button delButton = new Button("");
-        Image img = new Image(Utils.resources.remove());
-        img.getElement().getStyle().setVerticalAlign(Style.VerticalAlign.MIDDLE);
-        delButton.getElement().appendChild(img.getElement());
-        delButton.addStyleName(style.cellButton());
-        delButton.addStyleName(style.cellButtonSmall());
-        delButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
-        HandlerRegistration handlerRegistration = delButton.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                int tableRow = table.getCellForEvent(event).getRowIndex();
-                int rowIndex = hasHeader ? tableRow - 1 : tableRow;
-                FormField toDelete = value.getValue().get(rowIndex);
-                List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
-                if (registrations != null) {
-                    for (HandlerRegistration registration : registrations) {
-                        registration.removeHandler();
+        if (!readOnly) {
+            final Button delButton = new Button("");
+            Image img = new Image(Utils.resources.remove());
+            img.getElement().getStyle().setVerticalAlign(Style.VerticalAlign.MIDDLE);
+            delButton.getElement().appendChild(img.getElement());
+            delButton.addStyleName(style.cellButton());
+            delButton.addStyleName(style.cellButtonSmall());
+            delButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
+            HandlerRegistration handlerRegistration = delButton.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    int tableRow = table.getCellForEvent(event).getRowIndex();
+                    int rowIndex = hasHeader ? tableRow - 1 : tableRow;
+                    FormField toDelete = value.getValue().get(rowIndex);
+                    List<HandlerRegistration> registrations = rowHandlerRegistrationMap.remove(toDelete);
+                    if (registrations != null) {
+                        for (HandlerRegistration registration : registrations) {
+                            registration.removeHandler();
+                        }
+                        registrations.clear();
                     }
-                    registrations.clear();
+                    table.removeRow(tableRow);
+                    value.getValue().remove(rowIndex);
+                    fireChanged();
                 }
-                table.removeRow(tableRow);
-                value.removeRow(rowIndex);
-                fireChanged();
-            }
-        });
-        handlerRegistrations.add(handlerRegistration);
-        table.setWidget(row, table.getCellCount(row), delButton);
+            });
+            handlerRegistrations.add(handlerRegistration);
+            table.setWidget(row, table.getCellCount(row), delButton);
+        }
     }
 
     private String getScrollTablePreferredWidth(int configWidth) {
@@ -469,32 +480,30 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                                 if (unionVal == null) {
                                     value += "null";
                                 } else {
-                                    if (unionVal.getFieldType() == FieldType.RECORD && ((RecordField)unionVal).isTypeConsumer()) {
-                                        String fqnString = "Invalid FQN reference";
-                                        FqnKey fqnKey = ((RecordField)unionVal).getConsumedFqnKey();
-                                        if (fqnKey != null) {
-                                            Fqn fqn = unionVal.getContext().getDeclaredTypes().get(fqnKey);
+                                    if (unionVal.getFieldType() == FieldType.RECORD) {
+                                        RecordField recordField = ((RecordField)unionVal);
+                                        if (recordField.isTypeConsumer()) {
+                                            String fqnString = "Invalid FQN reference";
+                                            FqnKey fqnKey = recordField.getConsumedFqnKey();
+                                            if (fqnKey != null) {
+                                                Fqn fqn = unionVal.getContext().getDeclaredTypes().get(fqnKey);
+                                                if (fqn != null) {
+                                                    fqnString = fqn.getFqnString();
+                                                }
+                                            } 
+                                            value += fqnString;
+                                        } else if (recordField.isTypeHolder()) {
+                                            String fqnString = "Invalid FQN";
+                                            Fqn fqn = recordField.getDeclaredFqn();
                                             if (fqn != null) {
                                                 fqnString = fqn.getFqnString();
                                             }
-                                        } 
-                                        value += fqnString;
-                                    } else {
-                                        FormField displayName = ((RecordField) unionVal).getFieldByName("displayName");
-                                        Fqn declaredFqn = ((RecordField) unionVal).getDeclaredFqn();
-
-                                        String displayNameStr = displayName != null ? ((StringField) displayName).getValue() : null;
-                                        String declaredFqnStr = declaredFqn != null ? declaredFqn.getFqnString() : null;
-
-                                        if (displayNameStr != null && !displayNameStr.isEmpty()) {
-                                            value += displayNameStr;
+                                            value += fqnString;
                                         } else {
-                                            if (declaredFqnStr != null && !declaredFqnStr.isEmpty()){
-                                                value += declaredFqnStr;
-                                            } else {
-                                                value += unionVal.getDisplayName();
-                                            }
-                                        }
+                                            value += unionVal.getDisplayName();
+                                        }                                        
+                                    } else {
+                                        value += unionVal.getDisplayName();
                                     }
                                 }
                             } else {
