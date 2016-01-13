@@ -743,8 +743,10 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 List<Schema> types = fieldTypeSchema.getTypes();
                 GenericData.Array<Record> acceptableValuesArrayData = new GenericData.Array<>(types.size(), acceptableValuesField.schema());
                 for (Schema typeSchema : types) {
-                    Record fieldTypeRecord = createTypeFromSchema(typeSchema, namedFqns);
-                    acceptableValuesArrayData.add(fieldTypeRecord);
+                    if (typeSchema.getType() != Schema.Type.NULL) {
+                        Record fieldTypeRecord = createTypeFromSchema(typeSchema, namedFqns);
+                        acceptableValuesArrayData.add(fieldTypeRecord);
+                    }
                 }
                 record.put(ACCEPTABLE_VALUES, acceptableValuesArrayData);
                 break;

@@ -480,16 +480,28 @@ public class ArrayFieldWidget extends AbstractFieldWidget<ArrayField> {
                                 if (unionVal == null) {
                                     value += "null";
                                 } else {
-                                    if (unionVal.getFieldType() == FieldType.RECORD && ((RecordField)unionVal).isTypeConsumer()) {
-                                        String fqnString = "Ivalid FQN reference";
-                                        FqnKey fqnKey = ((RecordField)unionVal).getConsumedFqnKey();
-                                        if (fqnKey != null) {
-                                            Fqn fqn = unionVal.getContext().getDeclaredTypes().get(fqnKey);
+                                    if (unionVal.getFieldType() == FieldType.RECORD) {
+                                        RecordField recordField = ((RecordField)unionVal);
+                                        if (recordField.isTypeConsumer()) {
+                                            String fqnString = "Invalid FQN reference";
+                                            FqnKey fqnKey = recordField.getConsumedFqnKey();
+                                            if (fqnKey != null) {
+                                                Fqn fqn = unionVal.getContext().getDeclaredTypes().get(fqnKey);
+                                                if (fqn != null) {
+                                                    fqnString = fqn.getFqnString();
+                                                }
+                                            } 
+                                            value += fqnString;
+                                        } else if (recordField.isTypeHolder()) {
+                                            String fqnString = "Invalid FQN";
+                                            Fqn fqn = recordField.getDeclaredFqn();
                                             if (fqn != null) {
                                                 fqnString = fqn.getFqnString();
                                             }
-                                        } 
-                                        value += fqnString;
+                                            value += fqnString;
+                                        } else {
+                                            value += unionVal.getDisplayName();
+                                        }                                        
                                     } else {
                                         value += unionVal.getDisplayName();
                                     }

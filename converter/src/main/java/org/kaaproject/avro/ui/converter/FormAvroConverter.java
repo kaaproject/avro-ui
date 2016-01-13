@@ -770,7 +770,8 @@ public class FormAvroConverter implements ConverterConstants {
                     }
                     throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
                 } else if (isNullTypeSchema(schema)) {
-                    if (schema.getTypes().size() > 2) {
+                    if (schema.getTypes().size() > 2 || 
+                            (schema.getTypes().size() == 1 && schema.getTypes().get(0).getType() == Schema.Type.NULL)) {
                         return FieldType.UNION;
                     } else {
                         for (Schema typeSchema : schema.getTypes()) {
@@ -870,7 +871,8 @@ public class FormAvroConverter implements ConverterConstants {
             }
             throw new UnsupportedOperationException("Unsupported avro field type: " + schema.getType());
         } else if (isNullTypeSchema(schema)) {
-            if (schema.getTypes().size() > 2) {
+            if (schema.getTypes().size() > 2 || 
+                    (schema.getTypes().size() == 1 && schema.getTypes().get(0).getType() == Schema.Type.NULL)) {
                 return schema;
             } else {
                 for (Schema typeSchema : schema.getTypes()) {

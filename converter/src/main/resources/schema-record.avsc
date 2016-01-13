@@ -225,7 +225,7 @@
                                                                             ]
                                                                         },
                                                                         {"name": "acceptableValues", 
-                                                                         "displayName": "Possible values", 
+                                                                         "displayName": "Possible values",
                                                                          "type": {
                                                                                 "type": "array",
                                                                                 "items": 
@@ -242,8 +242,7 @@
                                                                                             "org.kaaproject.avro.ui.gen.RecordFieldType",
                                                                                             "org.kaaproject.avro.ui.gen.NamedReferenceFieldType",
                                                                                             "org.kaaproject.avro.ui.gen.ArrayFieldType",
-                                                                                            "org.kaaproject.avro.ui.gen.UnionFieldType",
-                                                                                            "null"                                                                                     
+                                                                                            "org.kaaproject.avro.ui.gen.UnionFieldType"                                                       
                                                                                         ]
                                                                                   }
                                                                         }
