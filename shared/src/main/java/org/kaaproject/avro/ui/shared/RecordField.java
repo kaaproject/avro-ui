@@ -125,6 +125,10 @@ public class RecordField extends FqnField {
         if (nameField != null && namespaceField != null) {
             String name = ((StringField)nameField).getValue();
             String namespace = ((StringField)namespaceField).getValue();
+            if (strIsEmpty(namespace) && !isRoot() 
+                    && context != null && context.getRootRecord() != null) {
+                namespace = context.getRootRecord().getDeclaredFqn().getNamespace();
+            }
             if (!strIsEmpty(name) && !strIsEmpty(namespace)) {
                 return new Fqn(namespace, name);
             }
@@ -332,6 +336,9 @@ public class RecordField extends FqnField {
             if (nameField != null && namespaceField != null) {
                 nameField.addValueChangeListener(fqnValueChangeListener);
                 namespaceField.addValueChangeListener(fqnValueChangeListener);
+                if (isRoot()) {
+                    namespaceField.setOptional(false);
+                }
             }
             if (isRoot() && context.isCtlSchema()) {
                 versionValueChangeListener = new VersionValueChangeListener(this);

@@ -155,6 +155,14 @@ public class FormContext implements Serializable {
             }
         }
         
+        if (typeHolder.isRoot()) {
+            for (RecordField holder : typeHolders.values()) {
+                if (!holder.isRoot()) {
+                    updateTypeHolder(holder);
+                }
+            }
+        }
+        
     }
     
     public Map<Integer, RecordField> getTypeHolders() {

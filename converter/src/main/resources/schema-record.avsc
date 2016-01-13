@@ -8,7 +8,7 @@
     [
          {"name": "alert", "displayName": "Alert", "alert": true, "type": ["string", "null"]},
          {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter record name"},
-         {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter record namespace"},
+         {"name": "recordNamespace", "displayName": "Namespace", "type": ["string", "null"], "displayPrompt": "Enter record namespace"},
          {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter record display name"},
          {"name": "fields", 
           "displayName": "Fields", 
@@ -127,7 +127,7 @@
                                                     [
                                                          {"name": "alert", "displayName": "Alert", "alert": true, "type": ["string", "null"]},
                                                          {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter fixed type name"},
-                                                         {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter fixed type namespace"},
+                                                         {"name": "recordNamespace", "displayName": "Namespace", "type": ["string", "null"], "displayPrompt": "Enter fixed type namespace"},
                                                          {"name": "fixedSize", "displayName": "Size", "type": "int", "displayPrompt": "Enter fixed size"},                                                    
                                                          {"name": "defaultValue", "displayName": "Default value", "type": ["string", "null"], "displayPrompt": "Enter default fixed field value in Base64 format"}
                                                     ]
@@ -142,7 +142,7 @@
                                                     [
                                                          {"name": "alert", "displayName": "Alert", "alert": true, "type": ["string", "null"]},
                                                          {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter enum type name"},
-                                                         {"name": "recordNamespace", "displayName": "Namespace", "type": "string", "displayPrompt": "Enter enum type namespace"},                                                                                                   
+                                                         {"name": "recordNamespace", "displayName": "Namespace", "type": ["string", "null"], "displayPrompt": "Enter enum type namespace"},                                                                                                   
                                                          {"name": "defaultValue", "displayName": "Default symbol", "type": ["string", "null"], "displayPrompt": "Enter enum default symbol"},
                                                          {"name": "symbols", 
                                                           "displayName": "Symbols", 
