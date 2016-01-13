@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 CyberVision, Inc.
+ * Copyright 2014-2016 CyberVision, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@
 package org.kaaproject.avro.ui.sandbox.client.layout;
 
 import org.kaaproject.avro.ui.gwt.client.AvroUiResources.AvroUiStyle;
-import org.kaaproject.avro.ui.gwt.client.util.Utils;
+import org.kaaproject.avro.ui.sandbox.client.AvroUiSandboxResources.AvroUiSandboxStyle;
+import org.kaaproject.avro.ui.sandbox.client.util.Utils;
+import org.kaaproject.avro.ui.shared.Version;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -32,11 +35,15 @@ public class AppLayout extends Composite {
 
         @UiField SimplePanel appHeader;
         @UiField SimpleWidgetPanel appContent;
+        @UiField(provided=true) final AvroUiSandboxStyle avroUiSandboxStyle;
         @UiField(provided=true) final AvroUiStyle avroUiStyle;
+        @UiField HTMLPanel footerPanel;
         
         public AppLayout() {
+            avroUiSandboxStyle = Utils.avroUiSandboxStyle;
             avroUiStyle = Utils.avroUiStyle;
             initWidget(uiBinder.createAndBindUi(this));
+            footerPanel.getElement().setInnerHTML(Utils.messages.footerMessage(Version.PROJECT_VERSION));
         }
 
         public SimplePanel getAppHeaderHolder() {

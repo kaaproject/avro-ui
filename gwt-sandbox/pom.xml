@@ -163,6 +163,7 @@
                 <version>${gwt.version}</version>
                 <configuration>
                     <i18nConstantsWithLookupBundle>org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxConstants</i18nConstantsWithLookupBundle>
+                    <i18nMessagesBundle>org.kaaproject.avro.ui.sandbox.client.i18n.AvroUiSandboxMessages</i18nMessagesBundle>
                     <cssFile>org/kaaproject/avro/ui/sandbox/client/AvroUiSandboxTheme.css</cssFile>
                     <gwtSdkFirstInClasspath>true</gwtSdkFirstInClasspath>
                     <runTarget>AvroUiSandbox.html</runTarget>                    

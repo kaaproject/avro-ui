@@ -17,3 +17,4 @@ target/
 /bin
 bin/
 **/dependency-reduced-pom.xml
+shared/src/main/java/org/kaaproject/avro/ui/shared/Version.java
