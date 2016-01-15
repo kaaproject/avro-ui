@@ -19,6 +19,7 @@ package org.kaaproject.avro.ui.gwt.client.widget;
 import java.util.Iterator;
 
 import org.kaaproject.avro.ui.gwt.client.util.Utils;
+import org.kaaproject.avro.ui.gwt.client.widget.dialog.AvroUiDialog;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.EventTarget;
@@ -232,7 +233,9 @@ public class FormPopup extends PopupPanel implements MouseListener {
 
             }
         });
-
+        
+        getGlassElement().getStyle().setZIndex(AvroUiDialog.GLASS_Z_INDEX);
+        getElement().getStyle().setZIndex(AvroUiDialog.DIALOG_Z_INDEX);
     }
 
     public void onSizeOverflow(int deltaWidth, int deltaHeight) {
