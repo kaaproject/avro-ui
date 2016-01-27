@@ -126,7 +126,8 @@ public class RecordField extends FqnField {
             String name = ((StringField)nameField).getValue();
             String namespace = ((StringField)namespaceField).getValue();
             if (strIsEmpty(namespace) && !isRoot() 
-                    && context != null && context.getRootRecord() != null) {
+                    && context != null && context.getRootRecord() != null
+                    && context.getRootRecord().getDeclaredFqn() != null) {
                 namespace = context.getRootRecord().getDeclaredFqn().getNamespace();
             }
             if (!strIsEmpty(name) && !strIsEmpty(namespace)) {

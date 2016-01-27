@@ -186,7 +186,11 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public RecordField createSchemaFormFromSchema(Schema schema, Set<Fqn> fqns) throws IOException {
-        GenericRecord record = (GenericRecord) createTypeFromSchema(schema, fqns, true, schema.getNamespace());
+        String namespace = "";
+        if (schema.getType() == Schema.Type.RECORD) {
+            namespace = schema.getNamespace();
+        }
+        GenericRecord record = (GenericRecord) createTypeFromSchema(schema, fqns, true, namespace);
         RecordField recordField = FormAvroConverter.createRecordFieldFromGenericRecord(record, ctlSource);
         customizeUiForm(customizeUiFormForCtl(recordField));
         return recordField;
@@ -214,7 +218,10 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 namedSchemas.put(fqn, emptyRecordSchema);
             }
         }
-        String rootNamespace = field.getContext().getRootRecord().getDeclaredFqn().getNamespace();
+        String rootNamespace = "";
+        if (field.getContext().getRootRecord().getDeclaredFqn() != null) {
+            rootNamespace = field.getContext().getRootRecord().getDeclaredFqn().getNamespace();
+        }
         Schema schema = createFieldSchema(record, namedSchemas, rootNamespace);
         return schema;
     }
