@@ -29,6 +29,8 @@ public class RecordField extends FqnField {
     private static final String FQN_FIELD = "fqn";
     private static final String RECORD_NAMESPACE_FIELD = "recordNamespace";
     private static final String RECORD_NAME_FIELD = "recordName";
+    private static final String DISPLAY_NAME_FIELD = "displayName";
+    private static final String DESCRIPTION_FIELD = "description";
     private static final String VERSION_FIELD = "version";
     
     private List<FormField> value;
@@ -152,6 +154,29 @@ public class RecordField extends FqnField {
         }
     }
     
+    public String getDisplayNameFieldValue() {
+    	FormField displayNameField = getFieldByName(DISPLAY_NAME_FIELD);
+    	if (displayNameField != null) {
+    		return ((StringField)displayNameField).getValue();
+    	}
+    	return null;
+    }
+    
+    public void setDisplayNameFieldOptional(boolean optional) {
+    	FormField displayNameField = getFieldByName(DISPLAY_NAME_FIELD);
+    	if (displayNameField != null) {
+    		displayNameField.setOptional(optional);
+    	}
+    }
+
+    public String getDescriptionFieldValue() {
+    	FormField descriptionField = getFieldByName(DESCRIPTION_FIELD);
+    	if (descriptionField != null) {
+    		return ((StringField)descriptionField).getValue();
+    	}
+    	return null;
+    }
+
     public Integer getVersion() {
         if (isRoot() && context.isCtlSchema()) {
             FormField versionField = getFieldByName(VERSION_FIELD);
