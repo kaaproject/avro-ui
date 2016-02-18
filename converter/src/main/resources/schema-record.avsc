@@ -10,6 +10,7 @@
          {"name": "recordName", "displayName": "Name", "type": "string", "displayPrompt": "Enter record name"},
          {"name": "recordNamespace", "displayName": "Namespace", "type": ["string", "null"], "displayPrompt": "Enter record namespace"},
          {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter record display name"},
+         {"name": "description", "displayName": "Description", "type": ["string", "null"], "displayPrompt": "Enter record description"},
          {"name": "fields", 
           "displayName": "Fields", 
           "type": {

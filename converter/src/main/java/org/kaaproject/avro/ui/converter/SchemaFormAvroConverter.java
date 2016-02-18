@@ -706,6 +706,14 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                                 record.put(DISPLAY_NAME, displayNameNode.asText());
                             }                    
                         }
+                        
+                        if (record.getSchema().getField(DESCRIPTION) != null) {
+                            JsonNode descriptionNode = fieldTypeSchema.getJsonProp(DESCRIPTION);
+                            if (descriptionNode != null && descriptionNode.isTextual()) {
+                                record.put(DESCRIPTION, descriptionNode.asText());
+                            }                    
+                        }
+                        
                         if (hasCtl) {
                             JsonNode versionNode = fieldTypeSchema.getJsonProp(VERSION);
                             if (versionNode != null && versionNode.isInt()) {
@@ -794,6 +802,13 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
             JsonNode displayNameNode = field.getJsonProp(DISPLAY_NAME);
             if (displayNameNode != null && displayNameNode.isTextual()) {
                 fieldRecord.put(DISPLAY_NAME, displayNameNode.asText());
+            }
+        }
+        
+        if (fieldRecord.getSchema().getField(DESCRIPTION) != null) {
+            JsonNode descriptionNode = field.getJsonProp(DESCRIPTION);
+            if (descriptionNode != null && descriptionNode.isTextual()) {
+                fieldRecord.put(DESCRIPTION, descriptionNode.asText());
             }
         }
         
@@ -1104,6 +1119,10 @@ public class SchemaFormAvroConverter implements ConverterConstants, SchemaFormCo
                 String displayName = (String) fieldType.get(DISPLAY_NAME);
                 if (displayName != null) {
                     fieldSchema.addProp(DISPLAY_NAME, displayName);
+                }
+                String description = (String) fieldType.get(DESCRIPTION);
+                if (description != null) {
+                    fieldSchema.addProp(DESCRIPTION, description);
                 }
                 @SuppressWarnings("unchecked")
                 GenericData.Array<Record> fieldsArray =  (GenericData.Array<Record>)fieldType.get(FIELDS);

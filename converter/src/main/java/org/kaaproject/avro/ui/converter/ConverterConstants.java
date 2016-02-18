@@ -28,6 +28,9 @@ public interface ConverterConstants {
     /** The Constant DISPLAY_NAME. */
     public static final String DISPLAY_NAME = "displayName";
     
+    /** The Constant DESCRIPTION. */
+    public static final String DESCRIPTION = "description";
+    
     /** The Constant DISPLAY_PROMPT. */
     public static final String DISPLAY_PROMPT = "displayPrompt";
     
