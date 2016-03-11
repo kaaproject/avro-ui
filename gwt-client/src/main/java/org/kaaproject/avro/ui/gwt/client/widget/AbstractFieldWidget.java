@@ -808,11 +808,10 @@ public abstract class AbstractFieldWidget<T extends FormField> extends SimplePan
         
         public FieldWidgetLabel(final FormField field) {
             this.getElement().getStyle().setPosition(Position.RELATIVE);
+            this.getElement().getStyle().setProperty("display", "flex");
             Label label = new Label(field.getDisplayName());
-            label.getElement().getStyle().setPosition(Position.ABSOLUTE);
             if (field.isOverride()) {
                 overrideBox = new CheckBox();
-                overrideBox.getElement().getStyle().setPosition(Position.ABSOLUTE);
                 label.getElement().getStyle().setLeft(28, Unit.PX);
                 overrideBox.setValue(field.isChanged());
                 overrideBox.setEnabled(!readOnly && !field.isReadOnly());
