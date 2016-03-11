@@ -202,7 +202,7 @@ public class MainActivity extends AbstractActivity  {
     
     private void showRecordJson() {
         RecordField recordField = view.getRecordConstructorView().getValue();
-
+        view.clearMessages();
         if (recordField!= null && recordField.isValid()) {
             AvroUiSandbox.getAvroUiSandboxService().getJsonStringFromRecord(recordField,
                     new BusyAsyncCallback<String>() {
@@ -218,7 +218,7 @@ public class MainActivity extends AbstractActivity  {
                 }
             });
         } else {
-            view.clearMessages();
+            view.setErrorMessage(Utils.constants.unableToGenerateJsonIncompleteRecordForm());
             view.getRecordConstructorView().setFormJson("");
         }
     }
