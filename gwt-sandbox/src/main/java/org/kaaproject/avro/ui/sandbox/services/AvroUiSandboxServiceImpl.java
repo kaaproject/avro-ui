@@ -17,8 +17,6 @@ package org.kaaproject.avro.ui.sandbox.services;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -30,8 +28,6 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonDecoder;
 import org.apache.avro.io.JsonEncoder;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -44,7 +40,6 @@ import org.kaaproject.avro.ui.sandbox.shared.services.AvroUiSandboxServiceExcept
 import org.kaaproject.avro.ui.shared.RecordField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spring4gwt.server.SpringGwtRemoteServiceServlet;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
