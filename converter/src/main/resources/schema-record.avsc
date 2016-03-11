@@ -26,7 +26,7 @@
                                     {"name": "fieldName", "displayName": "Field name", "type": "string", "keyIndex": 1, "weight": 0.8, "displayPrompt": "Enter field name"},
                                     {"name": "displayName", "displayName": "Display name", "type": ["string", "null"], "displayPrompt": "Enter field label text"},
                                     {"name": "displayPrompt", "displayName": "Display prompt", "type": ["string", "null"], "displayPrompt": "Enter field input prompt"},
-                                    {"name": "optional", "displayName": "Is optional", "type": "boolean", "by_default": true, "keyIndex": 3, "weight": 0.5, "displayPrompt": "Select to make field optional"},
+                                    {"name": "optional", "displayName": "Is optional", "type": "boolean", "by_default": false, "keyIndex": 3, "weight": 0.5, "displayPrompt": "Select to make field optional"},
                                     {"name": "weight", "displayName": "Weight", "type": ["float", "null"], "displayPrompt": "Enter relative column width"},
                                     {"name": "keyIndex", "displayName": "Key index", "type": ["int", "null"], "displayPrompt": "Enter column order number"},
                                     {"name": "fieldType", 
