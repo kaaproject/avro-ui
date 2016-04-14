@@ -29,7 +29,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <main.dir>${basedir}</main.dir>
-    <avro.version>1.7.5</avro.version>
+    <avro.version>1.8.0</avro.version>
     <gwt.version>2.7.0</gwt.version>
     <gwtchosen.version>1.2.0</gwtchosen.version>
     <gwtquery.version>1.4.2</gwtquery.version>    
